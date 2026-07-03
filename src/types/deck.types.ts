@@ -1,12 +1,8 @@
-export type Deck = {
-  id: number;
-  name: string;
-};
+import { decks, visibilityEnum } from '@/db/schema';
 
-export type CreateDeck = {
-  name: string;
-};
+export type DeckVisibility = (typeof visibilityEnum.enumValues)[number];
 
-export type DeleteDeck = {
-  id: number;
-};
+export type Deck = typeof decks.$inferSelect;
+
+export type CreateDeck = typeof decks.$inferInsert;
+export type CreateDeckInput = Omit<CreateDeck, 'ownerId'>;
