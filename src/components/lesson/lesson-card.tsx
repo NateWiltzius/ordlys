@@ -1,22 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CreateVocabModal from '@/components/shared/create-vocab-modal';
-import VocabCard from '@/components/vocab/vocab-card';
+import VocabTable from '@/components/vocab/vocab-table';
 import { deleteLessonAction } from '@/server/lesson.actions';
+import { moveVocabAction } from '@/server/vocab.actions';
 import { Lesson } from '@/types/lesson.types';
+import { OrderDirection } from '@/types/order.types';
 import { Vocab } from '@/types/vocab.types';
 import { Button, Card, Chip } from '@heroui/react';
 import { useRouter } from 'next/navigation';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { moveItem } from '@/lib/order/move-item';
+import EditVocabModal from '@/components/vocab/edit-vocab-modal';
 
 type Props = {
   lesson: Lesson;
   vocabs: Vocab[];
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  isLessonOrderPending: boolean;
+  onMoveLesson: (lessonId: number, direction: OrderDirection) => void;
 };
 
-export default function LessonCard({ lesson, vocabs }: Props) {
+export default function LessonCard({
+  lesson,
+  vocabs,
+  canMoveUp,
+  canMoveDown,
+  isLessonOrderPending,
+  onMoveLesson,
+}: Props) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [orderedVocabs, setOrderedVocabs] = useState(vocabs);
+  const [movingVocabId, setMovingVocabId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setOrderedVocabs(vocabs);
+  }, [vocabs]);
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -30,6 +52,27 @@ export default function LessonCard({ lesson, vocabs }: Props) {
     }
   };
 
+  const handleMoveVocab = async (vocabId: number, direction: OrderDirection) => {
+    if (movingVocabId !== null) return;
+
+    const previousVocabs = orderedVocabs;
+    const currentIndex = previousVocabs.findIndex(vocab => vocab.id === vocabId);
+    const nextVocabs = moveItem(previousVocabs, currentIndex, direction);
+    if (nextVocabs === previousVocabs) return;
+
+    setOrderedVocabs(nextVocabs);
+    setMovingVocabId(vocabId);
+
+    try {
+      await moveVocabAction(vocabId, direction);
+      router.refresh();
+    } catch {
+      setOrderedVocabs(previousVocabs);
+    } finally {
+      setMovingVocabId(null);
+    }
+  };
+
   return (
     <Card>
       <Card.Header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -38,26 +81,63 @@ export default function LessonCard({ lesson, vocabs }: Props) {
           <Card.Description>Manage the words in this lesson.</Card.Description>
         </div>
 
-        <Chip size="sm" variant="soft">
-          {vocabs.length} {vocabs.length === 1 ? 'word' : 'words'}
-        </Chip>
+        <div className="flex items-center gap-1">
+          <Chip size="sm" variant="soft">
+            {orderedVocabs.length} {orderedVocabs.length === 1 ? 'word' : 'words'}
+          </Chip>
+          <Button
+            size="sm"
+            variant="tertiary"
+            isIconOnly
+            isDisabled={!canMoveUp || isLessonOrderPending}
+            aria-label={`Move ${lesson.title} up`}
+            onPress={() => onMoveLesson(lesson.id, 'up')}
+          >
+            <ChevronUpIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="tertiary"
+            isIconOnly
+            isDisabled={!canMoveDown || isLessonOrderPending}
+            aria-label={`Move ${lesson.title} down`}
+            onPress={() => onMoveLesson(lesson.id, 'down')}
+          >
+            <ChevronDownIcon className="h-4 w-4" />
+          </Button>
+        </div>
       </Card.Header>
 
       <Card.Content>
-        {vocabs.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {vocabs.map(vocab => (
-              <VocabCard key={vocab.id} vocab={vocab} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg bg-default-100 px-4 py-3">
-            <p className="text-sm font-medium">No words yet</p>
-            <p className="mt-1 text-sm text-default-500">
-              Add vocabulary to start building this lesson.
-            </p>
-          </div>
-        )}
+        <VocabTable
+          vocabs={orderedVocabs}
+          emptyDescription="Add vocabulary to start building this lesson."
+          renderActions={(vocab, index) => (
+            <div className="flex items-center gap-1">
+              <EditVocabModal vocab={vocab} />
+              <Button
+                size="sm"
+                variant="tertiary"
+                isIconOnly
+                isDisabled={index === 0 || movingVocabId !== null}
+                aria-label={`Move ${vocab.front} up`}
+                onPress={() => handleMoveVocab(vocab.id, 'up')}
+              >
+                <ChevronUpIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="tertiary"
+                isIconOnly
+                isDisabled={index === orderedVocabs.length - 1 || movingVocabId !== null}
+                aria-label={`Move ${vocab.front} down`}
+                onPress={() => handleMoveVocab(vocab.id, 'down')}
+              >
+                <ChevronDownIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        />
       </Card.Content>
 
       <Card.Footer className="flex flex-wrap gap-2">

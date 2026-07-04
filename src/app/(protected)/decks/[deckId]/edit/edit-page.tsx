@@ -5,8 +5,14 @@ import CreateLessonModal from '@/components/shared/create-lesson-modal';
 import PageHeader from '@/components/shared/layout/page-header';
 import { Lesson } from '@/types/lesson.types';
 import { Vocab } from '@/types/vocab.types';
-import { Button, Card } from '@heroui/react';
-import Link from 'next/link';
+import { Card } from '@heroui/react';
+import ButtonLink from '@/components/shared/button-link';
+import EmptyState from '@/components/shared/empty-state';
+import { moveLessonAction } from '@/server/lesson.actions';
+import { moveItem } from '@/lib/order/move-item';
+import { OrderDirection } from '@/types/order.types';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   lessons: Lesson[];
@@ -15,6 +21,35 @@ type Props = {
 };
 
 export default function EditPage({ lessons, lessonVocabs, parsedDeckId }: Props) {
+  const router = useRouter();
+  const [orderedLessons, setOrderedLessons] = useState(lessons);
+  const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setOrderedLessons(lessons);
+  }, [lessons]);
+
+  const handleMoveLesson = async (lessonId: number, direction: OrderDirection) => {
+    if (movingLessonId !== null) return;
+
+    const previousLessons = orderedLessons;
+    const currentIndex = previousLessons.findIndex(lesson => lesson.id === lessonId);
+    const nextLessons = moveItem(previousLessons, currentIndex, direction);
+    if (nextLessons === previousLessons) return;
+
+    setOrderedLessons(nextLessons);
+    setMovingLessonId(lessonId);
+
+    try {
+      await moveLessonAction(lessonId, direction);
+      router.refresh();
+    } catch {
+      setOrderedLessons(previousLessons);
+    } finally {
+      setMovingLessonId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -22,9 +57,9 @@ export default function EditPage({ lessons, lessonVocabs, parsedDeckId }: Props)
         description="Organize lessons and vocabulary for this deck."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link href={`/decks/${parsedDeckId}`}>
-              <Button variant="secondary">Back to deck</Button>
-            </Link>
+            <ButtonLink href={`/decks/${parsedDeckId}`} variant="secondary">
+              Back to deck
+            </ButtonLink>
             <CreateLessonModal deckId={parsedDeckId} />
           </div>
         }
@@ -38,28 +73,28 @@ export default function EditPage({ lessons, lessonVocabs, parsedDeckId }: Props)
           </div>
 
           <p className="text-sm text-default-500">
-            {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
+            {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'}
           </p>
         </Card.Header>
 
         <Card.Content>
-          {lessons.length === 0 ? (
-            <div className="rounded-lg bg-default-100 px-4 py-6 text-center">
-              <p className="font-medium">No lessons yet</p>
-              <p className="mt-1 text-sm text-default-500">
-                Create your first lesson to start adding vocabulary.
-              </p>
-              <div className="mt-4 flex justify-center">
-                <CreateLessonModal deckId={parsedDeckId} />
-              </div>
-            </div>
+          {orderedLessons.length === 0 ? (
+            <EmptyState
+              title="No lessons yet"
+              description="Create your first lesson to start adding vocabulary."
+              action={<CreateLessonModal deckId={parsedDeckId} />}
+            />
           ) : (
             <div className="space-y-4">
-              {lessons.map(lesson => (
+              {orderedLessons.map((lesson, index) => (
                 <LessonCard
                   key={lesson.id}
                   lesson={lesson}
                   vocabs={lessonVocabs[lesson.id] ?? []}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < orderedLessons.length - 1}
+                  isLessonOrderPending={movingLessonId !== null}
+                  onMoveLesson={handleMoveLesson}
                 />
               ))}
             </div>

@@ -31,8 +31,6 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
       visibility: rawVisibility as DeckVisibility,
     };
 
-    console.log('Creating deck:', deck);
-
     setIsSubmitting(true);
     try {
       await createDeckAction(deck);

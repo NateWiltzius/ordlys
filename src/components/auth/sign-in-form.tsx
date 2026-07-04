@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, Input, Label } from '@heroui/react';
+import { Button, Card, Input, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -25,12 +25,13 @@ export function SignInForm() {
 
   return (
     <Card className="w-full">
-      <CardHeader className="pb-0">
-        <h1 className="text-xl font-semibold">Sign in</h1>
-      </CardHeader>
-      <CardContent>
+      <Card.Header>
+        <Card.Title>Sign in</Card.Title>
+        <Card.Description>Continue learning with your saved decks and progress.</Card.Description>
+      </Card.Header>
+      <Card.Content>
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-          <div className="flex flex-row gap-3 items-center">
+          <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -43,7 +44,7 @@ export function SignInForm() {
               autoFocus
             />
           </div>
-          <div className="flex flex-row gap-3 items-center">
+          <div className="space-y-1">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -59,7 +60,7 @@ export function SignInForm() {
             Sign in
           </Button>
         </form>
-      </CardContent>
+      </Card.Content>
     </Card>
   );
 }

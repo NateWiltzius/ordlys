@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, Input, Label } from '@heroui/react';
+import { Button, Card, Input, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -24,12 +24,13 @@ export function SignUpForm() {
 
   return (
     <Card className="w-full">
-      <CardHeader className="pb-0">
-        <h1 className="text-xl font-semibold">Sign up</h1>
-      </CardHeader>
-      <CardContent>
+      <Card.Header>
+        <Card.Title>Create an account</Card.Title>
+        <Card.Description>Save your decks, lessons, and review progress.</Card.Description>
+      </Card.Header>
+      <Card.Content>
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-          <div className="flex flex-row gap-3 items-center">
+          <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -41,7 +42,7 @@ export function SignUpForm() {
               onChange={e => setEmail(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-3 items-center">
+          <div className="space-y-1">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -57,7 +58,7 @@ export function SignUpForm() {
             Create account
           </Button>
         </form>
-      </CardContent>
+      </Card.Content>
     </Card>
   );
 }

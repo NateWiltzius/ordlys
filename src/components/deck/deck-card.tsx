@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { deleteDeckAction } from '@/server/deck.actions';
-import { subscribeUserToDeckAction } from '@/server/deck-subscription.actions';
+import {
+  subscribeUserToDeckAction,
+  unsubscribeUserFromDeckAction,
+} from '@/server/deck-subscription.actions';
 import { Deck } from '@/types/deck.types';
 import { Button, Card, Chip, ListBox, Popover } from '@heroui/react';
 import { useRouter } from 'next/navigation';
@@ -14,13 +17,14 @@ type Props = {
   isSubscribed?: boolean;
 };
 
-type DeckAction = 'review' | 'view' | 'edit' | 'delete';
+type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'unsubscribe';
 
 export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
   const router = useRouter();
 
   const [subscribed, setSubscribed] = useState(isSubscribed);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -57,6 +61,21 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
     }
   };
 
+  const handleUnsubscribe = async () => {
+    if (!subscribed || isUnsubscribing) return;
+
+    try {
+      setIsUnsubscribing(true);
+      await unsubscribeUserFromDeckAction(deck.id);
+      setSubscribed(false);
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to unsubscribe from deck', error);
+    } finally {
+      setIsUnsubscribing(false);
+    }
+  };
+
   const handleMenuAction = async (key: React.Key) => {
     setIsMenuOpen(false);
 
@@ -72,6 +91,9 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
         break;
       case 'delete':
         await handleDelete();
+        break;
+      case 'unsubscribe':
+        await handleUnsubscribe();
         break;
     }
   };
@@ -96,7 +118,9 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
     );
 
   const helperText = {
-    learning: 'Keep studying this deck and review any cards that are due.',
+    learning: deck.deletedAt
+      ? 'The owner removed this deck, but your subscription and progress are preserved.'
+      : 'Keep studying this deck and review any cards that are due.',
     owned: 'Manage the deck, edit its content, or start learning it.',
     public: 'Discover this deck and add it to your active learning list.',
   }[tab];
@@ -175,6 +199,17 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
                   {tab === 'owned' ? (
                     <ListBox.Item id="edit" textValue="Edit deck">
                       Edit deck
+                    </ListBox.Item>
+                  ) : null}
+
+                  {subscribed && tab !== 'owned' ? (
+                    <ListBox.Item
+                      id="unsubscribe"
+                      textValue="Unsubscribe"
+                      variant="danger"
+                      isDisabled={isUnsubscribing}
+                    >
+                      {isUnsubscribing ? 'Unsubscribing...' : 'Unsubscribe'}
                     </ListBox.Item>
                   ) : null}
 

@@ -18,15 +18,16 @@ import {
 } from '@/types/quiz.types';
 import { LearnItem, ReviewItem } from '@/types/review.types';
 import { Button, Card, ProgressBar } from '@heroui/react';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import ButtonLink from '@/components/shared/button-link';
 
 type Props = {
   quizItems: LearnItem[] | ReviewItem[];
   onVocabComplete: (vocabId: number, wasCorrect: boolean) => Promise<void>;
+  completionHref: string;
 };
 
-export default function QuizMode({ quizItems, onVocabComplete }: Props) {
+export default function QuizMode({ quizItems, onVocabComplete, completionHref }: Props) {
   const [answer, setAnswer] = useState('');
   const [failedCardIds, setFailedCardIds] = useState<Set<number>>(() => new Set());
   const [quizQueue, setQuizQueue] = useState<QuizQueueItem[] | null>(null);
@@ -39,7 +40,8 @@ export default function QuizMode({ quizItems, onVocabComplete }: Props) {
     incorrectAttempts: 0,
   });
   const [feedback, setFeedback] = useState<QuizFeedback | null>(null);
-  const [isContinuing, setIsContinuing] = useState(false);
+  const [pendingSaveCount, setPendingSaveCount] = useState(0);
+  const [saveError, setSaveError] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -54,6 +56,8 @@ export default function QuizMode({ quizItems, onVocabComplete }: Props) {
       incorrectAttempts: 0,
     });
     setFeedback(null);
+    setPendingSaveCount(0);
+    setSaveError(false);
   }, [quizItems]);
 
   const currentQuizItem = quizQueue?.[0];
@@ -96,68 +100,69 @@ export default function QuizMode({ quizItems, onVocabComplete }: Props) {
     });
   };
 
-  const handleContinue = async () => {
-    if (!feedback || isContinuing) return;
+  const handleContinue = () => {
+    if (!feedback) return;
 
-    setIsContinuing(true);
+    const { quizItem, isCorrect } = feedback;
 
-    try {
-      const { quizItem, isCorrect } = feedback;
+    setAttemptStats(prev => ({
+      totalAttempts: prev.totalAttempts + 1,
+      correctAttempts: prev.correctAttempts + Number(isCorrect),
+      incorrectAttempts: prev.incorrectAttempts + Number(!isCorrect),
+    }));
 
-      setAttemptStats(prev => ({
-        totalAttempts: prev.totalAttempts + 1,
-        correctAttempts: prev.correctAttempts + Number(isCorrect),
-        incorrectAttempts: prev.incorrectAttempts + Number(!isCorrect),
-      }));
+    if (isCorrect) {
+      const currentProgress = quizProgress[quizItem.cardId];
 
-      if (isCorrect) {
-        const currentProgress = quizProgress[quizItem.cardId];
+      const nextProgressForCard: QuizProgressItem = {
+        ...currentProgress,
+        btfPassed: quizItem.direction === 'btf' ? true : currentProgress.btfPassed,
+        ftbPassed: quizItem.direction === 'ftb' ? true : currentProgress.ftbPassed,
+      };
 
-        const nextProgressForCard: QuizProgressItem = {
-          ...currentProgress,
-          btfPassed: quizItem.direction === 'btf' ? true : currentProgress.btfPassed,
-          ftbPassed: quizItem.direction === 'ftb' ? true : currentProgress.ftbPassed,
-        };
+      const nextQuizProgress: QuizProgress = {
+        ...quizProgress,
+        [quizItem.cardId]: nextProgressForCard,
+      };
 
-        const nextQuizProgress: QuizProgress = {
-          ...quizProgress,
-          [quizItem.cardId]: nextProgressForCard,
-        };
+      const wasAlreadyFullyPassed = currentProgress.btfPassed && currentProgress.ftbPassed;
+      const isNowFullyPassed = nextProgressForCard.btfPassed && nextProgressForCard.ftbPassed;
 
-        const wasAlreadyFullyPassed = currentProgress.btfPassed && currentProgress.ftbPassed;
-        const isNowFullyPassed = nextProgressForCard.btfPassed && nextProgressForCard.ftbPassed;
+      setQuizProgress(nextQuizProgress);
+      setQuizQueue(prev => prev?.slice(1) ?? []);
 
-        setQuizProgress(nextQuizProgress);
-        setQuizQueue(prev => prev?.slice(1) ?? []);
-
-        if (isNowFullyPassed && !wasAlreadyFullyPassed) {
-          await onVocabComplete(quizItem.cardId, !failedCardIds.has(quizItem.cardId));
-
-          setFailedCardIds(prev => {
-            const next = new Set(prev);
-            next.delete(quizItem.cardId);
-            return next;
+      if (isNowFullyPassed && !wasAlreadyFullyPassed) {
+        setPendingSaveCount(count => count + 1);
+        void onVocabComplete(quizItem.cardId, !failedCardIds.has(quizItem.cardId))
+          .catch(() => {
+            setSaveError(true);
+          })
+          .finally(() => {
+            setPendingSaveCount(count => Math.max(0, count - 1));
           });
-        }
-      } else {
+
         setFailedCardIds(prev => {
           const next = new Set(prev);
-          next.add(quizItem.cardId);
+          next.delete(quizItem.cardId);
           return next;
         });
-
-        setQuizQueue(prev => {
-          if (!prev) return null;
-          const [, ...remainingItems] = prev;
-          return insertLater(remainingItems, quizItem, 2);
-        });
       }
+    } else {
+      setFailedCardIds(prev => {
+        const next = new Set(prev);
+        next.add(quizItem.cardId);
+        return next;
+      });
 
-      setAnswer('');
-      setFeedback(null);
-    } finally {
-      setIsContinuing(false);
+      setQuizQueue(prev => {
+        if (!prev) return null;
+        const [, ...remainingItems] = prev;
+        return insertLater(remainingItems, quizItem, 2);
+      });
     }
+
+    setAnswer('');
+    setFeedback(null);
   };
 
   if (quizQueue === null) {
@@ -170,7 +175,11 @@ export default function QuizMode({ quizItems, onVocabComplete }: Props) {
           </Card.Header>
           <Card.Content>
             {hasMounted ? (
-              <ProgressBar isIndeterminate aria-label="Preparing quiz" />
+              <ProgressBar isIndeterminate aria-label="Preparing quiz">
+                <ProgressBar.Track>
+                  <ProgressBar.Fill />
+                </ProgressBar.Track>
+              </ProgressBar>
             ) : (
               <div className="h-2 w-full animate-pulse rounded-full bg-default-200" />
             )}
@@ -183,20 +192,33 @@ export default function QuizMode({ quizItems, onVocabComplete }: Props) {
   if (!currentQuizItem) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
+        <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
         <Card variant="tertiary">
           <Card.Header>
             <Card.Title>Quiz complete</Card.Title>
-            <Card.Description>Nice work. Here is how this session went.</Card.Description>
+            <Card.Description>Nice work. Your session is complete.</Card.Description>
           </Card.Header>
           <Card.Content>
-            <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
+            {pendingSaveCount > 0 ? (
+              <p className="text-sm text-default-500">Saving progress…</p>
+            ) : saveError ? (
+              <p className="text-sm text-danger">
+                Some progress could not be saved. Please try the quiz again.
+              </p>
+            ) : (
+              <p className="text-sm text-default-600">Your progress has been saved.</p>
+            )}
           </Card.Content>
           <Card.Footer>
-            <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button variant="primary" className="w-full sm:w-auto">
-                Back to dashboard
+            {pendingSaveCount > 0 ? (
+              <Button variant="primary" isPending isDisabled>
+                Saving progress
               </Button>
-            </Link>
+            ) : (
+              <ButtonLink href={completionHref} className="w-full sm:w-auto">
+                Back to deck
+              </ButtonLink>
+            )}
           </Card.Footer>
         </Card>
       </div>
@@ -208,11 +230,7 @@ export default function QuizMode({ quizItems, onVocabComplete }: Props) {
       <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
 
       {feedback ? (
-        <QuizFeedbackPanel
-          feedback={feedback}
-          isContinuing={isContinuing}
-          onContinue={handleContinue}
-        />
+        <QuizFeedbackPanel feedback={feedback} onContinue={handleContinue} />
       ) : (
         <QuizAnswerForm
           prompt={currentQuizItem.prompt}

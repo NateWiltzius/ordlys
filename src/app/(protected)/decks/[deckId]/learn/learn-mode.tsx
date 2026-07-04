@@ -1,21 +1,26 @@
 import { LearnItem } from '@/types/review.types';
-import { Button, Card } from '@heroui/react';
+import { Button, Card, ProgressBar } from '@heroui/react';
 import { useState } from 'react';
 
 type Props = {
   learnItems: LearnItem[];
-  setModeHandler: (newMode: 'learn' | 'quiz') => void;
+  onStartQuiz: () => void;
 };
 
-export default function LearnMode({ learnItems, setModeHandler }: Props) {
+export default function LearnMode({ learnItems, onStartQuiz }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentItem = learnItems[currentIndex];
+  const isFirstItem = currentIndex === 0;
+  const isLastItem = currentIndex === learnItems.length - 1;
+  const progress = ((currentIndex + 1) / learnItems.length) * 100;
 
   const nextItemHandler = () => {
-    setCurrentIndex(current => Math.min(current + 1, learnItems.length - 1));
-    if (currentIndex === learnItems.length - 1) {
-      setModeHandler('quiz');
+    if (isLastItem) {
+      onStartQuiz();
+      return;
     }
+
+    setCurrentIndex(current => current + 1);
   };
 
   const previousItemHandler = () => {
@@ -23,15 +28,56 @@ export default function LearnMode({ learnItems, setModeHandler }: Props) {
   };
 
   return (
-    <div>
+    <div className="mx-auto max-w-2xl space-y-4">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-default-500">{currentItem.lessonTitle}</span>
+          <span className="font-medium">
+            {currentIndex + 1} / {learnItems.length}
+          </span>
+        </div>
+        <ProgressBar aria-label="Learning progress" value={progress} color="success">
+          <ProgressBar.Track>
+            <ProgressBar.Fill />
+          </ProgressBar.Track>
+        </ProgressBar>
+      </div>
+
       <Card>
         <Card.Header>
-          <Card.Title>{currentItem.front}</Card.Title>
+          <Card.Title>New word</Card.Title>
         </Card.Header>
-        <Card.Content>{currentItem.back}</Card.Content>
+        <Card.Content className="space-y-3">
+          <WordSide label="Front" value={currentItem.front} reading={currentItem.reading} />
+          <WordSide label="Back" value={currentItem.back} />
+        </Card.Content>
+        <Card.Footer className="flex justify-between gap-3">
+          <Button variant="secondary" onPress={previousItemHandler} isDisabled={isFirstItem}>
+            Previous
+          </Button>
+          <Button variant="primary" onPress={nextItemHandler}>
+            {isLastItem ? 'Start quiz' : 'Next word'}
+          </Button>
+        </Card.Footer>
       </Card>
-      <Button onClick={previousItemHandler}>Previous</Button>
-      <Button onClick={nextItemHandler}>Next</Button>
+    </div>
+  );
+}
+
+function WordSide({
+  label,
+  value,
+  reading,
+}: {
+  label: string;
+  value: string;
+  reading?: string | null;
+}) {
+  return (
+    <div className="rounded-lg bg-default-100 px-4 py-5">
+      <p className="text-xs font-medium uppercase tracking-wide text-default-500">{label}</p>
+      <p className="mt-1 text-xl font-semibold">{value}</p>
+      {reading ? <p className="mt-1 text-sm text-default-500">{reading}</p> : null}
     </div>
   );
 }

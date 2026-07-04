@@ -20,7 +20,7 @@ export default async function Navbar() {
   }
 
   return (
-    <nav className="p-4 sticky top-0 w-full flex flex-row justify-between items-center border-b">
+    <nav className="sticky top-0 z-50 flex w-full flex-row items-center justify-between border-b border-default-200 bg-background/95 p-4 shadow-sm backdrop-blur">
       <div>
         <Link href={loggedIn ? '/dashboard' : '/'}>
           <Typography type="h1" className="text-2xl">

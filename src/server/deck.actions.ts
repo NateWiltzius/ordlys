@@ -8,6 +8,7 @@ import {
   getDecksByOwnerId,
   getDeckStudyCounts,
   getPublicDecks,
+  getUserActiveDecks,
   getUserSubscribedDecks,
 } from '@/db/queries/deck.queries';
 import { createClient } from '@/lib/supabase/server';
@@ -54,6 +55,17 @@ export const getUserSubscribedDecksAction = async (): Promise<Deck[]> => {
   return await getUserSubscribedDecks(data.user.id);
 };
 
+export const getUserActiveDecksAction = async (): Promise<Deck[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
+    throw new Error('User must be authenticated to view their active decks.');
+  }
+
+  return await getUserActiveDecks(data.user.id);
+};
+
 export const getPublicDecksAction = async (): Promise<Deck[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -62,7 +74,7 @@ export const getPublicDecksAction = async (): Promise<Deck[]> => {
     throw new Error('User must be authenticated to view public decks.');
   }
 
-  return await getPublicDecks();
+  return await getPublicDecks(data.user.id);
 };
 
 export const deleteDeckAction = async (id: number): Promise<void> => {

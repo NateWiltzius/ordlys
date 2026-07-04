@@ -2,58 +2,18 @@
 
 import { getDeckById } from '@/db/queries/deck.queries';
 import { getLessonById } from '@/db/queries/lesson.queries';
-import { createVocab, getVocabByDeckId, getVocabByLessonId } from '@/db/queries/vocab.queries';
+import {
+  createVocab,
+  getVocabByDeckId,
+  getVocabById,
+  moveVocab,
+  updateVocab,
+} from '@/db/queries/vocab.queries';
 import { createClient } from '@/lib/supabase/server';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { CreateVocab, Vocab } from '@/types/vocab.types';
-import { revalidateTag, unstable_cache } from 'next/cache';
-
-const VOCABS_CACHE_TAG = 'vocabs';
-
-const getCachedVocab = (lessonId: number): (() => Promise<Vocab[]>) =>
-  unstable_cache(
-    async () => {
-      return await getVocabByLessonId(lessonId);
-    },
-    ['vocab-list', String(lessonId)],
-    {
-      tags: [`${VOCABS_CACHE_TAG}-${lessonId}`],
-      revalidate: 1,
-    },
-  );
-
-export const getVocabAction = async (lessonId: number): Promise<Vocab[]> => {
-  const parsedLessonId = parsePositiveInteger(lessonId);
-  if (!parsedLessonId) {
-    throw new Error('Invalid lesson ID.');
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to view vocabulary.');
-  }
-
-  const lesson = await getLessonById(parsedLessonId);
-  const deck = lesson ? await getDeckById(lesson.deckId) : undefined;
-  if (!lesson || !deck || deck.ownerId !== data.user.id) {
-    throw new Error('Lesson not found or access denied.');
-  }
-
-  return await getCachedVocab(parsedLessonId)();
-};
-
-const getCachedDeckVocab = (deckId: number): (() => Promise<Vocab[]>) =>
-  unstable_cache(
-    async () => {
-      return await getVocabByDeckId(deckId);
-    },
-    ['deck-vocab-list', String(deckId)],
-    {
-      tags: [`${VOCABS_CACHE_TAG}-deck-${deckId}`],
-      revalidate: 1,
-    },
-  );
+import { CreateVocab, UpdateVocabInput, Vocab } from '@/types/vocab.types';
+import { revalidatePath } from 'next/cache';
+import { OrderDirection } from '@/types/order.types';
 
 export const getVocabsByDeckAction = async (deckId: number): Promise<Vocab[]> => {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -68,11 +28,11 @@ export const getVocabsByDeckAction = async (deckId: number): Promise<Vocab[]> =>
   }
 
   const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.ownerId !== data.user.id) {
+  if (!deck || deck.deletedAt || deck.ownerId !== data.user.id) {
     throw new Error('Deck not found or access denied.');
   }
 
-  return await getCachedDeckVocab(parsedDeckId)();
+  return await getVocabByDeckId(parsedDeckId);
 };
 
 export async function createVocabAction(vocab: CreateVocab) {
@@ -105,7 +65,7 @@ export async function createVocabAction(vocab: CreateVocab) {
   }
 
   const deck = await getDeckById(lesson.deckId);
-  if (!deck) {
+  if (!deck || deck.deletedAt) {
     throw new Error('Deck not found.');
   }
 
@@ -121,8 +81,71 @@ export async function createVocabAction(vocab: CreateVocab) {
     backAlternatives: normalizedBackAlternatives,
     reading: typeof reading === 'string' ? reading.trim() : undefined,
   });
-  revalidateTag(`${VOCABS_CACHE_TAG}-deck-${lesson.deckId}`);
-  revalidateTag(`${VOCABS_CACHE_TAG}-${lessonId}`);
+  revalidatePath(`/decks/${lesson.deckId}/edit`);
+}
+
+export async function moveVocabAction(vocabId: number, direction: OrderDirection) {
+  if (typeof vocabId !== 'number' || !Number.isInteger(vocabId) || vocabId <= 0) {
+    throw new Error('Invalid vocabulary ID.');
+  }
+
+  if (direction !== 'up' && direction !== 'down') {
+    throw new Error('Invalid move direction.');
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) {
+    throw new Error('User must be authenticated to reorder vocabulary.');
+  }
+
+  const deckId = await moveVocab(vocabId, data.user.id, direction);
+  revalidatePath(`/decks/${deckId}`);
+  revalidatePath(`/decks/${deckId}/edit`);
+}
+
+export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput) {
+  if (typeof vocabId !== 'number' || !Number.isInteger(vocabId) || vocabId <= 0) {
+    throw new Error('Invalid vocabulary ID.');
+  }
+
+  const { front, back, frontAlternatives, backAlternatives, reading } = vocab;
+
+  if (typeof front !== 'string' || front.trim().length === 0) {
+    throw new Error('Front text is required.');
+  }
+
+  if (typeof back !== 'string' || back.trim().length === 0) {
+    throw new Error('Back text is required.');
+  }
+
+  const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, front);
+  const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, back);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) {
+    throw new Error('User must be authenticated to update vocabulary.');
+  }
+
+  const existingVocab = await getVocabById(vocabId);
+  const lesson = existingVocab ? await getLessonById(existingVocab.lessonId) : undefined;
+  const deck = lesson ? await getDeckById(lesson.deckId) : undefined;
+
+  if (!existingVocab || !lesson || !deck || deck.deletedAt || deck.ownerId !== data.user.id) {
+    throw new Error('Vocabulary not found or access denied.');
+  }
+
+  await updateVocab(vocabId, {
+    front: front.trim(),
+    back: back.trim(),
+    frontAlternatives: normalizedFrontAlternatives,
+    backAlternatives: normalizedBackAlternatives,
+    reading: typeof reading === 'string' && reading.trim() ? reading.trim() : null,
+  });
+
+  revalidatePath(`/decks/${lesson.deckId}`);
+  revalidatePath(`/decks/${lesson.deckId}/edit`);
 }
 
 function normalizeAlternatives(

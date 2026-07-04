@@ -1,5 +1,5 @@
-import { Button, Card, Chip } from '@heroui/react';
-import Link from 'next/link';
+import ButtonLink from '@/components/shared/button-link';
+import { Card, Chip } from '@heroui/react';
 
 export default function Home() {
   return (
@@ -21,16 +21,12 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link href="/auth/sign-up">
-              <Button variant="primary" size="lg">
-                Start learning
-              </Button>
-            </Link>
-            <Link href="/auth/login">
-              <Button variant="secondary" size="lg">
-                Log in
-              </Button>
-            </Link>
+            <ButtonLink href="/auth/sign-up" size="lg">
+              Start learning
+            </ButtonLink>
+            <ButtonLink href="/auth/sign-in" variant="secondary" size="lg">
+              Log in
+            </ButtonLink>
           </div>
         </div>
 

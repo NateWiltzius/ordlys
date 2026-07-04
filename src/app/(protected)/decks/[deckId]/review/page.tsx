@@ -16,5 +16,5 @@ export default async function ReviewPage({ params }: Props) {
 
   const dueReviews = await getDueReviewsForDeckAction(parsedDeckId);
 
-  return <ReviewMode dueReviews={dueReviews} />;
+  return <ReviewMode deckId={parsedDeckId} dueReviews={dueReviews} />;
 }

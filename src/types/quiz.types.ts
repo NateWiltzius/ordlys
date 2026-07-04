@@ -1,4 +1,4 @@
-export type QuizDirection = 'btf' | 'ftb';
+type QuizDirection = 'btf' | 'ftb';
 
 export type QuizQueueItem = {
   cardId: number;

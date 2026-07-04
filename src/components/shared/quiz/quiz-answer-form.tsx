@@ -26,26 +26,37 @@ export default function QuizAnswerForm({
       <form onSubmit={handleSubmit}>
         <Card.Header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <Card.Title>What does this mean?</Card.Title>
-            <Card.Description>Type your answer, then submit.</Card.Description>
+            <Card.Title>Recall the {direction === 'btf' ? 'front' : 'back'}</Card.Title>
+            <Card.Description>
+              You are shown the {direction === 'btf' ? 'back' : 'front'} side.
+            </Card.Description>
           </div>
 
           <Chip size="sm" variant="soft">
-            {direction === 'btf' ? 'Back to front' : 'Front to back'}
+            {direction === 'btf' ? 'Back → Front' : 'Front → Back'}
           </Chip>
         </Card.Header>
 
         <Card.Content className="space-y-4">
           <div className="rounded-lg bg-default-100 px-4 py-6 text-center">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-default-500">
+              {direction === 'btf' ? 'Back' : 'Front'}
+            </p>
             <p className="text-2xl font-semibold">{prompt}</p>
           </div>
 
-          <Input
-            value={answer}
-            onChange={e => onAnswerChange(e.target.value)}
-            placeholder="Your answer"
-            autoFocus
-          />
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Answer with the {direction === 'btf' ? 'front' : 'back'}
+            </p>
+            <Input
+              aria-label={`Answer with the ${direction === 'btf' ? 'front' : 'back'}`}
+              value={answer}
+              onChange={e => onAnswerChange(e.target.value)}
+              placeholder="Your answer"
+              autoFocus
+            />
+          </div>
         </Card.Content>
 
         <Card.Footer>

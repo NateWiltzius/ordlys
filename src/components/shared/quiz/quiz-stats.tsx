@@ -21,7 +21,11 @@ export default function QuizStats({ progressStats, attemptStats }: Props) {
           aria-label="Quiz progress"
           value={progressStats.progressPercentage}
           color="success"
-        />
+        >
+          <ProgressBar.Track>
+            <ProgressBar.Fill />
+          </ProgressBar.Track>
+        </ProgressBar>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Progress" value={`${progressStats.progressPercentage}%`} />

@@ -6,25 +6,13 @@ import {
   deleteLesson,
   getLessonById,
   getLessonsByDeckId,
+  moveLesson,
 } from '@/db/queries/lesson.queries';
 import { createClient } from '@/lib/supabase/server';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { CreateLesson, Lesson } from '@/types/lesson.types';
-import { revalidateTag, unstable_cache } from 'next/cache';
-
-const LESSONS_CACHE_TAG = 'lessons';
-
-const getCachedLessons = (deckId: number): (() => Promise<Lesson[]>) =>
-  unstable_cache(
-    async () => {
-      return await getLessonsByDeckId(deckId);
-    },
-    ['lessons-list', String(deckId)],
-    {
-      tags: [`${LESSONS_CACHE_TAG}-${deckId}`],
-      revalidate: 1,
-    },
-  );
+import { revalidatePath } from 'next/cache';
+import { OrderDirection } from '@/types/order.types';
 
 export const getLessonsAction = async (deckId: number): Promise<Lesson[]> => {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -39,11 +27,11 @@ export const getLessonsAction = async (deckId: number): Promise<Lesson[]> => {
   }
 
   const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.ownerId !== data.user.id) {
+  if (!deck || deck.deletedAt || deck.ownerId !== data.user.id) {
     throw new Error('Deck not found or access denied.');
   }
 
-  return await getCachedLessons(parsedDeckId)();
+  return await getLessonsByDeckId(parsedDeckId);
 };
 
 export async function createLessonAction(lesson: CreateLesson) {
@@ -63,7 +51,7 @@ export async function createLessonAction(lesson: CreateLesson) {
   }
 
   const deck = await getDeckById(deckId);
-  if (!deck) {
+  if (!deck || deck.deletedAt) {
     throw new Error('Deck not found.');
   }
 
@@ -78,7 +66,7 @@ export async function createLessonAction(lesson: CreateLesson) {
     },
     data.user.id,
   );
-  revalidateTag(`${LESSONS_CACHE_TAG}-${deckId}`);
+  revalidatePath(`/decks/${deckId}/edit`);
 }
 
 export async function deleteLessonAction(lessonId: number) {
@@ -98,7 +86,7 @@ export async function deleteLessonAction(lessonId: number) {
   }
 
   const deck = await getDeckById(lesson.deckId);
-  if (!deck) {
+  if (!deck || deck.deletedAt) {
     throw new Error('Deck not found.');
   }
 
@@ -107,5 +95,25 @@ export async function deleteLessonAction(lessonId: number) {
   }
 
   await deleteLesson(lessonId, data.user.id);
-  revalidateTag(`${LESSONS_CACHE_TAG}-${lesson.deckId}`);
+  revalidatePath(`/decks/${lesson.deckId}/edit`);
+}
+
+export async function moveLessonAction(lessonId: number, direction: OrderDirection) {
+  if (typeof lessonId !== 'number' || !Number.isInteger(lessonId) || lessonId <= 0) {
+    throw new Error('Invalid lesson ID.');
+  }
+
+  if (direction !== 'up' && direction !== 'down') {
+    throw new Error('Invalid move direction.');
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) {
+    throw new Error('User must be authenticated to reorder lessons.');
+  }
+
+  const deckId = await moveLesson(lessonId, data.user.id, direction);
+  revalidatePath(`/decks/${deckId}`);
+  revalidatePath(`/decks/${deckId}/edit`);
 }

@@ -4,14 +4,13 @@ import { useEffect } from 'react';
 
 type Props = {
   feedback: QuizFeedback;
-  isContinuing: boolean;
   onContinue: () => void;
 };
 
-export default function QuizFeedbackPanel({ feedback, isContinuing, onContinue }: Props) {
+export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' || event.repeat || event.isComposing || isContinuing) {
+      if (event.key !== 'Enter' || event.repeat || event.isComposing) {
         return;
       }
 
@@ -22,7 +21,7 @@ export default function QuizFeedbackPanel({ feedback, isContinuing, onContinue }
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isContinuing, onContinue]);
+  }, [onContinue]);
 
   return (
     <Card variant={feedback.isCorrect ? 'tertiary' : 'secondary'}>
@@ -37,23 +36,24 @@ export default function QuizFeedbackPanel({ feedback, isContinuing, onContinue }
         </div>
 
         <Chip size="sm" color={feedback.isCorrect ? 'success' : 'danger'} variant="soft">
-          {feedback.quizItem.direction === 'btf' ? 'Back to front' : 'Front to back'}
+          {feedback.quizItem.direction === 'btf' ? 'Back → Front' : 'Front → Back'}
         </Chip>
       </Card.Header>
 
       <Card.Content className="space-y-3">
-        <AnswerRow label="Prompt" value={feedback.quizItem.prompt} />
+        <AnswerRow
+          label={feedback.quizItem.direction === 'btf' ? 'Back shown' : 'Front shown'}
+          value={feedback.quizItem.prompt}
+        />
         <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
-        <AnswerRow label="Correct answer" value={feedback.quizItem.answer} />
+        <AnswerRow
+          label={feedback.quizItem.direction === 'btf' ? 'Correct front' : 'Correct back'}
+          value={feedback.quizItem.answer}
+        />
       </Card.Content>
 
       <Card.Footer>
-        <Button
-          variant="primary"
-          onPress={onContinue}
-          isPending={isContinuing}
-          className="w-full sm:w-auto"
-        >
+        <Button variant="primary" onPress={onContinue} className="w-full sm:w-auto">
           Continue
         </Button>
       </Card.Footer>

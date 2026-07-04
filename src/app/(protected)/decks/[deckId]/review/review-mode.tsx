@@ -3,10 +3,15 @@
 import QuizMode from '@/components/shared/quiz/quiz-mode';
 import { reviewVocabAction } from '@/server/review.actions';
 import { ReviewItem } from '@/types/review.types';
-import { Button, Card } from '@heroui/react';
-import Link from 'next/link';
+import { Card } from '@heroui/react';
+import ButtonLink from '@/components/shared/button-link';
 
-export default function ReviewMode({ dueReviews }: { dueReviews: ReviewItem[] }) {
+type Props = {
+  deckId: number;
+  dueReviews: ReviewItem[];
+};
+
+export default function ReviewMode({ deckId, dueReviews }: Props) {
   if (dueReviews.length === 0) {
     return (
       <div className="mx-auto max-w-2xl">
@@ -18,9 +23,7 @@ export default function ReviewMode({ dueReviews }: { dueReviews: ReviewItem[] })
             </Card.Description>
           </Card.Header>
           <Card.Footer>
-            <Link href="/dashboard">
-              <Button variant="primary">Back to dashboard</Button>
-            </Link>
+            <ButtonLink href={`/decks/${deckId}`}>Back to deck</ButtonLink>
           </Card.Footer>
         </Card>
       </div>
@@ -30,6 +33,7 @@ export default function ReviewMode({ dueReviews }: { dueReviews: ReviewItem[] })
   return (
     <QuizMode
       quizItems={dueReviews}
+      completionHref={`/decks/${deckId}`}
       onVocabComplete={async (vocabId, wasCorrect) => {
         await reviewVocabAction(vocabId, wasCorrect);
       }}

@@ -1,6 +1,9 @@
 'use server';
 
-import { createDeckSubscription } from '@/db/queries/deck-subscription.queries';
+import {
+  createDeckSubscription,
+  deleteDeckSubscription,
+} from '@/db/queries/deck-subscription.queries';
 import { getDeckById } from '@/db/queries/deck.queries';
 import { createClient } from '@/lib/supabase/server';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
@@ -21,12 +24,8 @@ export async function subscribeUserToDeckAction(deckId: number) {
   }
 
   const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.visibility !== 'public') {
+  if (!deck || deck.deletedAt || deck.visibility !== 'public' || deck.ownerId === data.user.id) {
     throw new Error('Deck not found or unavailable for subscription.');
-  }
-
-  if (deck.ownerId === data.user.id) {
-    throw new Error('You cannot subscribe to your own deck.');
   }
 
   const newDeckSubscription: CreateDeckSubscription = {
@@ -35,6 +34,25 @@ export async function subscribeUserToDeckAction(deckId: number) {
   };
 
   await createDeckSubscription(newDeckSubscription);
+  revalidatePath('/decks');
+  revalidatePath(`/decks/${parsedDeckId}`);
+  revalidatePath('/dashboard');
+}
+
+export async function unsubscribeUserFromDeckAction(deckId: number) {
+  const parsedDeckId = parsePositiveInteger(deckId);
+  if (!parsedDeckId) {
+    throw new Error('Invalid deck ID.');
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
+    throw new Error('User must be authenticated to unsubscribe from a deck.');
+  }
+
+  await deleteDeckSubscription(parsedDeckId, data.user.id);
   revalidatePath('/decks');
   revalidatePath(`/decks/${parsedDeckId}`);
   revalidatePath('/dashboard');

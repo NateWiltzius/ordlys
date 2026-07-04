@@ -1,8 +1,10 @@
 import { createVocabAction } from '@/server/vocab.actions';
 import { CreateVocab } from '@/types/vocab.types';
-import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/react';
+import { Button, Modal, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import VocabFormFields from '@/components/vocab/vocab-form-fields';
+import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
 
 type CreateVocabModalProps = {
   triggerLabel?: string;
@@ -27,6 +29,7 @@ export default function CreateVocabModal({
     const back = String(formData.get('back') ?? '').trim();
     const frontAlternatives = parseAlternatives(formData.get('frontAlternatives'));
     const backAlternatives = parseAlternatives(formData.get('backAlternatives'));
+    const reading = String(formData.get('reading') ?? '').trim();
 
     if (!front || !back) {
       return;
@@ -37,6 +40,7 @@ export default function CreateVocabModal({
       back,
       frontAlternatives,
       backAlternatives,
+      reading: reading || undefined,
       lessonId,
     };
 
@@ -67,34 +71,7 @@ export default function CreateVocabModal({
             </Modal.Header>
             <form onSubmit={handleCreateVocab}>
               <Modal.Body>
-                <Label className="text-sm text-default-600" htmlFor="front">
-                  Front
-                </Label>
-                <Input id="front" name="front" required className="w-full" />
-                <Label className="text-sm text-default-600" htmlFor="back">
-                  Back
-                </Label>
-                <Input id="back" name="back" required className="w-full" />
-                <Label className="text-sm text-default-600" htmlFor="frontAlternatives">
-                  Front alternatives
-                </Label>
-                <TextArea
-                  id="frontAlternatives"
-                  name="frontAlternatives"
-                  rows={3}
-                  placeholder="One accepted answer per line"
-                  className="w-full"
-                />
-                <Label className="text-sm text-default-600" htmlFor="backAlternatives">
-                  Back alternatives
-                </Label>
-                <TextArea
-                  id="backAlternatives"
-                  name="backAlternatives"
-                  rows={3}
-                  placeholder="One accepted answer per line"
-                  className="w-full"
-                />
+                <VocabFormFields />
               </Modal.Body>
               <Modal.Footer>
                 <Button className="w-full" type="submit" isDisabled={isSubmitting}>
@@ -107,13 +84,4 @@ export default function CreateVocabModal({
       </Modal.Backdrop>
     </Modal>
   );
-}
-
-function parseAlternatives(value: FormDataEntryValue | null): string[] {
-  if (typeof value !== 'string') return [];
-
-  return value
-    .split(/\r?\n/)
-    .map(alternative => alternative.trim())
-    .filter(Boolean);
 }

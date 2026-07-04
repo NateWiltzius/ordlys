@@ -1,5 +1,5 @@
 import LearnPage from '@/app/(protected)/decks/[deckId]/learn/learn-page';
-import { getNewVocabsForDeckAction } from '@/server/review.actions';
+import { getLessonProgressForDeckAction, getNewVocabsForDeckAction } from '@/server/review.actions';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 
@@ -14,7 +14,12 @@ export default async function Page({ params }: Props) {
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
-  const learnItems = await getNewVocabsForDeckAction(parsedDeckId, 5);
+  const [learnItems, lessonProgress] = await Promise.all([
+    getNewVocabsForDeckAction(parsedDeckId, 5),
+    getLessonProgressForDeckAction(parsedDeckId),
+  ]);
 
-  return <LearnPage deckId={parsedDeckId} learnItems={learnItems} />;
+  return (
+    <LearnPage deckId={parsedDeckId} learnItems={learnItems} lessonProgress={lessonProgress} />
+  );
 }

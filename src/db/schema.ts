@@ -9,6 +9,7 @@ export const decks = pgTable('decks', {
   title: varchar('title', { length: 255 }).notNull(),
   description: varchar('description', { length: 255 }),
   visibility: visibilityEnum(),
+  deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

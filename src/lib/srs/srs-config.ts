@@ -1,4 +1,4 @@
-export const DEFAULT_SRS_INTERVALS_MINUTES = [
+const DEFAULT_SRS_INTERVALS_MINUTES = [
   4 * 60, // 4 hours
   8 * 60, // 8 hours
   24 * 60, // 1 day
@@ -15,4 +15,9 @@ export const DEFAULT_SRS_CONFIG = {
   lapseLevelDecrease: 1,
   correctLevelIncrease: 1,
   intervalsMinutes: DEFAULT_SRS_INTERVALS_MINUTES,
+} as const;
+
+export const LESSON_PROGRESSION_CONFIG = {
+  unlockSrsLevel: 3,
+  unlockRatio: 0.8,
 } as const;
