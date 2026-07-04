@@ -10,12 +10,12 @@ import {
   sql,
   or,
   isNull,
-  isNotNull,
   notExists,
   ne,
   inArray,
 } from 'drizzle-orm';
 import { getNewVocabCountForDeck } from '@/db/queries/review.queries';
+import { viewDeckAccess } from '@/db/queries/deck-access';
 
 export const createDeck = async (deck: CreateDeck) => {
   await db.insert(decks).values({
@@ -24,6 +24,19 @@ export const createDeck = async (deck: CreateDeck) => {
     description: deck.description,
     visibility: deck.visibility,
   });
+};
+
+export const updateDeck = async (
+  deckId: number,
+  userId: string,
+  deck: Pick<CreateDeck, 'title' | 'description' | 'visibility'>,
+) => {
+  const updated = await db
+    .update(decks)
+    .set({ ...deck, updatedAt: new Date() })
+    .where(and(eq(decks.id, deckId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+    .returning({ id: decks.id });
+  if (!updated.length) throw new Error('Deck not found or access denied.');
 };
 
 export const getDecksByOwnerId = async (ownerId: string) => {
@@ -45,22 +58,8 @@ export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
   return db
     .selectDistinct({ ...getTableColumns(decks) })
     .from(decks)
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-    )
-    .leftJoin(lessons, eq(lessons.deckId, decks.id))
-    .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
-    .leftJoin(
-      userVocabState,
-      and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
-    )
-    .where(
-      or(
-        eq(deckSubscriptions.userId, userId),
-        and(eq(decks.ownerId, userId), isNull(decks.deletedAt), isNotNull(userVocabState.id)),
-      ),
-    );
+    .innerJoin(deckSubscriptions, eq(deckSubscriptions.deckId, decks.id))
+    .where(eq(deckSubscriptions.userId, userId));
 };
 
 export const getPublicDecks = async (userId: string): Promise<Deck[]> => {
@@ -251,17 +250,6 @@ export async function getDeckCardStudyCounts(
       },
     ]),
   );
-}
-
-function studyDeckAccess(userId: string) {
-  return or(
-    and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
-    eq(deckSubscriptions.userId, userId),
-  );
-}
-
-function viewDeckAccess(userId: string) {
-  return or(and(isNull(decks.deletedAt), eq(decks.visibility, 'public')), studyDeckAccess(userId));
 }
 
 function toReviewCounts(result?: ReviewCounts): ReviewCounts {

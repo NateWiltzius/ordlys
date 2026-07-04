@@ -10,6 +10,7 @@ import { Deck } from '@/types/deck.types';
 import { Button, Card, Chip, ListBox, Popover } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { errorMessage } from '@/lib/validation/content';
 
 type Props = {
   deck: Deck;
@@ -27,6 +28,7 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
   const [isUnsubscribing, setIsUnsubscribing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   useEffect(() => {
     setSubscribed(isSubscribed);
@@ -36,12 +38,13 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
     if (subscribed || isSubscribing) return;
 
     try {
+      setMutationError(null);
       setIsSubscribing(true);
       await subscribeUserToDeckAction(deck.id);
       setSubscribed(true);
       router.refresh();
     } catch (error) {
-      console.error('Failed to subscribe to deck', error);
+      setMutationError(errorMessage(error, 'Could not subscribe. Please try again.'));
     } finally {
       setIsSubscribing(false);
     }
@@ -49,13 +52,15 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
 
   const handleDelete = async () => {
     if (isDeleting) return;
+    if (!window.confirm(`Delete “${deck.title}”? This cannot be undone.`)) return;
 
     try {
+      setMutationError(null);
       setIsDeleting(true);
       await deleteDeckAction(deck.id);
       router.refresh();
     } catch (error) {
-      console.error('Failed to delete deck', error);
+      setMutationError(errorMessage(error, 'Could not delete the deck. Please try again.'));
     } finally {
       setIsDeleting(false);
     }
@@ -63,14 +68,19 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
 
   const handleUnsubscribe = async () => {
     if (!subscribed || isUnsubscribing) return;
+    const warning = deck.deletedAt
+      ? `Unsubscribe from “${deck.title}”? If you are the final subscriber, this archived deck and its learning history will be permanently removed.`
+      : `Unsubscribe from “${deck.title}”? Your current progress can be resumed if the deck remains available and you subscribe again.`;
+    if (!window.confirm(warning)) return;
 
     try {
+      setMutationError(null);
       setIsUnsubscribing(true);
       await unsubscribeUserFromDeckAction(deck.id);
       setSubscribed(false);
       router.refresh();
     } catch (error) {
-      console.error('Failed to unsubscribe from deck', error);
+      setMutationError(errorMessage(error, 'Could not unsubscribe. Please try again.'));
     } finally {
       setIsUnsubscribing(false);
     }
@@ -147,83 +157,90 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
       </Card.Content>
 
       <Card.Footer className="pt-2">
-        <div className="flex w-full items-start gap-2">
-          {tab === 'learning' || subscribed ? (
-            <Button
-              variant="primary"
-              size="sm"
-              className="flex-1"
-              onPress={() => router.push(`/decks/${deck.id}`)}
-            >
-              View deck
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              size="sm"
-              className="flex-1"
-              isPending={isSubscribing}
-              onPress={handleSubscribe}
-            >
-              Start learning
-            </Button>
-          )}
+        <div className="flex w-full flex-col gap-2">
+          {mutationError ? (
+            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+              {mutationError}
+            </p>
+          ) : null}
+          <div className="flex items-start gap-2">
+            {tab === 'learning' || subscribed ? (
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex-1"
+                onPress={() => router.push(`/decks/${deck.id}`)}
+              >
+                View deck
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex-1"
+                isPending={isSubscribing}
+                onPress={handleSubscribe}
+              >
+                Start learning
+              </Button>
+            )}
 
-          <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
-            <Button variant="tertiary" size="sm" aria-label={`More actions for ${deck.title}`}>
-              <EllipsisVerticalIcon className="h-5 w-5" />
-            </Button>
+            <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <Button variant="tertiary" size="sm" aria-label={`More actions for ${deck.title}`}>
+                <EllipsisVerticalIcon className="h-5 w-5" />
+              </Button>
 
-            <Popover.Content placement="bottom end">
-              <Popover.Dialog className="w-44 p-1">
-                <ListBox
-                  aria-label={`Actions for ${deck.title}`}
-                  selectionMode="none"
-                  onAction={handleMenuAction}
-                >
-                  {tab === 'learning' ? (
-                    <ListBox.Item id="review" textValue="Review">
-                      Review
-                    </ListBox.Item>
-                  ) : null}
+              <Popover.Content placement="bottom end">
+                <Popover.Dialog className="w-44 p-1">
+                  <ListBox
+                    aria-label={`Actions for ${deck.title}`}
+                    selectionMode="none"
+                    onAction={handleMenuAction}
+                  >
+                    {tab === 'learning' ? (
+                      <ListBox.Item id="review" textValue="Review">
+                        Review
+                      </ListBox.Item>
+                    ) : null}
 
-                  {tab === 'owned' ? (
-                    <ListBox.Item id="edit" textValue="Edit deck">
-                      Edit deck
-                    </ListBox.Item>
-                  ) : null}
+                    {tab === 'owned' ? (
+                      <ListBox.Item id="edit" textValue="Edit deck">
+                        Edit deck
+                      </ListBox.Item>
+                    ) : null}
 
-                  {subscribed ? (
-                    <ListBox.Item
-                      id="unsubscribe"
-                      textValue="Unsubscribe"
-                      variant="danger"
-                      isDisabled={isUnsubscribing}
-                    >
-                      {isUnsubscribing ? 'Unsubscribing...' : 'Unsubscribe'}
-                    </ListBox.Item>
-                  ) : null}
+                    {subscribed ? (
+                      <ListBox.Item
+                        id="unsubscribe"
+                        textValue="Unsubscribe"
+                        variant="danger"
+                        isDisabled={isUnsubscribing}
+                      >
+                        {isUnsubscribing ? 'Unsubscribing...' : 'Unsubscribe'}
+                      </ListBox.Item>
+                    ) : null}
 
-                  {(tab === 'public' || tab === 'owned') && !subscribed && (
-                    <ListBox.Item id="view" textValue="View deck">
-                      View deck
-                    </ListBox.Item>
-                  )}
+                    {(tab === 'public' || tab === 'owned') && !subscribed && (
+                      <ListBox.Item id="view" textValue="View deck">
+                        View deck
+                      </ListBox.Item>
+                    )}
 
-                  {tab === 'owned' ? (
-                    <ListBox.Item
-                      id="delete"
-                      textValue="Delete"
-                      variant="danger"
-                      isDisabled={isDeleting}
-                    >
-                      {isDeleting ? 'Deleting...' : 'Delete'}
-                    </ListBox.Item>
-                  ) : null}
-                </ListBox>
-              </Popover.Dialog>
-            </Popover.Content>
-          </Popover>
+                    {tab === 'owned' ? (
+                      <ListBox.Item
+                        id="delete"
+                        textValue="Delete"
+                        variant="danger"
+                        isDisabled={isDeleting}
+                      >
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </ListBox.Item>
+                    ) : null}
+                  </ListBox>
+                </Popover.Dialog>
+              </Popover.Content>
+            </Popover>
+          </div>
         </div>
       </Card.Footer>
     </Card>

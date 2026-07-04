@@ -75,6 +75,7 @@ export default function CreateLessonModal({
                   name="title"
                   placeholder="e.g. Present tense verbs"
                   required
+                  maxLength={255}
                   className="w-full"
                 />
               </Modal.Body>

@@ -14,10 +14,14 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`min-h-screen bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
+        className={`flex min-h-screen flex-col bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
       >
         <Navbar />
-        <main>{children}</main>
+        <main className="flex-1">{children}</main>
+        <footer className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </footer>
       </body>
     </html>
   );

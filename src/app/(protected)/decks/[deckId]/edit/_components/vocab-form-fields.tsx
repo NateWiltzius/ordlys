@@ -11,17 +11,37 @@ export default function VocabFormFields({ vocab }: Props) {
       <Label className="text-sm text-default-600" htmlFor="front">
         Front
       </Label>
-      <Input id="front" name="front" required className="w-full" defaultValue={vocab?.front} />
+      <Input
+        id="front"
+        name="front"
+        required
+        maxLength={255}
+        className="w-full"
+        defaultValue={vocab?.front}
+      />
 
       <Label className="text-sm text-default-600" htmlFor="back">
         Back
       </Label>
-      <Input id="back" name="back" required className="w-full" defaultValue={vocab?.back} />
+      <Input
+        id="back"
+        name="back"
+        required
+        maxLength={255}
+        className="w-full"
+        defaultValue={vocab?.back}
+      />
 
       <Label className="text-sm text-default-600" htmlFor="reading">
         Reading
       </Label>
-      <Input id="reading" name="reading" className="w-full" defaultValue={vocab?.reading ?? ''} />
+      <Input
+        id="reading"
+        name="reading"
+        maxLength={255}
+        className="w-full"
+        defaultValue={vocab?.reading ?? ''}
+      />
 
       <Label className="text-sm text-default-600" htmlFor="frontAlternatives">
         Front alternatives

@@ -14,6 +14,7 @@ type CreateDeckModalProps = {
 export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: CreateDeckModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleCreateDeck = async (e: FormEvent<HTMLFormElement>) => {
@@ -33,10 +34,13 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
 
     setIsSubmitting(true);
     try {
+      setError(null);
       await createDeckAction(deck);
       form.reset();
       modalState.close();
       router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not create the deck.');
     } finally {
       setIsSubmitting(false);
     }
@@ -64,6 +68,7 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
                     name="title"
                     placeholder="e.g. Norwegian Vocabulary"
                     required
+                    maxLength={255}
                     className="w-full"
                   />
                 </div>
@@ -76,6 +81,7 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
                     name="description"
                     placeholder="e.g. A deck for learning Norwegian vocabulary"
                     required
+                    maxLength={255}
                     className="w-full"
                   />
                 </div>
@@ -105,6 +111,11 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
                 </div>
               </Modal.Body>
               <Modal.Footer>
+                {error ? (
+                  <p role="alert" className="text-sm text-danger">
+                    {error}
+                  </p>
+                ) : null}
                 <Button className="w-full" type="submit" isDisabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create Deck'}
                 </Button>

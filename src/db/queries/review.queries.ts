@@ -1,9 +1,10 @@
-import { and, count, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, lte, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { deckSubscriptions, decks, lessons, vocabs, userVocabState } from '@/db/schema';
 import { getInitialSrsState, getNextSrsState, getSrsStateForLevel } from '@/lib/srs/srs-scheduler';
 import { LESSON_PROGRESSION_CONFIG, PLACEMENT_TEST_CONFIG } from '@/lib/srs/srs-config';
 import type { LessonProgress, SrsTransition } from '@/types/review.types';
+import { studyDeckAccess, viewDeckAccess } from '@/db/queries/deck-access';
 
 export async function getLessonProgressForDeck(
   deckId: number,
@@ -361,18 +362,4 @@ export async function placeVocab(
     previousLevel: existingState?.srsLevel ?? null,
     nextLevel: targetState.srsLevel,
   };
-}
-
-function studyDeckAccess(userId: string) {
-  return or(
-    and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
-    eq(deckSubscriptions.userId, userId),
-  );
-}
-
-function viewDeckAccess(userId: string) {
-  return or(
-    and(isNull(decks.deletedAt), or(eq(decks.visibility, 'public'), eq(decks.ownerId, userId))),
-    eq(deckSubscriptions.userId, userId),
-  );
 }

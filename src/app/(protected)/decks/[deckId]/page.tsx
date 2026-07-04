@@ -6,7 +6,7 @@ import DeckStudyContent from '@/app/(protected)/decks/[deckId]/_components/deck-
 import { getAccessibleDeckById } from '@/db/queries/deck.queries';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { getUserSubscribedDecksAction } from '@/server/deck.actions';
+import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
@@ -22,15 +22,14 @@ export default async function DeckPage({ params }: Props) {
   if (!parsedDeckId) notFound();
 
   const currentUserId = await getCurrentUserId();
-  const [deck, subscribedDecks] = await Promise.all([
+  const [deck, isSubscribed] = await Promise.all([
     getAccessibleDeckById(parsedDeckId, currentUserId),
-    getUserSubscribedDecksAction(),
+    hasDeckSubscription(parsedDeckId, currentUserId),
   ]);
   if (!deck) notFound();
 
   const isOwned = deck.ownerId === currentUserId;
-  const isSubscribed = subscribedDecks.some(subscribedDeck => subscribedDeck.id === deck.id);
-  const canStudy = isOwned || isSubscribed;
+  const canStudy = isSubscribed;
 
   return (
     <div className="space-y-6">

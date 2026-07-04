@@ -2,10 +2,10 @@ import { getCachedLessonProgress } from '@/app/(protected)/decks/[deckId]/_lib/g
 import ButtonLink from '@/components/shared/button-link';
 import StudySummary from '@/components/shared/study-summary';
 import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
-import { subscribeUserToDeckAction } from '@/server/deck-subscription.actions';
 import { getDeckStudyCountsAction } from '@/server/deck.actions';
 import { Deck } from '@/types/deck.types';
 import { Button, Card, ProgressBar } from '@heroui/react';
+import SubscribeDeckButton from '@/app/(protected)/decks/[deckId]/_components/subscribe-deck-button';
 
 type Props = {
   deck: Deck;
@@ -96,11 +96,7 @@ export default async function DeckStudyContent({ deck, userId, canStudy }: Props
                 Start learning
               </ButtonLink>
             ) : (
-              <form action={subscribeUserToDeckAction.bind(null, deck.id)} className="w-full">
-                <Button type="submit" variant="primary" className="w-full">
-                  Start learning this deck
-                </Button>
-              </form>
+              <SubscribeDeckButton deckId={deck.id} />
             )}
           </Card.Footer>
         </Card>

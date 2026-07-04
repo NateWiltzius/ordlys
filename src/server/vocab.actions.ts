@@ -4,6 +4,7 @@ import { getAccessibleDeckById, getDeckById } from '@/db/queries/deck.queries';
 import { getLessonById } from '@/db/queries/lesson.queries';
 import {
   createVocab,
+  deleteVocab,
   getVocabByDeckId,
   getVocabById,
   getVocabByLessonId,
@@ -17,6 +18,7 @@ import { CreateVocab, UpdateVocabInput, Vocab } from '@/types/vocab.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { CONTENT_LIMITS, optionalText, requiredText } from '@/lib/validation/content';
 
 export async function getLessonVocabularyAction(deckId: number, lessonId: number) {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -63,20 +65,16 @@ export const getVocabsByDeckAction = async (deckId: number): Promise<Vocab[]> =>
 export async function createVocabAction(vocab: CreateVocab) {
   const { front, back, frontAlternatives, backAlternatives, lessonId, reading } = vocab;
 
-  if (typeof front !== 'string' || front.trim().length === 0) {
-    throw new Error('Front text is required.');
-  }
-
-  if (typeof back !== 'string' || back.trim().length === 0) {
-    throw new Error('Back text is required.');
-  }
+  const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
+  const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
+  const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
 
   if (typeof lessonId !== 'number' || !Number.isInteger(lessonId) || lessonId <= 0) {
     throw new Error('Invalid lesson ID.');
   }
 
-  const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, front);
-  const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, back);
+  const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
+  const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, normalizedBack);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -100,11 +98,11 @@ export async function createVocabAction(vocab: CreateVocab) {
 
   await createVocab({
     lessonId,
-    front: front.trim(),
-    back: back.trim(),
+    front: normalizedFront,
+    back: normalizedBack,
     frontAlternatives: normalizedFrontAlternatives,
     backAlternatives: normalizedBackAlternatives,
-    reading: typeof reading === 'string' ? reading.trim() : undefined,
+    reading: normalizedReading,
   });
   revalidatePath(`/decks/${lesson.deckId}/edit`);
 }
@@ -136,16 +134,12 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
 
   const { front, back, frontAlternatives, backAlternatives, reading } = vocab;
 
-  if (typeof front !== 'string' || front.trim().length === 0) {
-    throw new Error('Front text is required.');
-  }
+  const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
+  const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
+  const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
 
-  if (typeof back !== 'string' || back.trim().length === 0) {
-    throw new Error('Back text is required.');
-  }
-
-  const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, front);
-  const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, back);
+  const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
+  const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, normalizedBack);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
@@ -162,13 +156,28 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
   }
 
   await updateVocab(vocabId, {
-    front: front.trim(),
-    back: back.trim(),
+    front: normalizedFront,
+    back: normalizedBack,
     frontAlternatives: normalizedFrontAlternatives,
     backAlternatives: normalizedBackAlternatives,
-    reading: typeof reading === 'string' && reading.trim() ? reading.trim() : null,
+    reading: normalizedReading,
   });
 
+  revalidatePath(`/decks/${lesson.deckId}`);
+  revalidatePath(`/decks/${lesson.deckId}/edit`);
+}
+
+export async function deleteVocabAction(vocabId: number) {
+  const parsedVocabId = parsePositiveInteger(vocabId);
+  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
+  const userId = await getCurrentUserId();
+  const existingVocab = await getVocabById(parsedVocabId);
+  const lesson = existingVocab ? await getLessonById(existingVocab.lessonId) : undefined;
+  const deck = lesson ? await getDeckById(lesson.deckId) : undefined;
+  if (!existingVocab || !lesson || !deck || deck.deletedAt || deck.ownerId !== userId) {
+    throw new Error('Vocabulary not found or access denied.');
+  }
+  await deleteVocab(parsedVocabId);
   revalidatePath(`/decks/${lesson.deckId}`);
   revalidatePath(`/decks/${lesson.deckId}/edit`);
 }
@@ -181,8 +190,8 @@ function normalizeAlternatives(
     return [];
   }
 
-  if (!Array.isArray(alternatives) || alternatives.length > 20) {
-    throw new Error('Alternatives must contain at most 20 answers.');
+  if (!Array.isArray(alternatives) || alternatives.length > CONTENT_LIMITS.alternatives) {
+    throw new Error(`Alternatives must contain at most ${CONTENT_LIMITS.alternatives} answers.`);
   }
 
   const canonicalNormalized = canonicalAnswer.trim().normalize('NFKC').toLowerCase();
@@ -195,8 +204,8 @@ function normalizeAlternatives(
 
     const trimmedAlternative = alternative.trim();
     if (!trimmedAlternative) continue;
-    if (trimmedAlternative.length > 255) {
-      throw new Error('Each alternative must be 255 characters or fewer.');
+    if (trimmedAlternative.length > CONTENT_LIMITS.vocabText) {
+      throw new Error(`Each alternative must be ${CONTENT_LIMITS.vocabText} characters or fewer.`);
     }
 
     const normalizedAlternative = trimmedAlternative.normalize('NFKC').toLowerCase();

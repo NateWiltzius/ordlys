@@ -3,6 +3,7 @@
 import {
   createDeck,
   deleteDeck,
+  updateDeck,
   getAllDecksStudyCounts,
   getDeckById,
   getDeckCardStudyCounts,
@@ -17,6 +18,8 @@ import { CreateDeck, CreateDeckInput, Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { CONTENT_LIMITS, optionalText, requiredText } from '@/lib/validation/content';
+import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
@@ -32,13 +35,13 @@ export async function getDashboardDataAction() {
 
 export async function getDecksPageDataAction() {
   const userId = await getCurrentUserId();
-  const [ownedDecks, publicDecks, subscribedDecks] = await Promise.all([
+  const [ownedDecks, publicDecks, learningDecks] = await Promise.all([
     getDecksByOwnerId(userId),
     getPublicDecks(userId),
     getUserSubscribedDecks(userId),
   ]);
 
-  return { ownedDecks, publicDecks, subscribedDecks };
+  return { ownedDecks, publicDecks, learningDecks };
 }
 
 export const createDeckAction = async (deck: CreateDeckInput): Promise<void> => {
@@ -49,8 +52,14 @@ export const createDeckAction = async (deck: CreateDeckInput): Promise<void> => 
     throw new Error('User must be authenticated to create a deck.');
   }
 
+  if (!deck || typeof deck !== 'object') throw new Error('Invalid deck.');
+  if (deck.visibility !== 'public' && deck.visibility !== 'private') {
+    throw new Error('Visibility must be public or private.');
+  }
   const deckWithOwner: CreateDeck = {
-    ...deck,
+    title: requiredText(deck.title, 'Deck title', CONTENT_LIMITS.deckTitle),
+    description: optionalText(deck.description, 'Description', CONTENT_LIMITS.deckDescription),
+    visibility: deck.visibility,
     ownerId: data.user.id,
   };
 
@@ -58,12 +67,25 @@ export const createDeckAction = async (deck: CreateDeckInput): Promise<void> => 
   revalidatePath('/decks');
 };
 
+export async function updateDeckAction(id: number, input: CreateDeckInput): Promise<void> {
+  const deckId = parsePositiveInteger(id);
+  if (!deckId || !input || typeof input !== 'object') throw new Error('Invalid deck.');
+  if (input.visibility !== 'public' && input.visibility !== 'private') {
+    throw new Error('Visibility must be public or private.');
+  }
+  const userId = await getCurrentUserId();
+  await updateDeck(deckId, userId, {
+    title: requiredText(input.title, 'Deck title', CONTENT_LIMITS.deckTitle),
+    description: optionalText(input.description, 'Description', CONTENT_LIMITS.deckDescription),
+    visibility: input.visibility,
+  });
+  revalidatePath('/decks');
+  revalidatePath(`/decks/${deckId}`);
+  revalidatePath(`/decks/${deckId}/edit`);
+}
+
 export const getDecksByOwnerIdAction = async (): Promise<Deck[]> => {
   return await getDecksByOwnerId(await getCurrentUserId());
-};
-
-export const getUserSubscribedDecksAction = async (): Promise<Deck[]> => {
-  return await getUserSubscribedDecks(await getCurrentUserId());
 };
 
 export const getUserActiveDecksAction = async (): Promise<Deck[]> => {

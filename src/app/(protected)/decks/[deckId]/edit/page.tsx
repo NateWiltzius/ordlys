@@ -33,5 +33,12 @@ export default async function Page({ params }: Props) {
     return accumulator;
   }, {});
 
-  return <EditPage lessons={lessons} lessonVocabs={lessonVocabs} parsedDeckId={parsedDeckId} />;
+  return (
+    <EditPage
+      deck={deck}
+      lessons={lessons}
+      lessonVocabs={lessonVocabs}
+      parsedDeckId={parsedDeckId}
+    />
+  );
 }

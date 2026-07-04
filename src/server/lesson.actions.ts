@@ -14,6 +14,7 @@ import { CreateLesson, Lesson } from '@/types/lesson.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { CONTENT_LIMITS, requiredText } from '@/lib/validation/content';
 
 export const getLessonsAction = async (deckId: number): Promise<Lesson[]> => {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -31,9 +32,7 @@ export const getLessonsAction = async (deckId: number): Promise<Lesson[]> => {
 
 export async function createLessonAction(lesson: CreateLesson) {
   const { title, deckId } = lesson;
-  if (typeof title !== 'string' || title.trim().length === 0) {
-    return;
-  }
+  const normalizedTitle = requiredText(title, 'Lesson title', CONTENT_LIMITS.lessonTitle);
 
   if (typeof deckId !== 'number' || !Number.isInteger(deckId) || deckId <= 0) {
     throw new Error('Invalid deck ID.');
@@ -56,7 +55,7 @@ export async function createLessonAction(lesson: CreateLesson) {
 
   await createLesson(
     {
-      title: title.trim(),
+      title: normalizedTitle,
       deckId,
     },
     data.user.id,

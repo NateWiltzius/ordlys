@@ -126,3 +126,7 @@ export const updateVocab = async (vocabId: number, vocab: UpdateVocabInput): Pro
     })
     .where(eq(vocabs.id, vocabId));
 };
+
+export const deleteVocab = async (vocabId: number): Promise<void> => {
+  await db.delete(vocabs).where(eq(vocabs.id, vocabId));
+};

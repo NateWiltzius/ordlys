@@ -4,7 +4,6 @@ import {
   createDeckSubscription,
   deleteDeckSubscription,
 } from '@/db/queries/deck-subscription.queries';
-import { getDeckById } from '@/db/queries/deck.queries';
 import { createClient } from '@/lib/supabase/server';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { CreateDeckSubscription } from '@/types/deck-subscription.types';
@@ -21,11 +20,6 @@ export async function subscribeUserToDeckAction(deckId: number) {
 
   if (error || !data.user) {
     throw new Error('User must be authenticated to subscribe to a deck.');
-  }
-
-  const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.deletedAt || deck.visibility !== 'public') {
-    throw new Error('Deck not found or unavailable for subscription.');
   }
 
   const newDeckSubscription: CreateDeckSubscription = {

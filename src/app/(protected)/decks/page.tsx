@@ -7,7 +7,7 @@ import { getDecksPageDataAction } from '@/server/deck.actions';
 import { Tabs } from '@heroui/react';
 
 export default async function DeckPage() {
-  const { ownedDecks, publicDecks, subscribedDecks } = await getDecksPageDataAction();
+  const { ownedDecks, publicDecks, learningDecks } = await getDecksPageDataAction();
 
   return (
     <>
@@ -34,13 +34,13 @@ export default async function DeckPage() {
           </Tabs.List>
         </Tabs.ListContainer>
         <Tabs.Panel className="pt-4" id="learning">
-          <LearningDecks decks={subscribedDecks} />
+          <LearningDecks decks={learningDecks} />
         </Tabs.Panel>
         <Tabs.Panel className="pt-4" id="owned">
-          <OwnedDecks decks={ownedDecks} subscribedDecks={subscribedDecks} />
+          <OwnedDecks decks={ownedDecks} learningDecks={learningDecks} />
         </Tabs.Panel>
         <Tabs.Panel className="pt-4" id="public">
-          <PublicDecks decks={publicDecks} subscribedDecks={subscribedDecks} />
+          <PublicDecks decks={publicDecks} learningDecks={learningDecks} />
         </Tabs.Panel>
       </Tabs>
     </>

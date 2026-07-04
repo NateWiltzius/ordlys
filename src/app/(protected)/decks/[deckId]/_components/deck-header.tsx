@@ -16,12 +16,21 @@ export default function DeckHeader({ deck, isOwned, isSubscribed }: Props) {
       title={deck.title}
       description={deck.description || 'No description provided.'}
       actions={
-        isOwned ? (
-          <ButtonLink href={`/decks/${deck.id}/edit`} variant="secondary">
-            Edit deck
-          </ButtonLink>
-        ) : isSubscribed ? (
-          <UnsubscribeDeckButton deckId={deck.id} />
+        isOwned || isSubscribed ? (
+          <div className="flex flex-wrap gap-2">
+            {isOwned ? (
+              <ButtonLink href={`/decks/${deck.id}/edit`} variant="secondary">
+                Edit deck
+              </ButtonLink>
+            ) : null}
+            {isSubscribed ? (
+              <UnsubscribeDeckButton
+                deckId={deck.id}
+                deckTitle={deck.title}
+                isArchived={Boolean(deck.deletedAt)}
+              />
+            ) : null}
+          </div>
         ) : null
       }
     >

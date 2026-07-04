@@ -13,14 +13,17 @@ import { moveItem } from '@/lib/order/move-item';
 import { OrderDirection } from '@/types/order.types';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import EditDeckModal from './edit-deck-modal';
+import { Deck } from '@/types/deck.types';
 
 type Props = {
   lessons: Lesson[];
   lessonVocabs: Record<number, Vocab[]>;
   parsedDeckId: number;
+  deck: Deck;
 };
 
-export default function EditPage({ lessons, lessonVocabs, parsedDeckId }: Props) {
+export default function EditPage({ lessons, lessonVocabs, parsedDeckId, deck }: Props) {
   const router = useRouter();
   const [orderedLessons, setOrderedLessons] = useState(lessons);
   const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
@@ -61,6 +64,7 @@ export default function EditPage({ lessons, lessonVocabs, parsedDeckId }: Props)
               Back to deck
             </ButtonLink>
             <CreateLessonModal deckId={parsedDeckId} />
+            <EditDeckModal deck={deck} />
           </div>
         }
       />
