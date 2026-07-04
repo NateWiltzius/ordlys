@@ -148,16 +148,7 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
 
       <Card.Footer className="pt-2">
         <div className="flex w-full items-start gap-2">
-          {tab === 'learning' ? (
-            <Button
-              variant="primary"
-              size="sm"
-              className="flex-1"
-              onPress={() => router.push(`/decks/${deck.id}/learn`)}
-            >
-              Continue learning
-            </Button>
-          ) : subscribed ? (
+          {tab === 'learning' || subscribed ? (
             <Button
               variant="primary"
               size="sm"

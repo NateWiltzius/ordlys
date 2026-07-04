@@ -46,7 +46,7 @@ export default async function DashboardPage() {
               action={<ButtonLink href="/decks">Browse decks</ButtonLink>}
             />
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
               {activeDecks.map(deck => (
                 <DashboardDeckCard key={deck.id} deck={deck} />
               ))}
