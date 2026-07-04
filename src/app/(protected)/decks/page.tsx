@@ -14,8 +14,8 @@ export default function DeckPage() {
         actions={<CreateDeckModal />}
       />
       <Tabs className="w-full">
-        <Tabs.ListContainer>
-          <Tabs.List aria-label="Options">
+        <Tabs.ListContainer className="max-w-full overflow-x-auto">
+          <Tabs.List aria-label="Deck categories" className="min-w-max">
             <Tabs.Tab id="learning">
               Learning
               <Tabs.Indicator />

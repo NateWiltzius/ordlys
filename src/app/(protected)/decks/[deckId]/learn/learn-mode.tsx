@@ -30,9 +30,9 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-default-500">{currentItem.lessonTitle}</span>
-          <span className="font-medium">
+        <div className="flex items-start justify-between gap-3 text-sm">
+          <span className="min-w-0 break-words text-default-500">{currentItem.lessonTitle}</span>
+          <span className="shrink-0 font-medium">
             {currentIndex + 1} / {learnItems.length}
           </span>
         </div>
@@ -51,11 +51,16 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
           <WordSide label="Front" value={currentItem.front} reading={currentItem.reading} />
           <WordSide label="Back" value={currentItem.back} />
         </Card.Content>
-        <Card.Footer className="flex justify-between gap-3">
-          <Button variant="secondary" onPress={previousItemHandler} isDisabled={isFirstItem}>
+        <Card.Footer className="grid grid-cols-2 gap-3">
+          <Button
+            variant="secondary"
+            className="w-full"
+            onPress={previousItemHandler}
+            isDisabled={isFirstItem}
+          >
             Previous
           </Button>
-          <Button variant="primary" onPress={nextItemHandler}>
+          <Button variant="primary" className="w-full" onPress={nextItemHandler}>
             {isLastItem ? 'Start quiz' : 'Next word'}
           </Button>
         </Card.Footer>
@@ -76,8 +81,8 @@ function WordSide({
   return (
     <div className="rounded-lg bg-default-100 px-4 py-5">
       <p className="text-xs font-medium uppercase tracking-wide text-default-500">{label}</p>
-      <p className="mt-1 text-xl font-semibold">{value}</p>
-      {reading ? <p className="mt-1 text-sm text-default-500">{reading}</p> : null}
+      <p className="mt-1 break-words text-xl font-semibold">{value}</p>
+      {reading ? <p className="mt-1 break-words text-sm text-default-500">{reading}</p> : null}
     </div>
   );
 }

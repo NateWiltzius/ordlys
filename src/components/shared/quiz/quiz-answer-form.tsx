@@ -42,7 +42,7 @@ export default function QuizAnswerForm({
             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-default-500">
               {direction === 'btf' ? 'Back' : 'Front'}
             </p>
-            <p className="text-2xl font-semibold">{prompt}</p>
+            <p className="break-words text-2xl font-semibold">{prompt}</p>
           </div>
 
           <div className="space-y-2">

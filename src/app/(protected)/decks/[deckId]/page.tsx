@@ -224,17 +224,23 @@ export default async function DeckPage({ params }: Props) {
                   <Accordion.Item key={lesson.lessonId} id={String(lesson.lessonId)}>
                     <Accordion.Heading>
                       <Accordion.Trigger>
-                        <span className="flex flex-1 items-center justify-between gap-4 text-left">
-                          <span className="font-medium">{lesson.lessonTitle}</span>
+                        <span className="flex min-w-0 flex-1 flex-col items-start gap-2 pr-2 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                          <span className="min-w-0 break-words font-medium">
+                            {lesson.lessonTitle}
+                          </span>
                           {lesson.totalWords === 0 ? (
-                            <Chip size="sm">Empty</Chip>
+                            <Chip size="sm" className="shrink-0">
+                              Empty
+                            </Chip>
                           ) : lesson.isUnlocked ? (
-                            <Chip size="sm" color="success">
+                            <Chip size="sm" color="success" className="shrink-0">
                               {lesson.masteredWords} / {lesson.requiredWords} at level{' '}
                               {LESSON_PROGRESSION_CONFIG.unlockSrsLevel}
                             </Chip>
                           ) : (
-                            <Chip size="sm">Locked</Chip>
+                            <Chip size="sm" className="shrink-0">
+                              Locked
+                            </Chip>
                           )}
                         </span>
                         <Accordion.Indicator />
