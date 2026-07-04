@@ -1,4 +1,13 @@
-import { integer, pgEnum, pgTable, serial, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
+import {
+  check,
+  integer,
+  pgEnum,
+  pgTable,
+  serial,
+  timestamp,
+  unique,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const visibilityEnum = pgEnum('visibility', ['private', 'public']);
@@ -75,5 +84,8 @@ export const userVocabState = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  table => [unique('user_vocab_state_user_id_vocab_id_unique').on(table.userId, table.vocabId)],
+  table => [
+    unique('user_vocab_state_user_id_vocab_id_unique').on(table.userId, table.vocabId),
+    check('user_vocab_state_srs_level_range', sql`${table.srsLevel} between 0 and 8`),
+  ],
 );

@@ -35,7 +35,7 @@ export default function ReviewMode({ deckId, dueReviews }: Props) {
       quizItems={dueReviews}
       completionHref={`/decks/${deckId}`}
       onVocabComplete={async (vocabId, wasCorrect) => {
-        await reviewVocabAction(vocabId, wasCorrect);
+        return await reviewVocabAction(vocabId, wasCorrect);
       }}
     />
   );

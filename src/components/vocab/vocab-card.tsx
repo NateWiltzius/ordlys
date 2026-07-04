@@ -1,13 +1,22 @@
 import { Vocab } from '@/types/vocab.types';
 import { ReactNode } from 'react';
+import SrsLevelChip from '@/components/vocab/srs-level-chip';
 
 type Props = {
   vocab: Vocab;
   index: number;
   actions?: ReactNode;
+  srsLevel?: number;
+  showSrsLevel?: boolean;
 };
 
-export default function VocabCard({ vocab, index, actions }: Props) {
+export default function VocabCard({
+  vocab,
+  index,
+  actions,
+  srsLevel,
+  showSrsLevel = false,
+}: Props) {
   return (
     <div
       className={`grid gap-3 bg-background px-4 py-3 transition-colors hover:bg-default-50 sm:gap-4 ${
@@ -21,6 +30,7 @@ export default function VocabCard({ vocab, index, actions }: Props) {
       </span>
 
       <VocabSide label="Front" value={vocab.front} alternatives={vocab.frontAlternatives}>
+        {showSrsLevel ? <SrsLevelChip srsLevel={srsLevel} /> : null}
         {vocab.reading ? (
           <p className="text-xs text-default-500">Reading: {vocab.reading}</p>
         ) : null}

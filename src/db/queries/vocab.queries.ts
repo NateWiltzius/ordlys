@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { decks, lessons, vocabs } from '@/db/schema';
+import { decks, lessons, userVocabState, vocabs } from '@/db/schema';
 import { CreateVocab, UpdateVocabInput, Vocab } from '@/types/vocab.types';
 import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import { OrderDirection } from '@/types/order.types';
@@ -15,6 +15,18 @@ export const getVocabByDeckId = async (deckId: number): Promise<Vocab[]> => {
 
 export const getVocabById = async (vocabId: number): Promise<Vocab | undefined> => {
   return (await db.select().from(vocabs).where(eq(vocabs.id, vocabId)).limit(1))[0];
+};
+
+export const getUserVocabLevelsByDeckId = async (deckId: number, userId: string) => {
+  return db
+    .select({
+      vocabId: userVocabState.vocabId,
+      srsLevel: userVocabState.srsLevel,
+    })
+    .from(userVocabState)
+    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .where(and(eq(lessons.deckId, deckId), eq(userVocabState.userId, userId)));
 };
 
 export const createVocab = async (vocab: CreateVocab): Promise<void> => {

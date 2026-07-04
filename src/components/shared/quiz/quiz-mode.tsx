@@ -16,14 +16,15 @@ import {
   QuizAttemptStats,
   QuizProgressStats,
 } from '@/types/quiz.types';
-import { LearnItem, ReviewItem } from '@/types/review.types';
-import { Button, Card, ProgressBar } from '@heroui/react';
+import { LearnItem, ReviewItem, SrsTransition } from '@/types/review.types';
+import { Button, Card, ProgressBar, Toast } from '@heroui/react';
 import { useEffect, useMemo, useState } from 'react';
 import ButtonLink from '@/components/shared/button-link';
+import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
 
 type Props = {
   quizItems: LearnItem[] | ReviewItem[];
-  onVocabComplete: (vocabId: number, wasCorrect: boolean) => Promise<void>;
+  onVocabComplete: (vocabId: number, wasCorrect: boolean) => Promise<SrsTransition>;
   completionHref: string;
 };
 
@@ -132,10 +133,17 @@ export default function QuizMode({ quizItems, onVocabComplete, completionHref }:
       setQuizQueue(prev => prev?.slice(1) ?? []);
 
       if (isNowFullyPassed && !wasAlreadyFullyPassed) {
+        const completedVocab = quizItems.find(item => item.id === quizItem.cardId);
+        const vocabLabel = completedVocab?.front ?? quizItem.prompt;
+
         setPendingSaveCount(count => count + 1);
         void onVocabComplete(quizItem.cardId, !failedCardIds.has(quizItem.cardId))
+          .then(transition => {
+            showSrsTransitionToast(vocabLabel, transition);
+          })
           .catch(() => {
             setSaveError(true);
+            Toast.toast.danger(`Could not save progress for ${vocabLabel}`);
           })
           .finally(() => {
             setPendingSaveCount(count => Math.max(0, count - 1));
@@ -167,79 +175,125 @@ export default function QuizMode({ quizItems, onVocabComplete, completionHref }:
 
   if (quizQueue === null) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <Card>
-          <Card.Header>
-            <Card.Title>Preparing quiz</Card.Title>
-            <Card.Description>Building your study queue.</Card.Description>
-          </Card.Header>
-          <Card.Content>
-            {hasMounted ? (
-              <ProgressBar isIndeterminate aria-label="Preparing quiz">
-                <ProgressBar.Track>
-                  <ProgressBar.Fill />
-                </ProgressBar.Track>
-              </ProgressBar>
-            ) : (
-              <div className="h-2 w-full animate-pulse rounded-full bg-default-200" />
-            )}
-          </Card.Content>
-        </Card>
-      </div>
+      <>
+        <Toast.Provider placement="bottom end" />
+        <div className="mx-auto max-w-2xl">
+          <Card>
+            <Card.Header>
+              <Card.Title>Preparing quiz</Card.Title>
+              <Card.Description>Building your study queue.</Card.Description>
+            </Card.Header>
+            <Card.Content>
+              {hasMounted ? (
+                <ProgressBar isIndeterminate aria-label="Preparing quiz">
+                  <ProgressBar.Track>
+                    <ProgressBar.Fill />
+                  </ProgressBar.Track>
+                </ProgressBar>
+              ) : (
+                <div className="h-2 w-full animate-pulse rounded-full bg-default-200" />
+              )}
+            </Card.Content>
+          </Card>
+        </div>
+      </>
     );
   }
 
   if (!currentQuizItem) {
     return (
-      <div className="mx-auto max-w-2xl space-y-4">
-        <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
-        <Card variant="tertiary">
-          <Card.Header>
-            <Card.Title>Quiz complete</Card.Title>
-            <Card.Description>Nice work. Your session is complete.</Card.Description>
-          </Card.Header>
-          <Card.Content>
-            {pendingSaveCount > 0 ? (
-              <p className="text-sm text-default-500">Saving progress…</p>
-            ) : saveError ? (
-              <p className="text-sm text-danger">
-                Some progress could not be saved. Please try the quiz again.
-              </p>
-            ) : (
-              <p className="text-sm text-default-600">Your progress has been saved.</p>
-            )}
-          </Card.Content>
-          <Card.Footer>
-            {pendingSaveCount > 0 ? (
-              <Button variant="primary" isPending isDisabled>
-                Saving progress
-              </Button>
-            ) : (
-              <ButtonLink href={completionHref} className="w-full sm:w-auto">
-                Back to deck
-              </ButtonLink>
-            )}
-          </Card.Footer>
-        </Card>
-      </div>
+      <>
+        <Toast.Provider placement="bottom end" />
+        <div className="mx-auto max-w-2xl space-y-4">
+          <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
+          <Card variant="tertiary">
+            <Card.Header>
+              <Card.Title>Quiz complete</Card.Title>
+              <Card.Description>Nice work. Your session is complete.</Card.Description>
+            </Card.Header>
+            <Card.Content>
+              {pendingSaveCount > 0 ? (
+                <p className="text-sm text-default-500">Saving progress…</p>
+              ) : saveError ? (
+                <p className="text-sm text-danger">
+                  Some progress could not be saved. Please try the quiz again.
+                </p>
+              ) : (
+                <p className="text-sm text-default-600">Your progress has been saved.</p>
+              )}
+            </Card.Content>
+            <Card.Footer>
+              {pendingSaveCount > 0 ? (
+                <Button variant="primary" isPending isDisabled>
+                  Saving progress
+                </Button>
+              ) : (
+                <ButtonLink href={completionHref} className="w-full sm:w-auto">
+                  Back to deck
+                </ButtonLink>
+              )}
+            </Card.Footer>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
+    <>
+      <Toast.Provider placement="bottom end" />
+      <div className="mx-auto max-w-2xl space-y-4">
+        <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
 
-      {feedback ? (
-        <QuizFeedbackPanel feedback={feedback} onContinue={handleContinue} />
-      ) : (
-        <QuizAnswerForm
-          prompt={currentQuizItem.prompt}
-          answer={answer}
-          direction={currentQuizItem.direction}
-          onAnswerChange={setAnswer}
-          onSubmit={handleAnswerSubmit}
-        />
-      )}
-    </div>
+        {feedback ? (
+          <QuizFeedbackPanel feedback={feedback} onContinue={handleContinue} />
+        ) : (
+          <QuizAnswerForm
+            prompt={currentQuizItem.prompt}
+            answer={answer}
+            direction={currentQuizItem.direction}
+            onAnswerChange={setAnswer}
+            onSubmit={handleAnswerSubmit}
+          />
+        )}
+      </div>
+    </>
   );
+}
+
+function formatSrsTransition({ previousLevel, nextLevel }: SrsTransition) {
+  const nextLabel = formatSrsLevel(nextLevel);
+
+  if (previousLevel === null) {
+    return `Started at ${nextLabel}`;
+  }
+
+  if (previousLevel === nextLevel) {
+    return `Remains at ${nextLabel}`;
+  }
+
+  return `${formatSrsLevel(previousLevel)} → ${nextLabel}`;
+}
+
+function showSrsTransitionToast(vocabLabel: string, transition: SrsTransition) {
+  const options = {
+    description: formatSrsTransition(transition),
+  };
+
+  if (transition.previousLevel === null || transition.nextLevel > transition.previousLevel) {
+    Toast.toast.success(vocabLabel, options);
+  } else if (transition.nextLevel < transition.previousLevel) {
+    Toast.toast.warning(vocabLabel, options);
+  } else {
+    Toast.toast.info(vocabLabel, options);
+  }
+}
+
+function formatSrsLevel(srsLevel: number) {
+  const normalizedLevel = Math.min(
+    DEFAULT_SRS_CONFIG.maxLevel,
+    Math.max(DEFAULT_SRS_CONFIG.initialLevel, srsLevel),
+  );
+
+  return `Level ${normalizedLevel} · ${SRS_LEVEL_LABELS[normalizedLevel]}`;
 }

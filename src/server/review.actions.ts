@@ -1,11 +1,13 @@
 'use server';
 
-import { LearnItem, ReviewItem } from '@/types/review.types';
+import { LearnItem, ReviewItem, SrsTransition } from '@/types/review.types';
 import { createClient } from '@/lib/supabase/server';
 import {
   getDueReviewsForDeck,
   getLessonProgressForDeck,
   getNewVocabsForDeck,
+  getPlacementTestVocabs,
+  placeVocab,
   reviewVocab,
   startVocab,
 } from '@/db/queries/review.queries';
@@ -33,6 +35,17 @@ export async function getDueReviewsForDeckAction(deckId: number): Promise<Review
   return await getDueReviewsForDeck(deckId, data.user.id);
 }
 
+export async function getPlacementTestVocabsAction(deckId: number, lessonId: number) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user || !data.user.id) {
+    throw new Error('User not authenticated');
+  }
+
+  return await getPlacementTestVocabs(deckId, lessonId, data.user.id);
+}
+
 export async function getLessonProgressForDeckAction(deckId: number): Promise<LessonProgress[]> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -44,7 +57,7 @@ export async function getLessonProgressForDeckAction(deckId: number): Promise<Le
   return await getLessonProgressForDeck(deckId, data.user.id);
 }
 
-export async function startVocabAction(vocabId: number): Promise<void> {
+export async function startVocabAction(vocabId: number): Promise<SrsTransition> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
@@ -52,10 +65,13 @@ export async function startVocabAction(vocabId: number): Promise<void> {
     throw new Error('User not authenticated');
   }
 
-  await startVocab(vocabId, data.user.id);
+  return await startVocab(vocabId, data.user.id);
 }
 
-export async function reviewVocabAction(vocabId: number, wasCorrect: boolean): Promise<void> {
+export async function reviewVocabAction(
+  vocabId: number,
+  wasCorrect: boolean,
+): Promise<SrsTransition> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
@@ -63,5 +79,19 @@ export async function reviewVocabAction(vocabId: number, wasCorrect: boolean): P
     throw new Error('User not authenticated');
   }
 
-  await reviewVocab(vocabId, data.user.id, wasCorrect);
+  return await reviewVocab(vocabId, data.user.id, wasCorrect);
+}
+
+export async function placeVocabAction(
+  vocabId: number,
+  wasCorrect: boolean,
+): Promise<SrsTransition> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user || !data.user.id) {
+    throw new Error('User not authenticated');
+  }
+
+  return await placeVocab(vocabId, data.user.id, wasCorrect);
 }

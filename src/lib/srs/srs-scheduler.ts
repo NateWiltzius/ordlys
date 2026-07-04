@@ -10,15 +10,22 @@ function getIntervalMinutesForLevel(srsLevel: number) {
   return intervals[Math.min(srsLevel, intervals.length - 1)];
 }
 
-export function getInitialSrsState(now = new Date()) {
-  const srsLevel = DEFAULT_SRS_CONFIG.initialLevel;
-  const intervalMinutes = getIntervalMinutesForLevel(srsLevel);
+export function getSrsStateForLevel(srsLevel: number, now = new Date()) {
+  const normalizedLevel = Math.min(
+    DEFAULT_SRS_CONFIG.maxLevel,
+    Math.max(DEFAULT_SRS_CONFIG.initialLevel, srsLevel),
+  );
+  const intervalMinutes = getIntervalMinutesForLevel(normalizedLevel);
 
   return {
-    srsLevel,
+    srsLevel: normalizedLevel,
     intervalMinutes,
     dueAt: addMinutes(now, intervalMinutes),
   };
+}
+
+export function getInitialSrsState(now = new Date()) {
+  return getSrsStateForLevel(DEFAULT_SRS_CONFIG.initialLevel, now);
 }
 
 export function getNextSrsState(params: {
@@ -27,10 +34,20 @@ export function getNextSrsState(params: {
   now?: Date;
 }) {
   const now = params.now ?? new Date();
+  const currentSrsLevel = Math.min(
+    DEFAULT_SRS_CONFIG.maxLevel,
+    Math.max(DEFAULT_SRS_CONFIG.initialLevel, params.currentSrsLevel),
+  );
 
   const nextSrsLevel = params.wasCorrect
-    ? params.currentSrsLevel + DEFAULT_SRS_CONFIG.correctLevelIncrease
-    : Math.max(0, params.currentSrsLevel - DEFAULT_SRS_CONFIG.lapseLevelDecrease);
+    ? Math.min(
+        DEFAULT_SRS_CONFIG.maxLevel,
+        currentSrsLevel + DEFAULT_SRS_CONFIG.correctLevelIncrease,
+      )
+    : Math.max(
+        DEFAULT_SRS_CONFIG.initialLevel,
+        currentSrsLevel - DEFAULT_SRS_CONFIG.lapseLevelDecrease,
+      );
 
   const intervalMinutes = getIntervalMinutesForLevel(nextSrsLevel);
 

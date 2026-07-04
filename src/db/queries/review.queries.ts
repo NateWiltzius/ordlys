@@ -1,9 +1,9 @@
 import { and, count, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { deckSubscriptions, decks, lessons, vocabs, userVocabState } from '@/db/schema';
-import { getInitialSrsState, getNextSrsState } from '@/lib/srs/srs-scheduler';
-import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
-import type { LessonProgress } from '@/types/review.types';
+import { getInitialSrsState, getNextSrsState, getSrsStateForLevel } from '@/lib/srs/srs-scheduler';
+import { LESSON_PROGRESSION_CONFIG, PLACEMENT_TEST_CONFIG } from '@/lib/srs/srs-config';
+import type { LessonProgress, SrsTransition } from '@/types/review.types';
 
 export async function getLessonProgressForDeck(
   deckId: number,
@@ -176,7 +176,30 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
     .orderBy(userVocabState.dueAt);
 }
 
-export async function startVocab(vocabId: number, userId: string) {
+export async function getPlacementTestVocabs(deckId: number, lessonId: number, userId: string) {
+  return db
+    .select({
+      id: vocabs.id,
+      front: vocabs.front,
+      back: vocabs.back,
+      frontAlternatives: vocabs.frontAlternatives,
+      backAlternatives: vocabs.backAlternatives,
+      reading: vocabs.reading,
+      lessonId: vocabs.lessonId,
+      lessonTitle: lessons.title,
+    })
+    .from(vocabs)
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .leftJoin(
+      deckSubscriptions,
+      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    )
+    .where(and(eq(decks.id, deckId), eq(lessons.id, lessonId), studyDeckAccess(userId)))
+    .orderBy(vocabs.orderIndex, vocabs.id);
+}
+
+export async function startVocab(vocabId: number, userId: string): Promise<SrsTransition> {
   const now = new Date();
   const initialSrsState = getInitialSrsState(now);
 
@@ -216,9 +239,18 @@ export async function startVocab(vocabId: number, userId: string) {
     .onConflictDoNothing({
       target: [userVocabState.userId, userVocabState.vocabId],
     });
+
+  return {
+    previousLevel: null,
+    nextLevel: initialSrsState.srsLevel,
+  };
 }
 
-export async function reviewVocab(vocabId: number, userId: string, wasCorrect: boolean) {
+export async function reviewVocab(
+  vocabId: number,
+  userId: string,
+  wasCorrect: boolean,
+): Promise<SrsTransition> {
   const now = new Date();
 
   const [state] = await db
@@ -260,6 +292,75 @@ export async function reviewVocab(vocabId: number, userId: string, wasCorrect: b
       updatedAt: now,
     })
     .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)));
+
+  return {
+    previousLevel: state.srsLevel,
+    nextLevel: nextSrsState.srsLevel,
+  };
+}
+
+export async function placeVocab(
+  vocabId: number,
+  userId: string,
+  wasCorrect: boolean,
+): Promise<SrsTransition> {
+  const now = new Date();
+  const targetState = getSrsStateForLevel(
+    wasCorrect ? PLACEMENT_TEST_CONFIG.passedSrsLevel : 0,
+    now,
+  );
+
+  const [vocabAccess] = await db
+    .select({ id: vocabs.id })
+    .from(vocabs)
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .leftJoin(
+      deckSubscriptions,
+      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    )
+    .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
+    .limit(1);
+
+  if (!vocabAccess) {
+    throw new Error('Vocab not found or access denied');
+  }
+
+  const [existingState] = await db
+    .select({ srsLevel: userVocabState.srsLevel })
+    .from(userVocabState)
+    .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)))
+    .limit(1);
+
+  if (existingState && existingState.srsLevel >= targetState.srsLevel) {
+    return {
+      previousLevel: existingState.srsLevel,
+      nextLevel: existingState.srsLevel,
+    };
+  }
+
+  await db
+    .insert(userVocabState)
+    .values({
+      userId,
+      vocabId,
+      srsLevel: targetState.srsLevel,
+      dueAt: targetState.dueAt,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [userVocabState.userId, userVocabState.vocabId],
+      set: {
+        srsLevel: targetState.srsLevel,
+        dueAt: targetState.dueAt,
+        updatedAt: now,
+      },
+    });
+
+  return {
+    previousLevel: existingState?.srsLevel ?? null,
+    nextLevel: targetState.srsLevel,
+  };
 }
 
 function studyDeckAccess(userId: string) {

@@ -60,7 +60,7 @@ export default function QuizAnswerForm({
         </Card.Content>
 
         <Card.Footer>
-          <Button type="submit" variant="primary" className="w-full sm:w-auto">
+          <Button type="submit" variant="primary" className="w-full sm:w-auto mt-2">
             Submit answer
           </Button>
         </Card.Footer>

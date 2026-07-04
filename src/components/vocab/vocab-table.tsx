@@ -8,6 +8,8 @@ type Props = {
   emptyTitle?: string;
   emptyDescription?: string;
   renderActions?: (vocab: Vocab, index: number) => ReactNode;
+  srsLevels?: Record<number, number>;
+  showSrsLevels?: boolean;
 };
 
 export default function VocabTable({
@@ -15,6 +17,8 @@ export default function VocabTable({
   emptyTitle = 'No words yet',
   emptyDescription,
   renderActions,
+  srsLevels = {},
+  showSrsLevels = false,
 }: Props) {
   if (vocabs.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
@@ -41,6 +45,8 @@ export default function VocabTable({
             vocab={vocab}
             index={index + 1}
             actions={renderActions?.(vocab, index)}
+            srsLevel={srsLevels[vocab.id]}
+            showSrsLevel={showSrsLevels}
           />
         ))}
       </div>

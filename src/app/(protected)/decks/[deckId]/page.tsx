@@ -1,5 +1,5 @@
 import { getAccessibleDeckById } from '@/db/queries/deck.queries';
-import { getVocabByDeckId } from '@/db/queries/vocab.queries';
+import { getUserVocabLevelsByDeckId, getVocabByDeckId } from '@/db/queries/vocab.queries';
 import { createClient } from '@/lib/supabase/server';
 import PageHeader from '@/components/shared/layout/page-header';
 import { getDeckStudyCountsAction, getUserSubscribedDecksAction } from '@/server/deck.actions';
@@ -36,11 +36,12 @@ export default async function DeckPage({ params }: Props) {
   const deck = await getAccessibleDeckById(parsedDeckId, currentUserId);
   if (!deck) notFound();
 
-  const [counts, subscribedDecks, lessonProgress, vocabs] = await Promise.all([
+  const [counts, subscribedDecks, lessonProgress, vocabs, userVocabLevels] = await Promise.all([
     getDeckStudyCountsAction(parsedDeckId),
     getUserSubscribedDecksAction(),
     getLessonProgressForDeckAction(parsedDeckId),
     getVocabByDeckId(parsedDeckId),
+    getUserVocabLevelsByDeckId(parsedDeckId, currentUserId),
   ]);
 
   const isOwned = Boolean(currentUserId && deck.ownerId === currentUserId);
@@ -64,6 +65,9 @@ export default async function DeckPage({ params }: Props) {
     groupedVocabs[vocab.lessonId].push(vocab);
     return groupedVocabs;
   }, {});
+  const srsLevelsByVocabId = Object.fromEntries(
+    userVocabLevels.map(state => [state.vocabId, state.srsLevel]),
+  );
 
   return (
     <div className="space-y-6">
@@ -238,9 +242,22 @@ export default async function DeckPage({ params }: Props) {
                     </Accordion.Heading>
                     <Accordion.Panel>
                       <Accordion.Body>
+                        {canStudy && lesson.totalWords > 0 ? (
+                          <div className="mb-4 flex justify-end">
+                            <ButtonLink
+                              href={`/decks/${deck.id}/placement/${lesson.lessonId}`}
+                              variant="secondary"
+                              size="sm"
+                            >
+                              Take placement test
+                            </ButtonLink>
+                          </div>
+                        ) : null}
                         <VocabTable
                           vocabs={lessonVocabs}
                           emptyTitle="No vocabulary in this lesson"
+                          srsLevels={srsLevelsByVocabId}
+                          showSrsLevels
                         />
                       </Accordion.Body>
                     </Accordion.Panel>

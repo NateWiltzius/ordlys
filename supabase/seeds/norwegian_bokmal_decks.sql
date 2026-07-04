@@ -4,10 +4,6 @@ DECLARE
   noun_deck_id integer;
   verb_deck_id integer;
 BEGIN
-  IF seed_owner_id = 'REPLACE_WITH_SUPABASE_USER_ID' THEN
-    RAISE EXCEPTION 'Replace REPLACE_WITH_SUPABASE_USER_ID before running this seed';
-  END IF;
-
   INSERT INTO decks (owner_id, title, description, visibility)
   VALUES (
     seed_owner_id,

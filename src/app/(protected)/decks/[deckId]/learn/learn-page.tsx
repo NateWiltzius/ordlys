@@ -7,6 +7,7 @@ import { LearnItem, LessonProgress } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import { useState } from 'react';
 import ButtonLink from '@/components/shared/button-link';
+import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 
 type Props = {
   deckId: number;
@@ -36,7 +37,7 @@ export default function LearnPage({ deckId, learnItems, lessonProgress }: Props)
             </Card.Title>
             <Card.Description>
               {nextLockedLesson && previousLesson
-                ? `${remainingRequired} more ${remainingRequired === 1 ? 'word needs' : 'words need'} to reach SRS level 2 in ${previousLesson.lessonTitle}.`
+                ? `${remainingRequired} more ${remainingRequired === 1 ? 'word needs' : 'words need'} to reach SRS level ${LESSON_PROGRESSION_CONFIG.unlockSrsLevel} in ${previousLesson.lessonTitle}.`
                 : 'You have added every word in this deck to your review queue.'}
             </Card.Description>
           </Card.Header>
@@ -58,7 +59,7 @@ export default function LearnPage({ deckId, learnItems, lessonProgress }: Props)
           quizItems={learnItems}
           completionHref={`/decks/${deckId}`}
           onVocabComplete={async vocabId => {
-            await startVocabAction(vocabId);
+            return await startVocabAction(vocabId);
           }}
         />
       )}

@@ -1,4 +1,8 @@
-import { getDueReviewsForDeck, getNewVocabsForDeck } from '@/db/queries/review.queries';
+import {
+  getDueReviewsForDeck,
+  getNewVocabsForDeck,
+  getPlacementTestVocabs,
+} from '@/db/queries/review.queries';
 
 export type ReviewCounts = {
   totalWords: number;
@@ -17,5 +21,11 @@ export type LessonProgress = {
   isUnlocked: boolean;
 };
 
+export type SrsTransition = {
+  previousLevel: number | null;
+  nextLevel: number;
+};
+
 export type LearnItem = Awaited<ReturnType<typeof getNewVocabsForDeck>>[number];
 export type ReviewItem = Awaited<ReturnType<typeof getDueReviewsForDeck>>[number];
+export type PlacementTestItem = Awaited<ReturnType<typeof getPlacementTestVocabs>>[number];

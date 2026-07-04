@@ -10,8 +10,21 @@ const DEFAULT_SRS_INTERVALS_MINUTES = [
   180 * 24 * 60, // 6 months
 ] as const;
 
+export const SRS_LEVEL_LABELS = [
+  'Learning',
+  'Learning',
+  'Learning',
+  'Strong',
+  'Strong',
+  'Strong',
+  'Mature',
+  'Mature',
+  'Mastered',
+] as const;
+
 export const DEFAULT_SRS_CONFIG = {
   initialLevel: 0,
+  maxLevel: SRS_LEVEL_LABELS.length - 1,
   lapseLevelDecrease: 1,
   correctLevelIncrease: 1,
   intervalsMinutes: DEFAULT_SRS_INTERVALS_MINUTES,
@@ -20,4 +33,8 @@ export const DEFAULT_SRS_CONFIG = {
 export const LESSON_PROGRESSION_CONFIG = {
   unlockSrsLevel: 3,
   unlockRatio: 0.8,
+} as const;
+
+export const PLACEMENT_TEST_CONFIG = {
+  passedSrsLevel: 3,
 } as const;
