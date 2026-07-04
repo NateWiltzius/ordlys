@@ -1,11 +1,13 @@
 'use server';
 
-import { getDeckById } from '@/db/queries/deck.queries';
+import { getAccessibleDeckById, getDeckById } from '@/db/queries/deck.queries';
 import { getLessonById } from '@/db/queries/lesson.queries';
 import {
   createVocab,
   getVocabByDeckId,
   getVocabById,
+  getVocabByLessonId,
+  getUserVocabLevelsByLessonId,
   moveVocab,
   updateVocab,
 } from '@/db/queries/vocab.queries';
@@ -14,6 +16,35 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { CreateVocab, UpdateVocabInput, Vocab } from '@/types/vocab.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+
+export async function getLessonVocabularyAction(deckId: number, lessonId: number) {
+  const parsedDeckId = parsePositiveInteger(deckId);
+  const parsedLessonId = parsePositiveInteger(lessonId);
+  if (!parsedDeckId || !parsedLessonId) {
+    throw new Error('Invalid deck or lesson ID.');
+  }
+
+  const userId = await getCurrentUserId();
+  const [deck, lesson] = await Promise.all([
+    getAccessibleDeckById(parsedDeckId, userId),
+    getLessonById(parsedLessonId),
+  ]);
+
+  if (!deck || !lesson || lesson.deckId !== deck.id) {
+    throw new Error('Lesson not found or access denied.');
+  }
+
+  const [lessonVocabs, userVocabLevels] = await Promise.all([
+    getVocabByLessonId(parsedLessonId),
+    getUserVocabLevelsByLessonId(parsedLessonId, userId),
+  ]);
+
+  return {
+    vocabs: lessonVocabs,
+    srsLevels: Object.fromEntries(userVocabLevels.map(state => [state.vocabId, state.srsLevel])),
+  };
+}
 
 export const getVocabsByDeckAction = async (deckId: number): Promise<Vocab[]> => {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -21,14 +52,8 @@ export const getVocabsByDeckAction = async (deckId: number): Promise<Vocab[]> =>
     throw new Error('Invalid deck ID.');
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to view vocabulary.');
-  }
-
   const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.deletedAt || deck.ownerId !== data.user.id) {
+  if (!deck || deck.deletedAt || deck.ownerId !== (await getCurrentUserId())) {
     throw new Error('Deck not found or access denied.');
   }
 

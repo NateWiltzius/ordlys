@@ -1,4 +1,4 @@
-import LearnPage from '@/app/(protected)/decks/[deckId]/learn/learn-page';
+import LearnPage from '@/app/(protected)/decks/[deckId]/learn/_components/learn-page';
 import { getLessonProgressForDeckAction, getNewVocabsForDeckAction } from '@/server/review.actions';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';

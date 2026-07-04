@@ -1,0 +1,25 @@
+import { ReactNode } from 'react';
+
+type Props = {
+  label: string;
+  value: string;
+  alternatives: string[];
+  children?: ReactNode;
+};
+
+export default function VocabSide({ label, value, alternatives, children }: Props) {
+  return (
+    <div className="min-w-0">
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-default-400 sm:hidden">
+        {label}
+      </p>
+      <p className="break-words text-sm font-medium text-default-800">{value}</p>
+      {alternatives.length > 0 ? (
+        <p className="mt-1 break-words text-xs leading-relaxed text-default-500">
+          <span className="font-medium">Also accepts:</span> {alternatives.join(', ')}
+        </p>
+      ) : null}
+      {children ? <div className="mt-1">{children}</div> : null}
+    </div>
+  );
+}

@@ -1,14 +1,13 @@
-import DashboardDeckCard from '@/components/deck/dashboard-deck-card';
+import DashboardDeckCard from '@/app/(protected)/dashboard/_components/dashboard-deck-card';
 import PageHeader from '@/components/shared/layout/page-header';
-import { getAllDecksStudyCountsAction, getUserActiveDecksAction } from '@/server/deck.actions';
+import { getDashboardDataAction } from '@/server/deck.actions';
 import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
 import StudySummary from '@/components/shared/study-summary';
 import EmptyState from '@/components/shared/empty-state';
 
 export default async function DashboardPage() {
-  const allDeckStats = await getAllDecksStudyCountsAction();
-  const activeDecks = await getUserActiveDecksAction();
+  const { activeDecks, allDeckStats, deckStats } = await getDashboardDataAction();
 
   return (
     <div className="space-y-6">
@@ -48,7 +47,11 @@ export default async function DashboardPage() {
           ) : (
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
               {activeDecks.map(deck => (
-                <DashboardDeckCard key={deck.id} deck={deck} />
+                <DashboardDeckCard
+                  key={deck.id}
+                  deck={deck}
+                  stats={deckStats[deck.id] ?? { totalWords: 0, reviewsDue: 0 }}
+                />
               ))}
             </div>
           )}

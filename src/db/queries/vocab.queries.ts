@@ -13,6 +13,14 @@ export const getVocabByDeckId = async (deckId: number): Promise<Vocab[]> => {
     .orderBy(lessons.orderIndex, vocabs.orderIndex, vocabs.id);
 };
 
+export const getVocabByLessonId = async (lessonId: number): Promise<Vocab[]> => {
+  return db
+    .select()
+    .from(vocabs)
+    .where(eq(vocabs.lessonId, lessonId))
+    .orderBy(vocabs.orderIndex, vocabs.id);
+};
+
 export const getVocabById = async (vocabId: number): Promise<Vocab | undefined> => {
   return (await db.select().from(vocabs).where(eq(vocabs.id, vocabId)).limit(1))[0];
 };
@@ -27,6 +35,17 @@ export const getUserVocabLevelsByDeckId = async (deckId: number, userId: string)
     .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
     .where(and(eq(lessons.deckId, deckId), eq(userVocabState.userId, userId)));
+};
+
+export const getUserVocabLevelsByLessonId = async (lessonId: number, userId: string) => {
+  return db
+    .select({
+      vocabId: userVocabState.vocabId,
+      srsLevel: userVocabState.srsLevel,
+    })
+    .from(userVocabState)
+    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+    .where(and(eq(vocabs.lessonId, lessonId), eq(userVocabState.userId, userId)));
 };
 
 export const createVocab = async (vocab: CreateVocab): Promise<void> => {

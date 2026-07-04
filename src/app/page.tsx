@@ -1,3 +1,4 @@
+import FeatureCard from '@/app/_components/feature-card';
 import ButtonLink from '@/components/shared/button-link';
 import { Card, Chip } from '@heroui/react';
 
@@ -70,16 +71,5 @@ export default function Home() {
         />
       </section>
     </div>
-  );
-}
-
-function FeatureCard({ title, description }: { title: string; description: string }) {
-  return (
-    <Card>
-      <Card.Header>
-        <Card.Title>{title}</Card.Title>
-        <Card.Description>{description}</Card.Description>
-      </Card.Header>
-    </Card>
   );
 }

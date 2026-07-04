@@ -1,11 +1,14 @@
-import LearningDecks from '@/app/(protected)/decks/learning-decks';
-import OwnedDecks from '@/app/(protected)/decks/owned-decks';
-import PublicDecks from '@/app/(protected)/decks/public-decks';
-import CreateDeckModal from '@/components/shared/create-deck-modal';
+import CreateDeckModal from '@/app/(protected)/decks/_components/create-deck-modal';
+import LearningDecks from '@/app/(protected)/decks/_components/learning-decks';
+import OwnedDecks from '@/app/(protected)/decks/_components/owned-decks';
+import PublicDecks from '@/app/(protected)/decks/_components/public-decks';
 import PageHeader from '@/components/shared/layout/page-header';
+import { getDecksPageDataAction } from '@/server/deck.actions';
 import { Tabs } from '@heroui/react';
 
-export default function DeckPage() {
+export default async function DeckPage() {
+  const { ownedDecks, publicDecks, subscribedDecks } = await getDecksPageDataAction();
+
   return (
     <>
       <PageHeader
@@ -31,13 +34,13 @@ export default function DeckPage() {
           </Tabs.List>
         </Tabs.ListContainer>
         <Tabs.Panel className="pt-4" id="learning">
-          <LearningDecks />
+          <LearningDecks decks={subscribedDecks} />
         </Tabs.Panel>
         <Tabs.Panel className="pt-4" id="owned">
-          <OwnedDecks />
+          <OwnedDecks decks={ownedDecks} subscribedDecks={subscribedDecks} />
         </Tabs.Panel>
         <Tabs.Panel className="pt-4" id="public">
-          <PublicDecks />
+          <PublicDecks decks={publicDecks} subscribedDecks={subscribedDecks} />
         </Tabs.Panel>
       </Tabs>
     </>

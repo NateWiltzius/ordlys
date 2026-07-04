@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import '@/styles/globals.css';
 import { fontSans } from '@/config/font';
 import { PropsWithChildren } from 'react';
-import Navbar from '@/components/shared/layout/navbar/navbar';
+import Navbar from '@/app/_components/navbar';
 
 export const metadata: Metadata = {
   title: 'Ordlys',

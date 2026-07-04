@@ -1,4 +1,4 @@
-import PlacementTestMode from '@/app/(protected)/decks/[deckId]/placement/[lessonId]/placement-test-mode';
+import PlacementTestMode from '@/app/(protected)/decks/[deckId]/placement/[lessonId]/_components/placement-test-mode';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { getPlacementTestVocabsAction } from '@/server/review.actions';
 import { notFound } from 'next/navigation';

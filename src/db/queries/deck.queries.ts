@@ -177,13 +177,15 @@ export async function getDeckStudyCounts(deckId: number, userId: string): Promis
   };
 }
 
-export async function getAllDecksStudyCounts(userId: string): Promise<ReviewCounts> {
-  const activeDecks = await getUserActiveDecks(userId);
-  if (activeDecks.length === 0) {
+export async function getAllDecksStudyCounts(
+  userId: string,
+  activeDeckIds?: number[],
+): Promise<ReviewCounts> {
+  const deckIds = activeDeckIds ?? (await getUserActiveDecks(userId)).map(deck => deck.id);
+  if (deckIds.length === 0) {
     return toReviewCounts();
   }
 
-  const activeDeckIds = activeDecks.map(deck => deck.id);
   const [result] = await db
     .select({
       totalWords: count(vocabs.id),
@@ -202,16 +204,53 @@ export async function getAllDecksStudyCounts(userId: string): Promise<ReviewCoun
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
     )
-    .where(inArray(decks.id, activeDeckIds));
+    .where(inArray(decks.id, deckIds));
 
   const availableCounts = await Promise.all(
-    activeDeckIds.map(deckId => getNewVocabCountForDeck(deckId, userId)),
+    deckIds.map(deckId => getNewVocabCountForDeck(deckId, userId)),
   );
 
   return {
     ...toReviewCounts(result),
     newWordsAvailable: availableCounts.reduce((total, available) => total + available, 0),
   };
+}
+
+export async function getDeckCardStudyCounts(
+  deckIds: number[],
+  userId: string,
+): Promise<Record<number, Pick<ReviewCounts, 'totalWords' | 'reviewsDue'>>> {
+  if (deckIds.length === 0) return {};
+
+  const rows = await db
+    .select({
+      deckId: decks.id,
+      totalWords: count(vocabs.id),
+      reviewsDue: sql<number>`
+        count(${userVocabState.id}) filter (
+          where ${userVocabState.dueAt} <= now()
+        )
+      `,
+    })
+    .from(decks)
+    .innerJoin(lessons, eq(lessons.deckId, decks.id))
+    .innerJoin(vocabs, eq(vocabs.lessonId, lessons.id))
+    .leftJoin(
+      userVocabState,
+      and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
+    )
+    .where(inArray(decks.id, deckIds))
+    .groupBy(decks.id);
+
+  return Object.fromEntries(
+    rows.map(row => [
+      row.deckId,
+      {
+        totalWords: Number(row.totalWords),
+        reviewsDue: Number(row.reviewsDue),
+      },
+    ]),
+  );
 }
 
 function studyDeckAccess(userId: string) {

@@ -1,4 +1,4 @@
-import ReviewMode from '@/app/(protected)/decks/[deckId]/review/review-mode';
+import ReviewMode from '@/app/(protected)/decks/[deckId]/review/_components/review-mode';
 import { getDueReviewsForDeckAction } from '@/server/review.actions';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';

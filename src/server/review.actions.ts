@@ -12,49 +12,22 @@ import {
   startVocab,
 } from '@/db/queries/review.queries';
 import { LessonProgress } from '@/types/review.types';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 
 export async function getNewVocabsForDeckAction(deckId: number, limit = 5): Promise<LearnItem[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user || !data.user.id) {
-    throw new Error('User not authenticated');
-  }
-
-  return await getNewVocabsForDeck(deckId, data.user.id, limit);
+  return await getNewVocabsForDeck(deckId, await getCurrentUserId(), limit);
 }
 
 export async function getDueReviewsForDeckAction(deckId: number): Promise<ReviewItem[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user || !data.user.id) {
-    throw new Error('User not authenticated');
-  }
-
-  return await getDueReviewsForDeck(deckId, data.user.id);
+  return await getDueReviewsForDeck(deckId, await getCurrentUserId());
 }
 
 export async function getPlacementTestVocabsAction(deckId: number, lessonId: number) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user || !data.user.id) {
-    throw new Error('User not authenticated');
-  }
-
-  return await getPlacementTestVocabs(deckId, lessonId, data.user.id);
+  return await getPlacementTestVocabs(deckId, lessonId, await getCurrentUserId());
 }
 
 export async function getLessonProgressForDeckAction(deckId: number): Promise<LessonProgress[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user || !data.user.id) {
-    throw new Error('User not authenticated');
-  }
-
-  return await getLessonProgressForDeck(deckId, data.user.id);
+  return await getLessonProgressForDeck(deckId, await getCurrentUserId());
 }
 
 export async function startVocabAction(vocabId: number): Promise<SrsTransition> {

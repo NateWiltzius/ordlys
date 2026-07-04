@@ -1,5 +1,6 @@
 import {
   check,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -12,16 +13,23 @@ import { sql } from 'drizzle-orm';
 
 export const visibilityEnum = pgEnum('visibility', ['private', 'public']);
 
-export const decks = pgTable('decks', {
-  id: serial('id').primaryKey(),
-  ownerId: varchar('owner_id', { length: 255 }).notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: varchar('description', { length: 255 }),
-  visibility: visibilityEnum(),
-  deletedAt: timestamp('deleted_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const decks = pgTable(
+  'decks',
+  {
+    id: serial('id').primaryKey(),
+    ownerId: varchar('owner_id', { length: 255 }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: varchar('description', { length: 255 }),
+    visibility: visibilityEnum(),
+    deletedAt: timestamp('deleted_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => [
+    index('decks_owner_id_idx').on(table.ownerId),
+    index('decks_visibility_deleted_at_idx').on(table.visibility, table.deletedAt),
+  ],
+);
 
 export const deckSubscriptions = pgTable(
   'deck_subscriptions',
@@ -33,40 +41,51 @@ export const deckSubscriptions = pgTable(
       .references(() => decks.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  table => [unique('deck_subscriptions_user_id_deck_id_unique').on(table.userId, table.deckId)],
+  table => [
+    unique('deck_subscriptions_user_id_deck_id_unique').on(table.userId, table.deckId),
+    index('deck_subscriptions_deck_id_idx').on(table.deckId),
+  ],
 );
 
-export const lessons = pgTable('lessons', {
-  id: serial('id').primaryKey(),
-  deckId: integer('deck_id')
-    .notNull()
-    .references(() => decks.id, { onDelete: 'cascade' }),
-  title: varchar('title', { length: 255 }).notNull(),
-  orderIndex: integer('order_index').notNull().default(0),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const lessons = pgTable(
+  'lessons',
+  {
+    id: serial('id').primaryKey(),
+    deckId: integer('deck_id')
+      .notNull()
+      .references(() => decks.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    orderIndex: integer('order_index').notNull().default(0),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => [index('lessons_deck_id_order_index_idx').on(table.deckId, table.orderIndex)],
+);
 
-export const vocabs = pgTable('vocabs', {
-  id: serial('id').primaryKey(),
-  lessonId: integer('lesson_id')
-    .notNull()
-    .references(() => lessons.id, { onDelete: 'cascade' }),
-  front: varchar('front', { length: 255 }).notNull(),
-  back: varchar('back', { length: 255 }).notNull(),
-  frontAlternatives: varchar('front_alternatives', { length: 255 })
-    .array()
-    .default(sql`ARRAY[]::varchar[]`)
-    .notNull(),
-  backAlternatives: varchar('back_alternatives', { length: 255 })
-    .array()
-    .default(sql`ARRAY[]::varchar[]`)
-    .notNull(),
-  reading: varchar('reading', { length: 255 }),
-  orderIndex: integer('order_index').notNull().default(0),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const vocabs = pgTable(
+  'vocabs',
+  {
+    id: serial('id').primaryKey(),
+    lessonId: integer('lesson_id')
+      .notNull()
+      .references(() => lessons.id, { onDelete: 'cascade' }),
+    front: varchar('front', { length: 255 }).notNull(),
+    back: varchar('back', { length: 255 }).notNull(),
+    frontAlternatives: varchar('front_alternatives', { length: 255 })
+      .array()
+      .default(sql`ARRAY[]::varchar[]`)
+      .notNull(),
+    backAlternatives: varchar('back_alternatives', { length: 255 })
+      .array()
+      .default(sql`ARRAY[]::varchar[]`)
+      .notNull(),
+    reading: varchar('reading', { length: 255 }),
+    orderIndex: integer('order_index').notNull().default(0),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => [index('vocabs_lesson_id_order_index_idx').on(table.lessonId, table.orderIndex)],
+);
 
 export const userVocabState = pgTable(
   'user_vocab_state',
@@ -86,6 +105,7 @@ export const userVocabState = pgTable(
   },
   table => [
     unique('user_vocab_state_user_id_vocab_id_unique').on(table.userId, table.vocabId),
+    index('user_vocab_state_user_id_due_at_idx').on(table.userId, table.dueAt),
     check('user_vocab_state_srs_level_range', sql`${table.srsLevel} between 0 and 8`),
   ],
 );

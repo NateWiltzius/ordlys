@@ -1,11 +1,11 @@
-import EditPage from '@/app/(protected)/decks/[deckId]/edit/edit-page';
-import { getLessonsAction } from '@/server/lesson.actions';
-import { getVocabsByDeckAction } from '@/server/vocab.actions';
+import EditPage from '@/app/(protected)/decks/[deckId]/edit/_components/edit-page';
 import { Vocab } from '@/types/vocab.types';
 import { getOwnedDeckById } from '@/db/queries/deck.queries';
-import { createClient } from '@/lib/supabase/server';
+import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
+import { getVocabByDeckId } from '@/db/queries/vocab.queries';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 
 type Props = {
   params: Promise<{
@@ -18,16 +18,13 @@ export default async function Page({ params }: Props) {
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) notFound();
-
-  const deck = await getOwnedDeckById(parsedDeckId, data.user.id);
+  const userId = await getCurrentUserId();
+  const deck = await getOwnedDeckById(parsedDeckId, userId);
   if (!deck) notFound();
 
   const [lessons, vocabs] = await Promise.all([
-    getLessonsAction(parsedDeckId),
-    getVocabsByDeckAction(parsedDeckId),
+    getLessonsByDeckId(parsedDeckId),
+    getVocabByDeckId(parsedDeckId),
   ]);
 
   const lessonVocabs = vocabs.reduce<Record<number, Vocab[]>>((accumulator, vocab) => {

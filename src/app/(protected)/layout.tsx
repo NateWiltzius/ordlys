@@ -1,17 +1,14 @@
 import { redirect } from 'next/navigation';
 
 import PageShell from '@/components/shared/layout/page-shell';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
 }
 
 export default async function ProtectedLayout({ children }: ProtectedLayoutProps) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
-
-  if (error || !data?.claims) {
+  if (!(await getCurrentUserIdOrNull())) {
     redirect('/auth/sign-in');
   }
 

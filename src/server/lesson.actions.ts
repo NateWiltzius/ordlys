@@ -13,6 +13,7 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { CreateLesson, Lesson } from '@/types/lesson.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 
 export const getLessonsAction = async (deckId: number): Promise<Lesson[]> => {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -20,14 +21,8 @@ export const getLessonsAction = async (deckId: number): Promise<Lesson[]> => {
     throw new Error('Invalid deck ID.');
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to view lessons.');
-  }
-
   const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.deletedAt || deck.ownerId !== data.user.id) {
+  if (!deck || deck.deletedAt || deck.ownerId !== (await getCurrentUserId())) {
     throw new Error('Deck not found or access denied.');
   }
 
