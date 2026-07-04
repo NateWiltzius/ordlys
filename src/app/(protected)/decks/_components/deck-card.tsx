@@ -193,7 +193,7 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
                     </ListBox.Item>
                   ) : null}
 
-                  {subscribed && tab !== 'owned' ? (
+                  {subscribed ? (
                     <ListBox.Item
                       id="unsubscribe"
                       textValue="Unsubscribe"
@@ -204,9 +204,11 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
                     </ListBox.Item>
                   ) : null}
 
-                  <ListBox.Item id="view" textValue="View deck">
-                    View deck
-                  </ListBox.Item>
+                  {(tab === 'public' || tab === 'owned') && !subscribed && (
+                    <ListBox.Item id="view" textValue="View deck">
+                      View deck
+                    </ListBox.Item>
+                  )}
 
                   {tab === 'owned' ? (
                     <ListBox.Item

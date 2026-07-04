@@ -14,15 +14,7 @@ export default function DeckHeader({ deck, isOwned, isSubscribed }: Props) {
   return (
     <PageHeader
       title={deck.title}
-      description={
-        isOwned
-          ? 'You manage this deck and can edit its lessons and vocabulary.'
-          : deck.deletedAt
-            ? 'The owner removed this deck, but your subscription and progress are preserved.'
-            : isSubscribed
-              ? 'You are currently learning this deck. Review due cards and keep going.'
-              : 'This is a public deck. Start learning it to add it to your active study list.'
-      }
+      description={deck.description || 'No description provided.'}
       actions={
         isOwned ? (
           <ButtonLink href={`/decks/${deck.id}/edit`} variant="secondary">

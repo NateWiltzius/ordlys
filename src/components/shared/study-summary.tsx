@@ -17,7 +17,7 @@ export default function StudySummary({ counts, description }: Props) {
       <Card.Content>
         <div className="grid gap-3 sm:grid-cols-3">
           <SummaryStat label="Total words" value={counts.totalWords} />
-          <SummaryStat label="New words available" value={counts.newWordsAvailable} />
+          <SummaryStat label="Ready to learn" value={counts.newWordsAvailable} />
           <SummaryStat label="Reviews due" value={counts.reviewsDue} />
         </div>
       </Card.Content>

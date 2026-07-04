@@ -39,7 +39,7 @@ export default function Home() {
 
           <Card.Content className="space-y-3">
             <div className="rounded-lg bg-default-100 px-4 py-3">
-              <p className="text-sm text-default-500">New words available</p>
+              <p className="text-sm text-default-500">Ready to learn</p>
               <p className="text-2xl font-semibold">12</p>
             </div>
 

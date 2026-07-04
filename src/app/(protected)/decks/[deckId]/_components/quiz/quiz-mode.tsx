@@ -203,7 +203,7 @@ export default function QuizMode({ quizItems, onVocabComplete, completionHref }:
   if (!currentQuizItem) {
     return (
       <>
-        <Toast.Provider placement="bottom end" />
+        <Toast.Provider placement="bottom" />
         <div className="mx-auto max-w-2xl space-y-4">
           <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
           <Card variant="tertiary">
@@ -241,7 +241,7 @@ export default function QuizMode({ quizItems, onVocabComplete, completionHref }:
 
   return (
     <>
-      <Toast.Provider placement="bottom end" />
+      <Toast.Provider placement="bottom" />
       <div className="mx-auto max-w-2xl space-y-4">
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
 

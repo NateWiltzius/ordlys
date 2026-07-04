@@ -24,7 +24,7 @@ export async function subscribeUserToDeckAction(deckId: number) {
   }
 
   const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.deletedAt || deck.visibility !== 'public' || deck.ownerId === data.user.id) {
+  if (!deck || deck.deletedAt || deck.visibility !== 'public') {
     throw new Error('Deck not found or unavailable for subscription.');
   }
 

@@ -79,7 +79,7 @@ export default async function DeckStudyContent({ deck, userId, canStudy }: Props
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card variant="tertiary" className="h-full">
+        <Card className="h-full">
           <Card.Header>
             <Card.Title>Learn new words</Card.Title>
             <Card.Description>
@@ -88,7 +88,7 @@ export default async function DeckStudyContent({ deck, userId, canStudy }: Props
           </Card.Header>
           <Card.Content>
             <p className="text-3xl font-semibold">{counts.newWordsAvailable}</p>
-            <p className="text-sm text-default-500">new words available</p>
+            <p className="text-sm text-default-500">Ready to learn</p>
           </Card.Content>
           <Card.Footer>
             {canStudy ? (
@@ -105,7 +105,7 @@ export default async function DeckStudyContent({ deck, userId, canStudy }: Props
           </Card.Footer>
         </Card>
 
-        <Card variant="secondary" className="h-full">
+        <Card className="h-full">
           <Card.Header>
             <Card.Title>Review due cards</Card.Title>
             <Card.Description>
@@ -118,11 +118,11 @@ export default async function DeckStudyContent({ deck, userId, canStudy }: Props
           </Card.Content>
           <Card.Footer>
             {canStudy ? (
-              <ButtonLink href={`/decks/${deck.id}/review`} variant="secondary" className="w-full">
+              <ButtonLink href={`/decks/${deck.id}/review`} variant="primary" className="w-full">
                 Review now
               </ButtonLink>
             ) : (
-              <Button variant="secondary" className="w-full" isDisabled>
+              <Button variant="primary" className="w-full" isDisabled>
                 Review now
               </Button>
             )}

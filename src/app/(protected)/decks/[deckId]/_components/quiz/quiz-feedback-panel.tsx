@@ -25,7 +25,7 @@ export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
   }, [onContinue]);
 
   return (
-    <Card variant={feedback.isCorrect ? 'tertiary' : 'secondary'}>
+    <Card className={feedback.isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}>
       <Card.Header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Card.Title>{feedback.isCorrect ? 'Correct' : 'Not quite'}</Card.Title>
@@ -36,7 +36,7 @@ export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
           </Card.Description>
         </div>
 
-        <Chip size="sm" color={feedback.isCorrect ? 'success' : 'danger'} variant="soft">
+        <Chip size="sm" color="default" variant="soft">
           {feedback.quizItem.direction === 'btf' ? 'Back → Front' : 'Front → Back'}
         </Chip>
       </Card.Header>
