@@ -7,7 +7,7 @@ import unicornPlugin from 'eslint-plugin-unicorn';
 
 export default tseslint.config(
   {
-    ignores: ['.next/', 'dist/', 'node_modules/'],
+    ignores: ['.next/', 'dist/', 'node_modules/', 'next-env.d.ts'],
   },
   {
     files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,mts,cts,tsx,mtsx}'],

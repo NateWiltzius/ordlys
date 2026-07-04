@@ -90,7 +90,9 @@ export default function QuizMode({ quizItems, onVocabComplete }: Props) {
     setFeedback({
       quizItem: currentQuizItem,
       submittedAnswer: answer,
-      isCorrect: normalizeAnswer(answer) === normalizeAnswer(currentQuizItem.answer),
+      isCorrect: currentQuizItem.acceptedAnswers.some(
+        acceptedAnswer => normalizeAnswer(answer) === normalizeAnswer(acceptedAnswer),
+      ),
     });
   };
 

@@ -1,10 +1,13 @@
-import { getDeckById } from '@/db/queries/deck.queries';
+import { getAccessibleDeckById } from '@/db/queries/deck.queries';
 import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
 import { createClient } from '@/lib/supabase/server';
 import PageHeader from '@/components/shared/layout/page-header';
 import { getDeckStudyCountsAction, getUserSubscribedDecksAction } from '@/server/deck.actions';
 import { Button, Card, Chip } from '@heroui/react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
+import { subscribeUserToDeckAction } from '@/server/deck-subscription.actions';
 
 type Props = {
   params: Promise<{
@@ -14,22 +17,24 @@ type Props = {
 
 export default async function DeckPage({ params }: Props) {
   const { deckId } = await params;
-  const parsedDeckId = Number(deckId);
-  const deck = await getDeckById(parsedDeckId);
-
-  if (!deck) {
-    return <div>Deck not found</div>;
-  }
-
-  const lessons = await getLessonsByDeckId(parsedDeckId);
-  const counts = await getDeckStudyCountsAction(parsedDeckId);
-  console.log(counts);
-  const subscribedDecks = await getUserSubscribedDecksAction();
+  const parsedDeckId = parsePositiveInteger(deckId);
+  if (!parsedDeckId) notFound();
 
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
   const currentUserId = data.user?.id;
+  if (!currentUserId) notFound();
+
+  const deck = await getAccessibleDeckById(parsedDeckId, currentUserId);
+  if (!deck) notFound();
+
+  const [lessons, counts, subscribedDecks] = await Promise.all([
+    getLessonsByDeckId(parsedDeckId),
+    getDeckStudyCountsAction(parsedDeckId),
+    getUserSubscribedDecksAction(),
+  ]);
+
   const isOwned = Boolean(currentUserId && deck.ownerId === currentUserId);
   const isSubscribed = subscribedDecks.some(subscribedDeck => subscribedDeck.id === deck.id);
   const canStudy = isOwned || isSubscribed;
@@ -86,9 +91,11 @@ export default async function DeckPage({ params }: Props) {
                 </Button>
               </Link>
             ) : (
-              <Button variant="primary" className="w-full">
-                Start learning this deck
-              </Button>
+              <form action={subscribeUserToDeckAction.bind(null, deck.id)} className="w-full">
+                <Button type="submit" variant="primary" className="w-full">
+                  Start learning this deck
+                </Button>
+              </form>
             )}
           </Card.Footer>
         </Card>

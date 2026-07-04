@@ -8,6 +8,7 @@ import {
   getLessonsByDeckId,
 } from '@/db/queries/lesson.queries';
 import { createClient } from '@/lib/supabase/server';
+import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { CreateLesson, Lesson } from '@/types/lesson.types';
 import { revalidateTag, unstable_cache } from 'next/cache';
 
@@ -26,7 +27,23 @@ const getCachedLessons = (deckId: number): (() => Promise<Lesson[]>) =>
   );
 
 export const getLessonsAction = async (deckId: number): Promise<Lesson[]> => {
-  return await getCachedLessons(deckId)();
+  const parsedDeckId = parsePositiveInteger(deckId);
+  if (!parsedDeckId) {
+    throw new Error('Invalid deck ID.');
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) {
+    throw new Error('User must be authenticated to view lessons.');
+  }
+
+  const deck = await getDeckById(parsedDeckId);
+  if (!deck || deck.ownerId !== data.user.id) {
+    throw new Error('Deck not found or access denied.');
+  }
+
+  return await getCachedLessons(parsedDeckId)();
 };
 
 export async function createLessonAction(lesson: CreateLesson) {

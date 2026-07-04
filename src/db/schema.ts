@@ -1,4 +1,5 @@
 import { integer, pgEnum, pgTable, serial, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const visibilityEnum = pgEnum('visibility', ['private', 'public']);
 
@@ -43,6 +44,14 @@ export const vocabs = pgTable('vocabs', {
     .references(() => lessons.id, { onDelete: 'cascade' }),
   front: varchar('front', { length: 255 }).notNull(),
   back: varchar('back', { length: 255 }).notNull(),
+  frontAlternatives: varchar('front_alternatives', { length: 255 })
+    .array()
+    .default(sql`ARRAY[]::varchar[]`)
+    .notNull(),
+  backAlternatives: varchar('back_alternatives', { length: 255 })
+    .array()
+    .default(sql`ARRAY[]::varchar[]`)
+    .notNull(),
   reading: varchar('reading', { length: 255 }),
   orderIndex: integer('order_index').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -55,7 +64,9 @@ export const userVocabState = pgTable(
     id: serial('id').primaryKey(),
 
     userId: varchar('user_id', { length: 255 }).notNull(),
-    vocabId: integer('vocab_id').notNull(),
+    vocabId: integer('vocab_id')
+      .notNull()
+      .references(() => vocabs.id, { onDelete: 'cascade' }),
 
     srsLevel: integer('srs_level').default(0).notNull(),
     dueAt: timestamp('due_at').notNull(),

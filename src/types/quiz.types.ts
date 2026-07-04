@@ -5,6 +5,7 @@ export type QuizQueueItem = {
   direction: QuizDirection;
   prompt: string;
   answer: string;
+  acceptedAnswers: string[];
 };
 
 export type QuizProgressItem = {

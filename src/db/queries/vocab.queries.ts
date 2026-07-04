@@ -20,6 +20,8 @@ export const createVocab = async (vocab: CreateVocab): Promise<void> => {
     lessonId: vocab.lessonId,
     front: vocab.front,
     back: vocab.back,
+    frontAlternatives: vocab.frontAlternatives,
+    backAlternatives: vocab.backAlternatives,
     reading: vocab.reading,
   });
 };

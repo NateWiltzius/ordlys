@@ -8,12 +8,14 @@ export function buildQuizQueue(learnItems: LearnItem[] | ReviewItem[]): QuizQueu
       direction: 'btf',
       prompt: item.back,
       answer: item.front,
+      acceptedAnswers: [item.front, ...item.frontAlternatives],
     },
     {
       cardId: item.id,
       direction: 'ftb',
       prompt: item.front,
       answer: item.back,
+      acceptedAnswers: [item.back, ...item.backAlternatives],
     },
   ]);
 }

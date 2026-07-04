@@ -11,8 +11,18 @@ export default function VocabCard({ vocab }: Props) {
       <div className="space-y-1 px-3 py-2">
         <p className="text-xs font-medium uppercase tracking-wide text-default-500">Front</p>
         <p className="line-clamp-2 text-sm font-medium text-default-800">{vocab.front}</p>
+        {vocab.frontAlternatives.length > 0 && (
+          <p className="text-xs text-default-500">
+            Also accepts: {vocab.frontAlternatives.join(', ')}
+          </p>
+        )}
         <p className="mt-1 text-xs font-medium uppercase tracking-wide text-default-500">Back</p>
         <p className="line-clamp-2 text-sm text-default-700">{vocab.back}</p>
+        {vocab.backAlternatives.length > 0 && (
+          <p className="text-xs text-default-500">
+            Also accepts: {vocab.backAlternatives.join(', ')}
+          </p>
+        )}
         {vocab.reading && <p className="text-xs text-default-500">Reading: {vocab.reading}</p>}
       </div>
     </Card>

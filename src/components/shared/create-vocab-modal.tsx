@@ -1,6 +1,6 @@
 import { createVocabAction } from '@/server/vocab.actions';
 import { CreateVocab } from '@/types/vocab.types';
-import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
+import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
@@ -25,6 +25,8 @@ export default function CreateVocabModal({
 
     const front = String(formData.get('front') ?? '').trim();
     const back = String(formData.get('back') ?? '').trim();
+    const frontAlternatives = parseAlternatives(formData.get('frontAlternatives'));
+    const backAlternatives = parseAlternatives(formData.get('backAlternatives'));
 
     if (!front || !back) {
       return;
@@ -33,6 +35,8 @@ export default function CreateVocabModal({
     const vocab: CreateVocab = {
       front,
       back,
+      frontAlternatives,
+      backAlternatives,
       lessonId,
     };
 
@@ -71,6 +75,26 @@ export default function CreateVocabModal({
                   Back
                 </Label>
                 <Input id="back" name="back" required className="w-full" />
+                <Label className="text-sm text-default-600" htmlFor="frontAlternatives">
+                  Front alternatives
+                </Label>
+                <TextArea
+                  id="frontAlternatives"
+                  name="frontAlternatives"
+                  rows={3}
+                  placeholder="One accepted answer per line"
+                  className="w-full"
+                />
+                <Label className="text-sm text-default-600" htmlFor="backAlternatives">
+                  Back alternatives
+                </Label>
+                <TextArea
+                  id="backAlternatives"
+                  name="backAlternatives"
+                  rows={3}
+                  placeholder="One accepted answer per line"
+                  className="w-full"
+                />
               </Modal.Body>
               <Modal.Footer>
                 <Button className="w-full" type="submit" isDisabled={isSubmitting}>
@@ -83,4 +107,13 @@ export default function CreateVocabModal({
       </Modal.Backdrop>
     </Modal>
   );
+}
+
+function parseAlternatives(value: FormDataEntryValue | null): string[] {
+  if (typeof value !== 'string') return [];
+
+  return value
+    .split(/\r?\n/)
+    .map(alternative => alternative.trim())
+    .filter(Boolean);
 }
