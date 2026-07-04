@@ -53,42 +53,40 @@ export default function CreateLessonModal({
   };
 
   return (
-    <>
+    <Modal state={modalState}>
       <Button variant="secondary" onPress={modalState.open}>
         {triggerLabel}
       </Button>
 
-      <Modal state={modalState}>
-        <Modal.Backdrop>
-          <Modal.Container>
-            <Modal.Dialog className="sm:max-w-[360px]">
-              <Modal.CloseTrigger />
-              <Modal.Header>
-                <Modal.Heading>Create lesson</Modal.Heading>
-              </Modal.Header>
-              <form onSubmit={handleCreateLesson}>
-                <Modal.Body>
-                  <Label className="text-sm text-default-600" htmlFor="title">
-                    Lesson title
-                  </Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    placeholder="e.g. Present tense verbs"
-                    required
-                    className="w-full"
-                  />
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button className="w-full" type="submit" isDisabled={isSubmitting}>
-                    {isSubmitting ? 'Creating...' : 'Create lesson'}
-                  </Button>
-                </Modal.Footer>
-              </form>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
-    </>
+      <Modal.Backdrop>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[360px]">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Heading>Create lesson</Modal.Heading>
+            </Modal.Header>
+            <form onSubmit={handleCreateLesson}>
+              <Modal.Body>
+                <Label className="text-sm text-default-600" htmlFor="title">
+                  Lesson title
+                </Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="e.g. Present tense verbs"
+                  required
+                  className="w-full"
+                />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button className="w-full" type="submit" isDisabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create lesson'}
+                </Button>
+              </Modal.Footer>
+            </form>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   );
 }

@@ -54,10 +54,13 @@ export async function createLessonAction(lesson: CreateLesson) {
     throw new Error('Not authorized to create a lesson for this deck.');
   }
 
-  await createLesson({
-    title: title.trim(),
-    deckId,
-  });
+  await createLesson(
+    {
+      title: title.trim(),
+      deckId,
+    },
+    data.user.id,
+  );
   revalidateTag(`${LESSONS_CACHE_TAG}-${deckId}`);
 }
 
@@ -86,6 +89,6 @@ export async function deleteLessonAction(lessonId: number) {
     throw new Error('Not authorized to delete a lesson for this deck.');
   }
 
-  await deleteLesson(lessonId);
+  await deleteLesson(lessonId, data.user.id);
   revalidateTag(`${LESSONS_CACHE_TAG}-${lesson.deckId}`);
 }

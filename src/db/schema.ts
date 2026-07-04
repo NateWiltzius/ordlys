@@ -16,7 +16,7 @@ export const deckSubscriptions = pgTable(
   'deck_subscriptions',
   {
     id: serial('id').primaryKey(),
-    userId: varchar('owner_id', { length: 255 }).notNull(),
+    userId: varchar('user_id', { length: 255 }).notNull(),
     deckId: integer('deck_id')
       .notNull()
       .references(() => decks.id, { onDelete: 'cascade' }),

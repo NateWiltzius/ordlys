@@ -86,7 +86,7 @@ export const deleteDeckAction = async (id: number): Promise<void> => {
     throw new Error('Not authorized to delete this deck.');
   }
 
-  await deleteDeck(id);
+  await deleteDeck(id, data.user.id);
   revalidatePath('/decks');
   revalidatePath('/dashboard');
 };

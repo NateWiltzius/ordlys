@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { deleteDeckAction } from '@/server/deck.actions';
 import { subscribeUserToDeckAction } from '@/server/deck-subscription.actions';
 import { Deck } from '@/types/deck.types';
-import { Button, Card, Chip } from '@heroui/react';
+import { Button, Card, Chip, ListBox, Popover } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
@@ -14,13 +14,15 @@ type Props = {
   isSubscribed?: boolean;
 };
 
+type DeckAction = 'review' | 'view' | 'edit' | 'delete';
+
 export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
   const router = useRouter();
 
   const [subscribed, setSubscribed] = useState(isSubscribed);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     setSubscribed(isSubscribed);
@@ -33,17 +35,13 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
       setIsSubscribing(true);
       await subscribeUserToDeckAction(deck.id);
       setSubscribed(true);
+      router.refresh();
     } catch (error) {
       console.error('Failed to subscribe to deck', error);
     } finally {
       setIsSubscribing(false);
     }
   };
-
-  const goToDeck = () => router.push(`/decks/${deck.id}`);
-  const goToEdit = () => router.push(`/decks/${deck.id}/edit`);
-  const goToReview = () => router.push(`/decks/${deck.id}/review`);
-  const goToLearn = () => router.push(`/decks/${deck.id}/learn`);
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -59,191 +57,49 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
     }
   };
 
-  const renderBadge = () => {
-    if (tab === 'learning') {
-      return (
-        <Chip size="sm" variant="primary">
-          Learning
-        </Chip>
-      );
-    }
+  const handleMenuAction = async (key: React.Key) => {
+    setIsMenuOpen(false);
 
-    if (tab === 'owned') {
-      return (
-        <Chip size="sm" variant="secondary">
-          Owned
-        </Chip>
-      );
+    switch (key as DeckAction) {
+      case 'review':
+        router.push(`/decks/${deck.id}/review`);
+        break;
+      case 'view':
+        router.push(`/decks/${deck.id}`);
+        break;
+      case 'edit':
+        router.push(`/decks/${deck.id}/edit`);
+        break;
+      case 'delete':
+        await handleDelete();
+        break;
     }
+  };
 
-    if (subscribed) {
-      return (
-        <Chip size="sm" variant="soft" color="success">
-          Subscribed
-        </Chip>
-      );
-    }
-
-    return (
+  const badge =
+    tab === 'learning' ? (
+      <Chip size="sm" variant="primary">
+        Learning
+      </Chip>
+    ) : tab === 'owned' ? (
+      <Chip size="sm" variant="secondary">
+        Owned
+      </Chip>
+    ) : subscribed ? (
+      <Chip size="sm" variant="soft" color="success">
+        Subscribed
+      </Chip>
+    ) : (
       <Chip size="sm" variant="tertiary">
         Public
       </Chip>
     );
-  };
 
-  const renderActions = () => {
-    // New pattern: primary action on the left, overflow menu for secondary actions
-    const closeMenu = () => setMenuOpen(false);
-
-    const Primary = (
-      <div className="flex-1">
-        {subscribed ? (
-          <Button
-            variant="primary"
-            size="sm"
-            className="w-full"
-            onPress={() => {
-              closeMenu();
-              goToLearn();
-            }}
-          >
-            Continue learning
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            size="sm"
-            className="w-full"
-            isPending={isSubscribing}
-            onPress={async () => {
-              await handleSubscribe();
-              closeMenu();
-            }}
-          >
-            Start learning
-          </Button>
-        )}
-      </div>
-    );
-
-    const MoreMenu = (
-      <div className="relative ml-2">
-        <Button
-          variant="tertiary"
-          size="sm"
-          onPress={() => setMenuOpen(!menuOpen)}
-          aria-haspopup="true"
-          aria-expanded={menuOpen}
-        >
-          <EllipsisVerticalIcon className="h-5 w-5" />
-        </Button>
-
-        {menuOpen && (
-          <div className="absolute right-0 z-10 mt-2 w-44 rounded-md border bg-white p-2 shadow-lg">
-            {tab === 'learning' && (
-              <ul role="menu" className="flex flex-col gap-2">
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
-                    onClick={() => {
-                      closeMenu();
-                      goToReview();
-                    }}
-                  >
-                    Review
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
-                    onClick={() => {
-                      closeMenu();
-                      goToDeck();
-                    }}
-                  >
-                    View deck
-                  </button>
-                </li>
-              </ul>
-            )}
-
-            {tab === 'owned' && (
-              <ul role="menu" className="flex flex-col gap-2">
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
-                    onClick={() => {
-                      closeMenu();
-                      goToEdit();
-                    }}
-                  >
-                    Edit deck
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
-                    onClick={() => {
-                      closeMenu();
-                      goToDeck();
-                    }}
-                  >
-                    View deck
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-danger-600 hover:bg-default-100"
-                    onClick={async () => {
-                      closeMenu();
-                      await handleDelete();
-                    }}
-                  >
-                    Delete
-                  </button>
-                </li>
-              </ul>
-            )}
-
-            {tab === 'public' && (
-              <ul role="menu" className="flex flex-col gap-2">
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-default-100"
-                    onClick={() => {
-                      closeMenu();
-                      goToDeck();
-                    }}
-                  >
-                    View deck
-                  </button>
-                </li>
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
-    );
-
-    return (
-      <div className="flex w-full items-start">
-        {Primary}
-        {MoreMenu}
-      </div>
-    );
-  };
+  const helperText = {
+    learning: 'Keep studying this deck and review any cards that are due.',
+    owned: 'Manage the deck, edit its content, or start learning it.',
+    public: 'Discover this deck and add it to your active learning list.',
+  }[tab];
 
   return (
     <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm transition">
@@ -257,18 +113,91 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
           )}
         </div>
 
-        <div className="shrink-0">{renderBadge()}</div>
+        <div className="shrink-0">{badge}</div>
       </Card.Header>
 
       <Card.Content className="flex-1 py-2">
         <div className="rounded-lg bg-default-100 px-3 py-2 text-sm text-default-600">
-          {tab === 'learning' && 'Keep studying this deck and review any cards that are due.'}
-          {tab === 'owned' && 'Manage the deck, edit its content, or start learning it.'}
-          {tab === 'public' && 'Discover this deck and add it to your active learning list.'}
+          {helperText}
         </div>
       </Card.Content>
 
-      <Card.Footer className="pt-2">{renderActions()}</Card.Footer>
+      <Card.Footer className="pt-2">
+        <div className="flex w-full items-start gap-2">
+          {tab === 'learning' ? (
+            <Button
+              variant="primary"
+              size="sm"
+              className="flex-1"
+              onPress={() => router.push(`/decks/${deck.id}/learn`)}
+            >
+              Continue learning
+            </Button>
+          ) : subscribed ? (
+            <Button
+              variant="primary"
+              size="sm"
+              className="flex-1"
+              onPress={() => router.push(`/decks/${deck.id}`)}
+            >
+              View deck
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="sm"
+              className="flex-1"
+              isPending={isSubscribing}
+              onPress={handleSubscribe}
+            >
+              Start learning
+            </Button>
+          )}
+
+          <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <Button variant="tertiary" size="sm" aria-label={`More actions for ${deck.title}`}>
+              <EllipsisVerticalIcon className="h-5 w-5" />
+            </Button>
+
+            <Popover.Content placement="bottom end">
+              <Popover.Dialog className="w-44 p-1">
+                <ListBox
+                  aria-label={`Actions for ${deck.title}`}
+                  selectionMode="none"
+                  onAction={handleMenuAction}
+                >
+                  {tab === 'learning' ? (
+                    <ListBox.Item id="review" textValue="Review">
+                      Review
+                    </ListBox.Item>
+                  ) : null}
+
+                  {tab === 'owned' ? (
+                    <ListBox.Item id="edit" textValue="Edit deck">
+                      Edit deck
+                    </ListBox.Item>
+                  ) : null}
+
+                  <ListBox.Item id="view" textValue="View deck">
+                    View deck
+                  </ListBox.Item>
+
+                  {tab === 'owned' ? (
+                    <ListBox.Item
+                      id="delete"
+                      textValue="Delete"
+                      variant="danger"
+                      isDisabled={isDeleting}
+                    >
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </ListBox.Item>
+                  ) : null}
+                </ListBox>
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
+        </div>
+      </Card.Footer>
     </Card>
   );
 }
