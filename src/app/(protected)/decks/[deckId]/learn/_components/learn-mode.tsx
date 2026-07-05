@@ -30,7 +30,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="w-full space-y-4">
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-3 text-sm">
           <span className="min-w-0 break-words text-default-500">{currentItem.lessonTitle}</span>

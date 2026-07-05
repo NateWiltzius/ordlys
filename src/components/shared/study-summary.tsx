@@ -1,6 +1,6 @@
 import { ReviewCounts } from '@/types/review.types';
 import { Card } from '@heroui/react';
-import SummaryStat from '@/components/shared/summary-stat';
+import StatTile from '@/components/shared/stat-tile';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 
 type Props = {
@@ -17,14 +17,14 @@ export default function StudySummary({ counts, description }: Props) {
       </Card.Header>
       <Card.Content>
         <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryStat label="Total words" value={counts.totalWords} />
-          <SummaryStat
+          <StatTile label="Total words" value={counts.totalWords} />
+          <StatTile
             label="Ready to learn"
             value={counts.newWordsAvailable}
             className={STUDY_TONE_STYLES.learning.surface}
             valueClassName={STUDY_TONE_STYLES.learning.text}
           />
-          <SummaryStat
+          <StatTile
             label="Reviews due"
             value={counts.reviewsDue}
             className={STUDY_TONE_STYLES.review.surface}

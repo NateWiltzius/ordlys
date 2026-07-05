@@ -1,8 +1,43 @@
-@import "tailwindcss";
-@import "@heroui/styles";
+@import 'tailwindcss';
+@import '@heroui/styles';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-	--font-sans: "font", sans-serif;
+  --font-sans: 'font', sans-serif;
+}
+
+@media (max-width: 639px) {
+  .quiz-answer-card {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .quiz-answer-card .quiz-answer-header,
+  .quiz-answer-card .quiz-answer-content,
+  .quiz-answer-card .quiz-answer-footer {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .quiz-answer-card[data-keyboard-open='true'] .quiz-answer-header {
+    display: none;
+  }
+
+  .quiz-answer-card[data-keyboard-open='true'] .quiz-answer-content {
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .quiz-answer-card[data-keyboard-open='true'] .quiz-answer-prompt {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .quiz-answer-card[data-keyboard-open='true'] .quiz-answer-footer {
+    padding-top: 0.5rem;
+  }
 }

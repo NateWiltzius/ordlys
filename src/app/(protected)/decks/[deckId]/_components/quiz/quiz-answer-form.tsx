@@ -1,6 +1,7 @@
 import { Button, Card, Chip, Input } from '@heroui/react';
-import { FormEvent, useEffect, useRef } from 'react';
+import { FormEvent, useRef } from 'react';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
+import { useKeepAboveKeyboard } from '@/hooks/use-keep-above-keyboard';
 
 type Props = {
   prompt: string;
@@ -20,25 +21,8 @@ export default function QuizAnswerForm({
   onSubmit,
 }: Props) {
   const answerInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const viewport = window.visualViewport;
-
-    const keepAnswerVisible = () => {
-      if (document.activeElement !== answerInputRef.current) return;
-
-      requestAnimationFrame(() => {
-        answerInputRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-      });
-    };
-
-    viewport?.addEventListener('resize', keepAnswerVisible);
-
-    return () => viewport?.removeEventListener('resize', keepAnswerVisible);
-  }, []);
+  const answerCardRef = useRef<HTMLDivElement>(null);
+  useKeepAboveKeyboard(answerInputRef, answerCardRef);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,9 +30,9 @@ export default function QuizAnswerForm({
   };
 
   return (
-    <Card variant="secondary" className="mb-[35dvh] sm:mb-0">
+    <Card ref={answerCardRef} variant="secondary" className="quiz-answer-card w-full">
       <form onSubmit={handleSubmit}>
-        <Card.Header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <Card.Header className="quiz-answer-header flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <Card.Title>Recall the {direction === 'btf' ? 'front' : 'back'}</Card.Title>
             <Card.Description>
@@ -56,13 +40,13 @@ export default function QuizAnswerForm({
             </Card.Description>
           </div>
 
-          <Chip size="sm" variant="soft">
+          <Chip size="sm" variant="soft" className="w-fit">
             {direction === 'btf' ? 'Back → Front' : 'Front → Back'}
           </Chip>
         </Card.Header>
 
-        <Card.Content className="space-y-4">
-          <div className="rounded-lg bg-default-100 px-4 py-6 text-center">
+        <Card.Content className="quiz-answer-content space-y-4">
+          <div className="quiz-answer-prompt rounded-lg bg-default-100 px-4 py-6 text-center">
             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-default-500">
               {direction === 'btf' ? 'Back' : 'Front'}
             </p>
@@ -81,19 +65,11 @@ export default function QuizAnswerForm({
               placeholder="Your answer"
               autoFocus
               fullWidth
-              onFocus={() => {
-                window.setTimeout(() => {
-                  answerInputRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                  });
-                }, 300);
-              }}
             />
           </div>
         </Card.Content>
 
-        <Card.Footer>
+        <Card.Footer className="quiz-answer-footer">
           <Button
             type="submit"
             variant="primary"

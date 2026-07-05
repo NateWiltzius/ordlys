@@ -2,11 +2,9 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, Input, Label } from '@heroui/react';
-import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
 export default function UpdatePasswordPage() {
-  const router = useRouter();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -17,8 +15,7 @@ export default function UpdatePasswordPage() {
     try {
       const { error: authError } = await createClient().auth.updateUser({ password });
       if (authError) throw authError;
-      router.replace('/');
-      router.refresh();
+      window.location.replace('/');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not update your password.');
     } finally {

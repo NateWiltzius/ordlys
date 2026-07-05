@@ -3,11 +3,9 @@
 import { useState } from 'react';
 import { Button, Card, Input, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export function SignInForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -32,8 +30,7 @@ export function SignInForm() {
         return;
       }
 
-      router.replace('/');
-      router.refresh();
+      window.location.replace('/');
     } catch {
       setErrorMessage('Unable to sign in right now. Please try again.');
     } finally {

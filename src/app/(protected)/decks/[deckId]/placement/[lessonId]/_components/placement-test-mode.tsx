@@ -5,6 +5,7 @@ import { PLACEMENT_TEST_CONFIG } from '@/lib/srs/srs-config';
 import { placeVocabAction } from '@/server/review.actions';
 import { PlacementTestItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
+import StudySession from '@/components/shared/layout/study-session';
 
 type Props = {
   deckId: number;
@@ -13,7 +14,7 @@ type Props = {
 
 export default function PlacementTestMode({ deckId, placementItems }: Props) {
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <StudySession className="space-y-6">
       <Card variant="tertiary">
         <Card.Header>
           <Card.Title>Placement test: {placementItems[0].lessonTitle}</Card.Title>
@@ -32,6 +33,6 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
           return await placeVocabAction(vocabId, wasCorrect, deckId);
         }}
       />
-    </div>
+    </StudySession>
   );
 }

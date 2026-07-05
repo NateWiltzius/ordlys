@@ -184,7 +184,7 @@ export default function QuizMode({
     return (
       <>
         <Toast.Provider placement="bottom" />
-        <div className="mx-auto max-w-2xl">
+        <div className="w-full">
           <Card>
             <Card.Header>
               <Card.Title>Preparing quiz</Card.Title>
@@ -211,7 +211,7 @@ export default function QuizMode({
     return (
       <>
         <Toast.Provider placement="bottom" />
-        <div className="mx-auto max-w-2xl space-y-4">
+        <div className="w-full space-y-4">
           <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
           <Card variant="tertiary">
             <Card.Header>
@@ -249,7 +249,7 @@ export default function QuizMode({
   return (
     <>
       <Toast.Provider placement="bottom" />
-      <div className="mx-auto max-w-2xl space-y-4">
+      <div className="w-full space-y-4">
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
 
         {feedback ? (

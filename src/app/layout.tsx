@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import { fontSans } from '@/config/font';
 import { PropsWithChildren } from 'react';
@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   title: 'Ordlys',
   description:
     'Ordlys is a SRS based flashcard app that is build around consistent quizing rather than self review.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {

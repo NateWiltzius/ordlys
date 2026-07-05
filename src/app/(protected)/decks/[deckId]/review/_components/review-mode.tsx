@@ -6,6 +6,7 @@ import { ReviewItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
+import StudySession from '@/components/shared/layout/study-session';
 
 type Props = {
   deckId: number;
@@ -15,7 +16,7 @@ type Props = {
 export default function ReviewMode({ deckId, dueReviews }: Props) {
   if (dueReviews.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl">
+      <StudySession>
         <Card>
           <Card.Header>
             <Card.Title>No reviews due</Card.Title>
@@ -27,12 +28,12 @@ export default function ReviewMode({ deckId, dueReviews }: Props) {
             <ButtonLink href={`/decks/${deckId}`}>Back to deck</ButtonLink>
           </Card.Footer>
         </Card>
-      </div>
+      </StudySession>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <StudySession className="space-y-6">
       <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.review.text}`}>
         Review due cards
       </h1>
@@ -44,6 +45,6 @@ export default function ReviewMode({ deckId, dueReviews }: Props) {
           return await reviewVocabAction(vocabId, wasCorrect, deckId);
         }}
       />
-    </div>
+    </StudySession>
   );
 }
