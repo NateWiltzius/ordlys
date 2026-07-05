@@ -77,6 +77,14 @@ export default function QuizMode({
   }, [quizItems]);
 
   const currentQuizItem = quizQueue?.[0];
+  const toastProvider = (
+    <Toast.Provider
+      placement="top start"
+      maxVisibleToasts={1}
+      width={320}
+      className="quiz-toast-region"
+    />
+  );
   const exitQuizButton = (
     <Button
       variant="tertiary"
@@ -203,7 +211,7 @@ export default function QuizMode({
     return (
       <>
         {exitQuizButton}
-        <Toast.Provider placement="bottom" />
+        {toastProvider}
         <div className="w-full">
           <Card>
             <Card.Header>
@@ -231,7 +239,7 @@ export default function QuizMode({
     return (
       <>
         {exitQuizButton}
-        <Toast.Provider placement="bottom" />
+        {toastProvider}
         <div className="w-full space-y-4">
           <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
           <Card variant="tertiary">
@@ -274,7 +282,7 @@ export default function QuizMode({
   return (
     <>
       {exitQuizButton}
-      <Toast.Provider placement="bottom" />
+      {toastProvider}
       <div className="w-full space-y-4">
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
 

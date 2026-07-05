@@ -13,6 +13,32 @@ html[data-quiz-active='true'] [data-app-footer] {
 }
 
 @media (max-width: 639px) {
+  .quiz-toast-region {
+    top: 0.75rem;
+    left: 0.75rem;
+    width: min(18rem, calc(100vw - 5rem));
+  }
+
+  .quiz-toast-region .toast {
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+  }
+
+  .quiz-toast-region .toast__indicator {
+    padding: 0.125rem;
+  }
+
+  .quiz-toast-region .toast__title,
+  .quiz-toast-region .toast__description {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .quiz-toast-region .toast__close-button {
+    display: none;
+  }
+
   .quiz-answer-card {
     overflow: visible;
     border: 0;
