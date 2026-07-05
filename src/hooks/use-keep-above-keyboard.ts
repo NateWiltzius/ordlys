@@ -4,6 +4,7 @@ import { RefObject, useEffect } from 'react';
 
 const VIEWPORT_CLEARANCE = 24;
 const KEYBOARD_SETTLE_DELAY = 100;
+const MINIMUM_SCROLL_BUFFER = 80;
 
 export function useKeepAboveKeyboard(
   inputRef: RefObject<HTMLInputElement | null>,
@@ -25,7 +26,9 @@ export function useKeepAboveKeyboard(
           window.innerHeight - viewport.height - viewport.offsetTop,
         );
         context.dataset.keyboardOpen = String(keyboardOpen);
-        context.style.marginBottom = keyboardInset > 0 ? `${keyboardInset + 16}px` : '';
+        context.style.marginBottom = keyboardOpen
+          ? `${Math.max(keyboardInset + 16, MINIMUM_SCROLL_BUFFER)}px`
+          : '';
 
         if (!keyboardOpen) return;
 
