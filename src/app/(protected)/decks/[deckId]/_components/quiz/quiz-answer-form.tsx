@@ -1,5 +1,5 @@
 import { Button, Card, Chip, Input } from '@heroui/react';
-import { FormEvent } from 'react';
+import { FormEvent, useEffect, useRef } from 'react';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
 
 type Props = {
@@ -19,13 +19,34 @@ export default function QuizAnswerForm({
   onAnswerChange,
   onSubmit,
 }: Props) {
+  const answerInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+
+    const keepAnswerVisible = () => {
+      if (document.activeElement !== answerInputRef.current) return;
+
+      requestAnimationFrame(() => {
+        answerInputRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      });
+    };
+
+    viewport?.addEventListener('resize', keepAnswerVisible);
+
+    return () => viewport?.removeEventListener('resize', keepAnswerVisible);
+  }, []);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit();
   };
 
   return (
-    <Card variant="secondary">
+    <Card variant="secondary" className="mb-[35dvh] sm:mb-0">
       <form onSubmit={handleSubmit}>
         <Card.Header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -53,12 +74,21 @@ export default function QuizAnswerForm({
               Answer with the {direction === 'btf' ? 'front' : 'back'}
             </p>
             <Input
+              ref={answerInputRef}
               aria-label={`Answer with the ${direction === 'btf' ? 'front' : 'back'}`}
               value={answer}
               onChange={e => onAnswerChange(e.target.value)}
               placeholder="Your answer"
               autoFocus
               fullWidth
+              onFocus={() => {
+                window.setTimeout(() => {
+                  answerInputRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                }, 300);
+              }}
             />
           </div>
         </Card.Content>

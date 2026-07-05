@@ -20,6 +20,9 @@ export default async function Navbar() {
       <div className="flex min-w-0 items-center gap-1 text-sm sm:gap-2 sm:text-base">
         {loggedIn ? (
           <>
+            <HeroLink href="/" className="rounded-md px-2 py-2 text-primary sm:px-3">
+              Dashboard
+            </HeroLink>
             <HeroLink href="/decks" className="rounded-md px-2 py-2 text-primary sm:px-3">
               Decks
             </HeroLink>
