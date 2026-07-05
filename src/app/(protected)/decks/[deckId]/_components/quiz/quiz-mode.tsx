@@ -18,7 +18,7 @@ import {
 } from '@/types/quiz.types';
 import { LearnItem, ReviewItem, SrsTransition } from '@/types/review.types';
 import { Button, Card, ProgressBar, Toast } from '@heroui/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
 import { StudyTone } from '@/lib/study-colors';
 import { HomeIcon } from '@heroicons/react/24/outline';
@@ -51,6 +51,7 @@ export default function QuizMode({
   const [pendingSaveCount, setPendingSaveCount] = useState(0);
   const [saveError, setSaveError] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const continueHandledRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.dataset.quizActive = 'true';
@@ -74,6 +75,7 @@ export default function QuizMode({
     setFeedback(null);
     setPendingSaveCount(0);
     setSaveError(false);
+    continueHandledRef.current = false;
   }, [quizItems]);
 
   const currentQuizItem = quizQueue?.[0];
@@ -126,6 +128,7 @@ export default function QuizMode({
   const handleAnswerSubmit = () => {
     if (!currentQuizItem) return;
 
+    continueHandledRef.current = false;
     setFeedback({
       quizItem: currentQuizItem,
       submittedAnswer: answer,
@@ -136,7 +139,8 @@ export default function QuizMode({
   };
 
   const handleContinue = () => {
-    if (!feedback) return;
+    if (!feedback || continueHandledRef.current) return;
+    continueHandledRef.current = true;
 
     const { quizItem, isCorrect } = feedback;
 

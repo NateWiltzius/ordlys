@@ -267,6 +267,7 @@ export async function reviewVocab(
           eq(userVocabState.vocabId, vocabId),
           eq(userVocabState.userId, userId),
           studyDeckAccess(userId),
+          lte(userVocabState.dueAt, now),
         ),
       )
       .for('update')

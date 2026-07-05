@@ -34,6 +34,36 @@ export default async function DeckStudyContent({ deck, canStudy }: Props) {
 
   return (
     <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <StudyActionCard
+          title="Review due cards"
+          description="Practice words that are ready for review and keep your memory fresh."
+          count={counts.reviewsDue}
+          countLabel="reviews due"
+          actionLabel="Review now"
+          icon={ClockIcon}
+          tone="review"
+          href={canStudy ? `/decks/${deck.id}/review` : undefined}
+          unavailableAction={
+            <Button variant="primary" size="lg" className="w-full" isDisabled>
+              Review now
+            </Button>
+          }
+        />
+
+        <StudyActionCard
+          title="Learn new words"
+          description="Add new vocabulary from this deck into your active review queue."
+          count={counts.newWordsAvailable}
+          countLabel="ready to learn"
+          actionLabel="Start learning"
+          icon={SparklesIcon}
+          tone="learning"
+          href={canStudy ? `/decks/${deck.id}/learn` : undefined}
+          unavailableAction={<SubscribeDeckButton deckId={deck.id} />}
+        />
+      </div>
+
       {currentLesson ? (
         <Card>
           <Card.Header>
@@ -77,36 +107,6 @@ export default async function DeckStudyContent({ deck, canStudy }: Props) {
           </Card.Content>
         </Card>
       ) : null}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <StudyActionCard
-          title="Learn new words"
-          description="Add new vocabulary from this deck into your active review queue."
-          count={counts.newWordsAvailable}
-          countLabel="ready to learn"
-          actionLabel="Start learning"
-          icon={SparklesIcon}
-          tone="learning"
-          href={canStudy ? `/decks/${deck.id}/learn` : undefined}
-          unavailableAction={<SubscribeDeckButton deckId={deck.id} />}
-        />
-
-        <StudyActionCard
-          title="Review due cards"
-          description="Practice words that are ready for review and keep your memory fresh."
-          count={counts.reviewsDue}
-          countLabel="reviews due"
-          actionLabel="Review now"
-          icon={ClockIcon}
-          tone="review"
-          href={canStudy ? `/decks/${deck.id}/review` : undefined}
-          unavailableAction={
-            <Button variant="primary" size="lg" className="w-full" isDisabled>
-              Review now
-            </Button>
-          }
-        />
-      </div>
 
       <StudySummary counts={counts} description="Your progress in this deck." />
     </div>
