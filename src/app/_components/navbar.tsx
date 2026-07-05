@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Typography } from '@heroui/react';
 import { signOutAction } from '@/server/auth.actions';
 import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
+import ThemeToggle from '@/app/_components/theme-toggle';
 
 export default async function Navbar() {
   const loggedIn = Boolean(await getCurrentUserIdOrNull());
@@ -44,6 +45,7 @@ export default async function Navbar() {
             </HeroLink>
           </>
         )}
+        <ThemeToggle />
       </div>
     </nav>
   );
