@@ -2,7 +2,7 @@
 
 import { RefObject, useEffect } from 'react';
 
-const VIEWPORT_CLEARANCE = 12;
+const VIEWPORT_CLEARANCE = 24;
 const KEYBOARD_SETTLE_DELAY = 100;
 
 export function useKeepAboveKeyboard(
@@ -46,10 +46,10 @@ export function useKeepAboveKeyboard(
             return;
           }
 
-          const inputRect = input.getBoundingClientRect();
-          if (inputRect.bottom > visibleBottom) {
+          const updatedContextRect = context.getBoundingClientRect();
+          if (updatedContextRect.bottom > visibleBottom) {
             window.scrollBy({
-              top: inputRect.bottom - visibleBottom,
+              top: updatedContextRect.bottom - visibleBottom,
               behavior: 'auto',
             });
           }
