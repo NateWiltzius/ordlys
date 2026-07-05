@@ -12,25 +12,24 @@ export function useKeepAboveKeyboard(
   useEffect(() => {
     const viewport = window.visualViewport;
     const context = contextRef.current;
-    if (!viewport || !context) return;
+    const input = inputRef.current;
+    if (!viewport || !context || !input) return;
     let settleTimer: number | undefined;
 
     const updatePosition = () => {
       window.clearTimeout(settleTimer);
       settleTimer = window.setTimeout(() => {
+        const keyboardOpen = document.activeElement === input;
         const keyboardInset = Math.max(
           0,
           window.innerHeight - viewport.height - viewport.offsetTop,
         );
-        context.dataset.keyboardOpen = String(keyboardInset > 0);
+        context.dataset.keyboardOpen = String(keyboardOpen);
         context.style.marginBottom = keyboardInset > 0 ? `${keyboardInset + 16}px` : '';
 
-        if (document.activeElement !== inputRef.current || keyboardInset === 0) return;
+        if (!keyboardOpen) return;
 
         requestAnimationFrame(() => {
-          const input = inputRef.current;
-          if (!input) return;
-
           const contextRect = context.getBoundingClientRect();
           const visibleTop = viewport.offsetTop + VIEWPORT_CLEARANCE;
           const visibleBottom = viewport.offsetTop + viewport.height - VIEWPORT_CLEARANCE;
@@ -57,11 +56,22 @@ export function useKeepAboveKeyboard(
       }, KEYBOARD_SETTLE_DELAY);
     };
 
+    const clearKeyboardState = () => {
+      window.clearTimeout(settleTimer);
+      context.dataset.keyboardOpen = 'false';
+      context.style.marginBottom = '';
+    };
+
     viewport.addEventListener('resize', updatePosition);
+    input.addEventListener('focus', updatePosition);
+    input.addEventListener('blur', clearKeyboardState);
+    updatePosition();
 
     return () => {
       window.clearTimeout(settleTimer);
       viewport.removeEventListener('resize', updatePosition);
+      input.removeEventListener('focus', updatePosition);
+      input.removeEventListener('blur', clearKeyboardState);
       context.style.marginBottom = '';
       delete context.dataset.keyboardOpen;
     };
