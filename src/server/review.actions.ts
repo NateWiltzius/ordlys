@@ -13,7 +13,6 @@ import {
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
-import { revalidatePath } from 'next/cache';
 
 export async function getLessonProgressForDeckAction(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -50,50 +49,28 @@ export async function getPlacementPageDataAction(deckIdInput: number, lessonIdIn
   return await getPlacementTestVocabs(deckId, lessonId, userId);
 }
 
-export async function startVocabAction(
-  vocabId: number,
-  deckIdInput: number,
-): Promise<SrsTransition> {
+export async function startVocabAction(vocabId: number): Promise<SrsTransition> {
   const parsedVocabId = parsePositiveInteger(vocabId);
-  const deckId = parsePositiveInteger(deckIdInput);
-  if (!parsedVocabId || !deckId) throw new Error('Invalid vocabulary or deck ID.');
-
-  const transition = await startVocab(parsedVocabId, await getCurrentUserId());
-  revalidateStudyPaths(deckId);
-  return transition;
+  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
+  return await startVocab(parsedVocabId, await getCurrentUserId());
 }
 
 export async function reviewVocabAction(
   vocabId: number,
   wasCorrect: boolean,
-  deckIdInput: number,
 ): Promise<SrsTransition> {
   const parsedVocabId = parsePositiveInteger(vocabId);
-  const deckId = parsePositiveInteger(deckIdInput);
-  if (!parsedVocabId || !deckId) throw new Error('Invalid vocabulary or deck ID.');
+  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
   if (typeof wasCorrect !== 'boolean') throw new Error('Invalid review result.');
-
-  const transition = await reviewVocab(parsedVocabId, await getCurrentUserId(), wasCorrect);
-  revalidateStudyPaths(deckId);
-  return transition;
+  return await reviewVocab(parsedVocabId, await getCurrentUserId(), wasCorrect);
 }
 
 export async function placeVocabAction(
   vocabId: number,
   wasCorrect: boolean,
-  deckIdInput: number,
 ): Promise<SrsTransition> {
   const parsedVocabId = parsePositiveInteger(vocabId);
-  const deckId = parsePositiveInteger(deckIdInput);
-  if (!parsedVocabId || !deckId) throw new Error('Invalid vocabulary or deck ID.');
+  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
   if (typeof wasCorrect !== 'boolean') throw new Error('Invalid placement result.');
-
-  const transition = await placeVocab(parsedVocabId, await getCurrentUserId(), wasCorrect);
-  revalidateStudyPaths(deckId);
-  return transition;
-}
-
-function revalidateStudyPaths(deckId: number) {
-  revalidatePath('/');
-  revalidatePath(`/decks/${deckId}`);
+  return await placeVocab(parsedVocabId, await getCurrentUserId(), wasCorrect);
 }

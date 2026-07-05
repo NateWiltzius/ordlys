@@ -64,7 +64,7 @@ export default function LearnPage({ deckId, learnItems, lessonProgress }: Props)
           tone="learning"
           completionHref={`/decks/${deckId}`}
           onVocabComplete={async vocabId => {
-            return await startVocabAction(vocabId, deckId);
+            return await startVocabAction(vocabId);
           }}
         />
       )}

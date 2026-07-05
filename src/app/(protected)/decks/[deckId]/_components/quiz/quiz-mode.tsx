@@ -17,12 +17,10 @@ import {
   QuizProgressStats,
 } from '@/types/quiz.types';
 import { LearnItem, ReviewItem, SrsTransition } from '@/types/review.types';
-import { buttonVariants, Button, Card, ProgressBar, Toast } from '@heroui/react';
+import { Button, Card, ProgressBar, Toast } from '@heroui/react';
 import { useEffect, useMemo, useState } from 'react';
-import ButtonLink from '@/components/shared/button-link';
 import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
 import { StudyTone } from '@/lib/study-colors';
-import Link from 'next/link';
 import { HomeIcon } from '@heroicons/react/24/outline';
 
 type Props = {
@@ -80,18 +78,15 @@ export default function QuizMode({
 
   const currentQuizItem = quizQueue?.[0];
   const exitQuizButton = (
-    <Link
-      href="/"
+    <Button
+      variant="tertiary"
+      size="sm"
       aria-label="Exit quiz and go to dashboard"
-      className={buttonVariants({
-        variant: 'tertiary',
-        size: 'sm',
-        className:
-          'fixed right-4 top-4 z-50 size-10 rounded-full border border-default-200 bg-background/95 p-0 shadow-md backdrop-blur',
-      })}
+      className="fixed right-4 top-4 z-50 size-10 rounded-full border border-default-200 bg-background/95 p-0 shadow-md backdrop-blur"
+      onPress={() => window.location.assign('/')}
     >
       <HomeIcon className="size-5" aria-hidden="true" />
-    </Link>
+    </Button>
   );
 
   const progressStats: QuizProgressStats = useMemo(() => {
@@ -261,9 +256,13 @@ export default function QuizMode({
                   Saving progress
                 </Button>
               ) : (
-                <ButtonLink href={completionHref} className="w-full sm:w-auto">
+                <Button
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  onPress={() => window.location.assign(completionHref)}
+                >
                   Back to deck
-                </ButtonLink>
+                </Button>
               )}
             </Card.Footer>
           </Card>
