@@ -1,12 +1,18 @@
 DO $seed$
 DECLARE
+  -- Replace this placeholder with the intended Supabase user ID.
+  seed_owner_id uuid := '00000000-0000-0000-0000-000000000001';
   core_deck_id integer;
   seeded_vocab_count integer;
 BEGIN
+  IF seed_owner_id = '00000000-0000-0000-0000-000000000001'::uuid THEN
+    RAISE EXCEPTION 'Replace seed_owner_id with a real Supabase user ID before running this seed';
+  END IF;
+
   SELECT id
   INTO core_deck_id
   FROM decks
-  WHERE owner_id = 'system'
+  WHERE owner_id = seed_owner_id
     AND title = 'Norwegian Core 300'
   LIMIT 1;
 
@@ -15,7 +21,7 @@ BEGIN
   ELSE
     INSERT INTO decks (owner_id, title, description, visibility)
     VALUES (
-      'system',
+      seed_owner_id,
       'Norwegian Core 300',
       'Practical everyday Bokmål vocabulary for beginners living in Norway.',
       'public'

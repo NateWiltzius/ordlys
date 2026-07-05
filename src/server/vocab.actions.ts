@@ -1,20 +1,17 @@
 'use server';
 
-import { getAccessibleDeckById, getDeckById } from '@/db/queries/deck.queries';
+import { getAccessibleDeckById } from '@/db/queries/deck.queries';
 import { getLessonById } from '@/db/queries/lesson.queries';
 import {
   createVocab,
   deleteVocab,
-  getVocabByDeckId,
-  getVocabById,
   getVocabByLessonId,
   getUserVocabLevelsByLessonId,
   moveVocab,
   updateVocab,
 } from '@/db/queries/vocab.queries';
-import { createClient } from '@/lib/supabase/server';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { CreateVocab, UpdateVocabInput, Vocab } from '@/types/vocab.types';
+import { CreateVocab, UpdateVocabInput } from '@/types/vocab.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
@@ -48,20 +45,6 @@ export async function getLessonVocabularyAction(deckId: number, lessonId: number
   };
 }
 
-export const getVocabsByDeckAction = async (deckId: number): Promise<Vocab[]> => {
-  const parsedDeckId = parsePositiveInteger(deckId);
-  if (!parsedDeckId) {
-    throw new Error('Invalid deck ID.');
-  }
-
-  const deck = await getDeckById(parsedDeckId);
-  if (!deck || deck.deletedAt || deck.ownerId !== (await getCurrentUserId())) {
-    throw new Error('Deck not found or access denied.');
-  }
-
-  return await getVocabByDeckId(parsedDeckId);
-};
-
 export async function createVocabAction(vocab: CreateVocab) {
   const { front, back, frontAlternatives, backAlternatives, lessonId, reading } = vocab;
 
@@ -76,35 +59,18 @@ export async function createVocabAction(vocab: CreateVocab) {
   const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
   const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, normalizedBack);
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to create a lesson.');
-  }
-
-  const lesson = await getLessonById(lessonId);
-  if (!lesson) {
-    throw new Error('Lesson not found.');
-  }
-
-  const deck = await getDeckById(lesson.deckId);
-  if (!deck || deck.deletedAt) {
-    throw new Error('Deck not found.');
-  }
-
-  if (deck.ownerId !== data.user.id) {
-    throw new Error('Not authorized to create vocab for this lesson.');
-  }
-
-  await createVocab({
-    lessonId,
-    front: normalizedFront,
-    back: normalizedBack,
-    frontAlternatives: normalizedFrontAlternatives,
-    backAlternatives: normalizedBackAlternatives,
-    reading: normalizedReading,
-  });
-  revalidatePath(`/decks/${lesson.deckId}/edit`);
+  const deckId = await createVocab(
+    {
+      lessonId,
+      front: normalizedFront,
+      back: normalizedBack,
+      frontAlternatives: normalizedFrontAlternatives,
+      backAlternatives: normalizedBackAlternatives,
+      reading: normalizedReading,
+    },
+    await getCurrentUserId(),
+  );
+  revalidatePath(`/decks/${deckId}/edit`);
 }
 
 export async function moveVocabAction(vocabId: number, direction: OrderDirection) {
@@ -116,13 +82,7 @@ export async function moveVocabAction(vocabId: number, direction: OrderDirection
     throw new Error('Invalid move direction.');
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to reorder vocabulary.');
-  }
-
-  const deckId = await moveVocab(vocabId, data.user.id, direction);
+  const deckId = await moveVocab(vocabId, await getCurrentUserId(), direction);
   revalidatePath(`/decks/${deckId}`);
   revalidatePath(`/decks/${deckId}/edit`);
 }
@@ -141,45 +101,28 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
   const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
   const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, normalizedBack);
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to update vocabulary.');
-  }
+  const deckId = await updateVocab(
+    vocabId,
+    {
+      front: normalizedFront,
+      back: normalizedBack,
+      frontAlternatives: normalizedFrontAlternatives,
+      backAlternatives: normalizedBackAlternatives,
+      reading: normalizedReading,
+    },
+    await getCurrentUserId(),
+  );
 
-  const existingVocab = await getVocabById(vocabId);
-  const lesson = existingVocab ? await getLessonById(existingVocab.lessonId) : undefined;
-  const deck = lesson ? await getDeckById(lesson.deckId) : undefined;
-
-  if (!existingVocab || !lesson || !deck || deck.deletedAt || deck.ownerId !== data.user.id) {
-    throw new Error('Vocabulary not found or access denied.');
-  }
-
-  await updateVocab(vocabId, {
-    front: normalizedFront,
-    back: normalizedBack,
-    frontAlternatives: normalizedFrontAlternatives,
-    backAlternatives: normalizedBackAlternatives,
-    reading: normalizedReading,
-  });
-
-  revalidatePath(`/decks/${lesson.deckId}`);
-  revalidatePath(`/decks/${lesson.deckId}/edit`);
+  revalidatePath(`/decks/${deckId}`);
+  revalidatePath(`/decks/${deckId}/edit`);
 }
 
 export async function deleteVocabAction(vocabId: number) {
   const parsedVocabId = parsePositiveInteger(vocabId);
   if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
-  const userId = await getCurrentUserId();
-  const existingVocab = await getVocabById(parsedVocabId);
-  const lesson = existingVocab ? await getLessonById(existingVocab.lessonId) : undefined;
-  const deck = lesson ? await getDeckById(lesson.deckId) : undefined;
-  if (!existingVocab || !lesson || !deck || deck.deletedAt || deck.ownerId !== userId) {
-    throw new Error('Vocabulary not found or access denied.');
-  }
-  await deleteVocab(parsedVocabId);
-  revalidatePath(`/decks/${lesson.deckId}`);
-  revalidatePath(`/decks/${lesson.deckId}/edit`);
+  const deckId = await deleteVocab(parsedVocabId, await getCurrentUserId());
+  revalidatePath(`/decks/${deckId}`);
+  revalidatePath(`/decks/${deckId}/edit`);
 }
 
 function normalizeAlternatives(

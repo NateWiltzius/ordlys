@@ -10,6 +10,7 @@ export const createLesson = async (lesson: CreateLesson, userId: string) => {
       .select({ id: decks.id })
       .from(decks)
       .where(and(eq(decks.id, lesson.deckId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .for('update')
       .limit(1);
 
     if (!deck) {
@@ -43,13 +44,14 @@ export const getLessonById = async (lessonId: number): Promise<Lesson | undefine
   return (await db.select().from(lessons).where(eq(lessons.id, lessonId)).limit(1))[0];
 };
 
-export const deleteLesson = async (lessonId: number, userId: string): Promise<void> => {
-  await db.transaction(async tx => {
+export const deleteLesson = async (lessonId: number, userId: string): Promise<number> => {
+  return db.transaction(async tx => {
     const [lesson] = await tx
-      .select({ id: lessons.id })
+      .select({ id: lessons.id, deckId: lessons.deckId })
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
       .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .for('update')
       .limit(1);
 
     if (!lesson) {
@@ -57,6 +59,7 @@ export const deleteLesson = async (lessonId: number, userId: string): Promise<vo
     }
 
     await tx.delete(lessons).where(eq(lessons.id, lessonId));
+    return lesson.deckId;
   });
 };
 
@@ -71,6 +74,7 @@ export const moveLesson = async (
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
       .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .for('update')
       .limit(1);
 
     if (!targetLesson) {
@@ -78,7 +82,7 @@ export const moveLesson = async (
     }
 
     const orderedLessons = await tx
-      .select({ id: lessons.id })
+      .select({ id: lessons.id, orderIndex: lessons.orderIndex })
       .from(lessons)
       .where(eq(lessons.deckId, targetLesson.deckId))
       .orderBy(lessons.orderIndex, lessons.id);
@@ -90,14 +94,16 @@ export const moveLesson = async (
       return targetLesson.deckId;
     }
 
-    [orderedLessons[currentIndex], orderedLessons[targetIndex]] = [
-      orderedLessons[targetIndex],
-      orderedLessons[currentIndex],
-    ];
-
-    for (const [orderIndex, lesson] of orderedLessons.entries()) {
-      await tx.update(lessons).set({ orderIndex }).where(eq(lessons.id, lesson.id));
-    }
+    const currentLesson = orderedLessons[currentIndex];
+    const adjacentLesson = orderedLessons[targetIndex];
+    await tx
+      .update(lessons)
+      .set({ orderIndex: adjacentLesson.orderIndex })
+      .where(eq(lessons.id, currentLesson.id));
+    await tx
+      .update(lessons)
+      .set({ orderIndex: currentLesson.orderIndex })
+      .where(eq(lessons.id, adjacentLesson.id));
 
     return targetLesson.deckId;
   });

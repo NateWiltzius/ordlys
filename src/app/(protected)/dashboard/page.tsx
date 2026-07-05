@@ -1,10 +1,10 @@
 import PageHeader from '@/components/shared/layout/page-header';
-import { getDashboardDataAction } from '@/server/deck.actions';
 import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
 import StudySummary from '@/components/shared/study-summary';
 import EmptyState from '@/components/shared/empty-state';
 import DashboardDeckRow from '@/app/(protected)/dashboard/_components/dashboard-deck-row';
+import { getDashboardDataAction } from '@/server/deck.actions';
 
 export default async function DashboardPage() {
   const { activeDecks, allDeckStats, deckStats } = await getDashboardDataAction();

@@ -1,11 +1,8 @@
 import EditPage from '@/app/(protected)/decks/[deckId]/edit/_components/edit-page';
 import { Vocab } from '@/types/vocab.types';
-import { getOwnedDeckById } from '@/db/queries/deck.queries';
-import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
-import { getVocabByDeckId } from '@/db/queries/vocab.queries';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
-import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { getEditDeckPageDataAction } from '@/server/deck.actions';
 
 type Props = {
   params: Promise<{
@@ -18,14 +15,9 @@ export default async function Page({ params }: Props) {
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
-  const userId = await getCurrentUserId();
-  const deck = await getOwnedDeckById(parsedDeckId, userId);
-  if (!deck) notFound();
-
-  const [lessons, vocabs] = await Promise.all([
-    getLessonsByDeckId(parsedDeckId),
-    getVocabByDeckId(parsedDeckId),
-  ]);
+  const data = await getEditDeckPageDataAction(parsedDeckId);
+  if (!data) notFound();
+  const { deck, lessons, vocabs } = data;
 
   const lessonVocabs = vocabs.reduce<Record<number, Vocab[]>>((accumulator, vocab) => {
     accumulator[vocab.lessonId] ??= [];

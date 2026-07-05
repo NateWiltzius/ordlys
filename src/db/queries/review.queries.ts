@@ -204,47 +204,44 @@ export async function startVocab(vocabId: number, userId: string): Promise<SrsTr
   const now = new Date();
   const initialSrsState = getInitialSrsState(now);
 
-  const [vocabAccess] = await db
-    .select({ id: vocabs.id, deckId: decks.id, lessonId: lessons.id })
-    .from(vocabs)
-    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-    .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-    )
-    .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
-    .limit(1);
+  return db.transaction(async tx => {
+    const [vocabAccess] = await tx
+      .select({ id: vocabs.id, deckId: decks.id, lessonId: lessons.id })
+      .from(vocabs)
+      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .innerJoin(
+        deckSubscriptions,
+        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+      )
+      .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
+      .for('update')
+      .limit(1);
 
-  if (!vocabAccess) {
-    throw new Error('Vocab not found or access denied');
-  }
+    if (!vocabAccess) throw new Error('Vocab not found or access denied');
 
-  const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
-  const lessonIsUnlocked = lessonProgress.some(
-    lesson => lesson.lessonId === vocabAccess.lessonId && lesson.isUnlocked,
-  );
+    const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
+    const lessonIsUnlocked = lessonProgress.some(
+      lesson => lesson.lessonId === vocabAccess.lessonId && lesson.isUnlocked,
+    );
+    if (!lessonIsUnlocked) {
+      throw new Error('Complete more reviews in the previous lesson before starting this word');
+    }
 
-  if (!lessonIsUnlocked) {
-    throw new Error('Complete more reviews in the previous lesson before starting this word');
-  }
+    await tx
+      .insert(userVocabState)
+      .values({
+        userId,
+        vocabId,
+        dueAt: initialSrsState.dueAt,
+        srsLevel: initialSrsState.srsLevel,
+      })
+      .onConflictDoNothing({
+        target: [userVocabState.userId, userVocabState.vocabId],
+      });
 
-  await db
-    .insert(userVocabState)
-    .values({
-      userId,
-      vocabId,
-      dueAt: initialSrsState.dueAt,
-      srsLevel: initialSrsState.srsLevel,
-    })
-    .onConflictDoNothing({
-      target: [userVocabState.userId, userVocabState.vocabId],
-    });
-
-  return {
-    previousLevel: null,
-    nextLevel: initialSrsState.srsLevel,
-  };
+    return { previousLevel: null, nextLevel: initialSrsState.srsLevel };
+  });
 }
 
 export async function reviewVocab(
@@ -254,50 +251,40 @@ export async function reviewVocab(
 ): Promise<SrsTransition> {
   const now = new Date();
 
-  const [state] = await db
-    .select({
-      srsLevel: userVocabState.srsLevel,
-    })
-    .from(userVocabState)
-    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
-    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-    .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-    )
-    .where(
-      and(
-        eq(userVocabState.vocabId, vocabId),
-        eq(userVocabState.userId, userId),
-        studyDeckAccess(userId),
-      ),
-    )
-    .limit(1);
+  return db.transaction(async tx => {
+    const [state] = await tx
+      .select({ srsLevel: userVocabState.srsLevel })
+      .from(userVocabState)
+      .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .innerJoin(
+        deckSubscriptions,
+        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+      )
+      .where(
+        and(
+          eq(userVocabState.vocabId, vocabId),
+          eq(userVocabState.userId, userId),
+          studyDeckAccess(userId),
+        ),
+      )
+      .for('update')
+      .limit(1);
+    if (!state) throw new Error('User vocab state not found or access denied');
 
-  if (!state) {
-    throw new Error('User vocab state not found or access denied');
-  }
+    const nextSrsState = getNextSrsState({
+      currentSrsLevel: state.srsLevel,
+      wasCorrect,
+      now,
+    });
+    await tx
+      .update(userVocabState)
+      .set({ srsLevel: nextSrsState.srsLevel, dueAt: nextSrsState.dueAt, updatedAt: now })
+      .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)));
 
-  const nextSrsState = getNextSrsState({
-    currentSrsLevel: state.srsLevel,
-    wasCorrect,
-    now,
+    return { previousLevel: state.srsLevel, nextLevel: nextSrsState.srsLevel };
   });
-
-  await db
-    .update(userVocabState)
-    .set({
-      srsLevel: nextSrsState.srsLevel,
-      dueAt: nextSrsState.dueAt,
-      updatedAt: now,
-    })
-    .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)));
-
-  return {
-    previousLevel: state.srsLevel,
-    nextLevel: nextSrsState.srsLevel,
-  };
 }
 
 export async function placeVocab(
@@ -311,55 +298,49 @@ export async function placeVocab(
     now,
   );
 
-  const [vocabAccess] = await db
-    .select({ id: vocabs.id })
-    .from(vocabs)
-    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-    .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-    )
-    .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
-    .limit(1);
+  return db.transaction(async tx => {
+    const [vocabAccess] = await tx
+      .select({ id: vocabs.id })
+      .from(vocabs)
+      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .innerJoin(
+        deckSubscriptions,
+        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+      )
+      .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
+      .for('update')
+      .limit(1);
+    if (!vocabAccess) throw new Error('Vocab not found or access denied');
 
-  if (!vocabAccess) {
-    throw new Error('Vocab not found or access denied');
-  }
+    const [existingState] = await tx
+      .select({ srsLevel: userVocabState.srsLevel })
+      .from(userVocabState)
+      .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)))
+      .for('update')
+      .limit(1);
+    if (existingState && existingState.srsLevel >= targetState.srsLevel) {
+      return { previousLevel: existingState.srsLevel, nextLevel: existingState.srsLevel };
+    }
 
-  const [existingState] = await db
-    .select({ srsLevel: userVocabState.srsLevel })
-    .from(userVocabState)
-    .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)))
-    .limit(1);
-
-  if (existingState && existingState.srsLevel >= targetState.srsLevel) {
-    return {
-      previousLevel: existingState.srsLevel,
-      nextLevel: existingState.srsLevel,
-    };
-  }
-
-  await db
-    .insert(userVocabState)
-    .values({
-      userId,
-      vocabId,
-      srsLevel: targetState.srsLevel,
-      dueAt: targetState.dueAt,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [userVocabState.userId, userVocabState.vocabId],
-      set: {
+    await tx
+      .insert(userVocabState)
+      .values({
+        userId,
+        vocabId,
         srsLevel: targetState.srsLevel,
         dueAt: targetState.dueAt,
         updatedAt: now,
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: [userVocabState.userId, userVocabState.vocabId],
+        set: {
+          srsLevel: targetState.srsLevel,
+          dueAt: targetState.dueAt,
+          updatedAt: now,
+        },
+      });
 
-  return {
-    previousLevel: existingState?.srsLevel ?? null,
-    nextLevel: targetState.srsLevel,
-  };
+    return { previousLevel: existingState?.srsLevel ?? null, nextLevel: targetState.srsLevel };
+  });
 }

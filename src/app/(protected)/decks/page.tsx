@@ -3,8 +3,8 @@ import LearningDecks from '@/app/(protected)/decks/_components/learning-decks';
 import OwnedDecks from '@/app/(protected)/decks/_components/owned-decks';
 import PublicDecks from '@/app/(protected)/decks/_components/public-decks';
 import PageHeader from '@/components/shared/layout/page-header';
-import { getDecksPageDataAction } from '@/server/deck.actions';
 import { Tabs } from '@heroui/react';
+import { getDecksPageDataAction } from '@/server/deck.actions';
 
 export default async function DeckPage() {
   const { ownedDecks, publicDecks, learningDecks } = await getDecksPageDataAction();

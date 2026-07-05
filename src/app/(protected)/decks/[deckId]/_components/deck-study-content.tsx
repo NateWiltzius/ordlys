@@ -9,14 +9,13 @@ import SubscribeDeckButton from '@/app/(protected)/decks/[deckId]/_components/su
 
 type Props = {
   deck: Deck;
-  userId: string;
   canStudy: boolean;
 };
 
-export default async function DeckStudyContent({ deck, userId, canStudy }: Props) {
+export default async function DeckStudyContent({ deck, canStudy }: Props) {
   const [counts, lessonProgress] = await Promise.all([
     getDeckStudyCountsAction(deck.id),
-    getCachedLessonProgress(deck.id, userId),
+    getCachedLessonProgress(deck.id),
   ]);
   const nonEmptyLessonProgress = lessonProgress.filter(lesson => lesson.totalWords > 0);
   const currentLesson =

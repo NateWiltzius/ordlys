@@ -7,6 +7,7 @@ import {
   serial,
   timestamp,
   unique,
+  uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -17,7 +18,7 @@ export const decks = pgTable(
   'decks',
   {
     id: serial('id').primaryKey(),
-    ownerId: varchar('owner_id', { length: 255 }).notNull(),
+    ownerId: uuid('owner_id').notNull(),
     title: varchar('title', { length: 255 }).notNull(),
     description: varchar('description', { length: 255 }),
     visibility: visibilityEnum(),
@@ -35,7 +36,7 @@ export const deckSubscriptions = pgTable(
   'deck_subscriptions',
   {
     id: serial('id').primaryKey(),
-    userId: varchar('user_id', { length: 255 }).notNull(),
+    userId: uuid('user_id').notNull(),
     deckId: integer('deck_id')
       .notNull()
       .references(() => decks.id, { onDelete: 'cascade' }),
@@ -92,7 +93,7 @@ export const userVocabState = pgTable(
   {
     id: serial('id').primaryKey(),
 
-    userId: varchar('user_id', { length: 255 }).notNull(),
+    userId: uuid('user_id').notNull(),
     vocabId: integer('vocab_id')
       .notNull()
       .references(() => vocabs.id, { onDelete: 'cascade' }),

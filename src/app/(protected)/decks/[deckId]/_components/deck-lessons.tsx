@@ -5,12 +5,11 @@ import { Card } from '@heroui/react';
 
 type Props = {
   deckId: number;
-  userId: string;
   canStudy: boolean;
 };
 
-export default async function DeckLessons({ deckId, userId, canStudy }: Props) {
-  const lessonProgress = await getCachedLessonProgress(deckId, userId);
+export default async function DeckLessons({ deckId, canStudy }: Props) {
+  const lessonProgress = await getCachedLessonProgress(deckId);
 
   return (
     <Card>

@@ -3,12 +3,10 @@ import DeckLessons from '@/app/(protected)/decks/[deckId]/_components/deck-lesso
 import LessonsSkeleton from '@/app/(protected)/decks/[deckId]/_components/lessons-skeleton';
 import { StudyContentSkeleton } from '@/app/(protected)/decks/[deckId]/_components/study-content-skeleton';
 import DeckStudyContent from '@/app/(protected)/decks/[deckId]/_components/deck-study-content';
-import { getAccessibleDeckById } from '@/db/queries/deck.queries';
-import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import { getDeckPageDataAction } from '@/server/deck.actions';
 
 type Props = {
   params: Promise<{
@@ -21,26 +19,20 @@ export default async function DeckPage({ params }: Props) {
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
-  const currentUserId = await getCurrentUserId();
-  const [deck, isSubscribed] = await Promise.all([
-    getAccessibleDeckById(parsedDeckId, currentUserId),
-    hasDeckSubscription(parsedDeckId, currentUserId),
-  ]);
-  if (!deck) notFound();
-
-  const isOwned = deck.ownerId === currentUserId;
-  const canStudy = isSubscribed;
+  const data = await getDeckPageDataAction(parsedDeckId);
+  if (!data) notFound();
+  const { deck, isOwned, isSubscribed } = data;
 
   return (
     <div className="space-y-6">
       <DeckHeader deck={deck} isOwned={isOwned} isSubscribed={isSubscribed} />
 
       <Suspense fallback={<StudyContentSkeleton />}>
-        <DeckStudyContent deck={deck} userId={currentUserId} canStudy={canStudy} />
+        <DeckStudyContent deck={deck} canStudy={isSubscribed} />
       </Suspense>
 
       <Suspense fallback={<LessonsSkeleton />}>
-        <DeckLessons deckId={deck.id} userId={currentUserId} canStudy={canStudy} />
+        <DeckLessons deckId={deck.id} canStudy={isSubscribed} />
       </Suspense>
     </div>
   );

@@ -4,10 +4,10 @@ import {
   createDeckSubscription,
   deleteDeckSubscription,
 } from '@/db/queries/deck-subscription.queries';
-import { createClient } from '@/lib/supabase/server';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { CreateDeckSubscription } from '@/types/deck-subscription.types';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 
 export async function subscribeUserToDeckAction(deckId: number) {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -15,16 +15,11 @@ export async function subscribeUserToDeckAction(deckId: number) {
     throw new Error('Invalid deck ID.');
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to subscribe to a deck.');
-  }
+  const userId = await getCurrentUserId();
 
   const newDeckSubscription: CreateDeckSubscription = {
     deckId: parsedDeckId,
-    userId: data.user.id,
+    userId,
   };
 
   await createDeckSubscription(newDeckSubscription);
@@ -39,14 +34,7 @@ export async function unsubscribeUserFromDeckAction(deckId: number) {
     throw new Error('Invalid deck ID.');
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to unsubscribe from a deck.');
-  }
-
-  await deleteDeckSubscription(parsedDeckId, data.user.id);
+  await deleteDeckSubscription(parsedDeckId, await getCurrentUserId());
   revalidatePath('/decks');
   revalidatePath(`/decks/${parsedDeckId}`);
   revalidatePath('/dashboard');

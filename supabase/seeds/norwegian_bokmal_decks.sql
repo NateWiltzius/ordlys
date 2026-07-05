@@ -1,9 +1,14 @@
 DO $seed$
 DECLARE
-  seed_owner_id text := 'REPLACE_WITH_SUPABASE_USER_ID';
+  -- Replace this valid placeholder UUID with the intended Supabase user ID.
+  seed_owner_id uuid := '00000000-0000-0000-0000-000000000001';
   noun_deck_id integer;
   verb_deck_id integer;
 BEGIN
+  IF seed_owner_id = '00000000-0000-0000-0000-000000000001'::uuid THEN
+    RAISE EXCEPTION 'Replace seed_owner_id with a real Supabase user ID before running this seed';
+  END IF;
+
   INSERT INTO decks (owner_id, title, description, visibility)
   VALUES (
     seed_owner_id,

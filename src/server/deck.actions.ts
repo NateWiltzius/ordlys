@@ -3,23 +3,25 @@
 import {
   createDeck,
   deleteDeck,
-  updateDeck,
+  getAccessibleDeckById,
   getAllDecksStudyCounts,
-  getDeckById,
   getDeckCardStudyCounts,
   getDecksByOwnerId,
   getDeckStudyCounts,
+  getOwnedDeckById,
   getPublicDecks,
   getUserActiveDecks,
   getUserSubscribedDecks,
+  updateDeck,
 } from '@/db/queries/deck.queries';
-import { createClient } from '@/lib/supabase/server';
-import { CreateDeck, CreateDeckInput, Deck } from '@/types/deck.types';
-import { ReviewCounts } from '@/types/review.types';
+import { CreateDeck, CreateDeckInput } from '@/types/deck.types';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { CONTENT_LIMITS, optionalText, requiredText } from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
+import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
+import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
+import { getVocabByDeckId } from '@/db/queries/vocab.queries';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
@@ -29,7 +31,6 @@ export async function getDashboardDataAction() {
     getAllDecksStudyCounts(userId, activeDeckIds),
     getDeckCardStudyCounts(activeDeckIds, userId),
   ]);
-
   return { activeDecks, allDeckStats, deckStats };
 }
 
@@ -40,18 +41,42 @@ export async function getDecksPageDataAction() {
     getPublicDecks(userId),
     getUserSubscribedDecks(userId),
   ]);
-
   return { ownedDecks, publicDecks, learningDecks };
 }
 
+export async function getDeckPageDataAction(id: number) {
+  const deckId = parsePositiveInteger(id);
+  if (!deckId) throw new Error('Invalid deck ID.');
+  const userId = await getCurrentUserId();
+  const [deck, isSubscribed] = await Promise.all([
+    getAccessibleDeckById(deckId, userId),
+    hasDeckSubscription(deckId, userId),
+  ]);
+  if (!deck) return null;
+  return { deck, isOwned: deck.ownerId === userId, isSubscribed };
+}
+
+export async function getEditDeckPageDataAction(id: number) {
+  const deckId = parsePositiveInteger(id);
+  if (!deckId) throw new Error('Invalid deck ID.');
+  const userId = await getCurrentUserId();
+  const deck = await getOwnedDeckById(deckId, userId);
+  if (!deck) return null;
+  const [lessons, vocabs] = await Promise.all([
+    getLessonsByDeckId(deckId),
+    getVocabByDeckId(deckId),
+  ]);
+  return { deck, lessons, vocabs };
+}
+
+export async function getDeckStudyCountsAction(id: number) {
+  const deckId = parsePositiveInteger(id);
+  if (!deckId) throw new Error('Invalid deck ID.');
+  return await getDeckStudyCounts(deckId, await getCurrentUserId());
+}
+
 export const createDeckAction = async (deck: CreateDeckInput): Promise<void> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to create a deck.');
-  }
-
+  const userId = await getCurrentUserId();
   if (!deck || typeof deck !== 'object') throw new Error('Invalid deck.');
   if (deck.visibility !== 'public' && deck.visibility !== 'private') {
     throw new Error('Visibility must be public or private.');
@@ -60,7 +85,7 @@ export const createDeckAction = async (deck: CreateDeckInput): Promise<void> => 
     title: requiredText(deck.title, 'Deck title', CONTENT_LIMITS.deckTitle),
     description: optionalText(deck.description, 'Description', CONTENT_LIMITS.deckDescription),
     visibility: deck.visibility,
-    ownerId: data.user.id,
+    ownerId: userId,
   };
 
   await createDeck(deckWithOwner);
@@ -84,48 +109,10 @@ export async function updateDeckAction(id: number, input: CreateDeckInput): Prom
   revalidatePath(`/decks/${deckId}/edit`);
 }
 
-export const getDecksByOwnerIdAction = async (): Promise<Deck[]> => {
-  return await getDecksByOwnerId(await getCurrentUserId());
-};
-
-export const getUserActiveDecksAction = async (): Promise<Deck[]> => {
-  return await getUserActiveDecks(await getCurrentUserId());
-};
-
-export const getPublicDecksAction = async (): Promise<Deck[]> => {
-  return await getPublicDecks(await getCurrentUserId());
-};
-
 export const deleteDeckAction = async (id: number): Promise<void> => {
-  if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
-    throw new Error('Invalid deck ID.');
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    throw new Error('User must be authenticated to delete a deck.');
-  }
-
-  const deck = await getDeckById(id);
-  if (!deck) {
-    throw new Error('Deck not found.');
-  }
-
-  if (deck.ownerId !== data.user.id) {
-    throw new Error('Not authorized to delete this deck.');
-  }
-
-  await deleteDeck(id, data.user.id);
+  const deckId = parsePositiveInteger(id);
+  if (!deckId) throw new Error('Invalid deck ID.');
+  await deleteDeck(deckId, await getCurrentUserId());
   revalidatePath('/decks');
   revalidatePath('/dashboard');
 };
-
-export async function getDeckStudyCountsAction(deckId: number): Promise<ReviewCounts> {
-  return await getDeckStudyCounts(deckId, await getCurrentUserId());
-}
-
-export async function getAllDecksStudyCountsAction(): Promise<ReviewCounts> {
-  return await getAllDecksStudyCounts(await getCurrentUserId());
-}

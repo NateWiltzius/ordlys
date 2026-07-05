@@ -25,18 +25,6 @@ export const getVocabById = async (vocabId: number): Promise<Vocab | undefined> 
   return (await db.select().from(vocabs).where(eq(vocabs.id, vocabId)).limit(1))[0];
 };
 
-export const getUserVocabLevelsByDeckId = async (deckId: number, userId: string) => {
-  return db
-    .select({
-      vocabId: userVocabState.vocabId,
-      srsLevel: userVocabState.srsLevel,
-    })
-    .from(userVocabState)
-    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
-    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-    .where(and(eq(lessons.deckId, deckId), eq(userVocabState.userId, userId)));
-};
-
 export const getUserVocabLevelsByLessonId = async (lessonId: number, userId: string) => {
   return db
     .select({
@@ -48,8 +36,20 @@ export const getUserVocabLevelsByLessonId = async (lessonId: number, userId: str
     .where(and(eq(vocabs.lessonId, lessonId), eq(userVocabState.userId, userId)));
 };
 
-export const createVocab = async (vocab: CreateVocab): Promise<void> => {
-  await db.transaction(async tx => {
+export const createVocab = async (vocab: CreateVocab, userId: string): Promise<number> => {
+  return db.transaction(async tx => {
+    const [lesson] = await tx
+      .select({ deckId: lessons.deckId })
+      .from(lessons)
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .where(
+        and(eq(lessons.id, vocab.lessonId), eq(decks.ownerId, userId), isNull(decks.deletedAt)),
+      )
+      .for('update')
+      .limit(1);
+
+    if (!lesson) throw new Error('Lesson not found or access denied.');
+
     const [order] = await tx
       .select({
         nextIndex: sql<number>`coalesce(max(${vocabs.orderIndex}), -1) + 1`,
@@ -66,6 +66,7 @@ export const createVocab = async (vocab: CreateVocab): Promise<void> => {
       reading: vocab.reading,
       orderIndex: Number(order.nextIndex),
     });
+    return lesson.deckId;
   });
 };
 
@@ -81,6 +82,7 @@ export const moveVocab = async (
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
       .where(and(eq(vocabs.id, vocabId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .for('update')
       .limit(1);
 
     if (!targetVocab) {
@@ -88,7 +90,7 @@ export const moveVocab = async (
     }
 
     const orderedVocabs = await tx
-      .select({ id: vocabs.id })
+      .select({ id: vocabs.id, orderIndex: vocabs.orderIndex })
       .from(vocabs)
       .where(eq(vocabs.lessonId, targetVocab.lessonId))
       .orderBy(vocabs.orderIndex, vocabs.id);
@@ -100,33 +102,65 @@ export const moveVocab = async (
       return targetVocab.deckId;
     }
 
-    [orderedVocabs[currentIndex], orderedVocabs[targetIndex]] = [
-      orderedVocabs[targetIndex],
-      orderedVocabs[currentIndex],
-    ];
-
-    for (const [orderIndex, vocab] of orderedVocabs.entries()) {
-      await tx.update(vocabs).set({ orderIndex }).where(eq(vocabs.id, vocab.id));
-    }
+    const currentVocab = orderedVocabs[currentIndex];
+    const adjacentVocab = orderedVocabs[targetIndex];
+    await tx
+      .update(vocabs)
+      .set({ orderIndex: adjacentVocab.orderIndex })
+      .where(eq(vocabs.id, currentVocab.id));
+    await tx
+      .update(vocabs)
+      .set({ orderIndex: currentVocab.orderIndex })
+      .where(eq(vocabs.id, adjacentVocab.id));
 
     return targetVocab.deckId;
   });
 };
 
-export const updateVocab = async (vocabId: number, vocab: UpdateVocabInput): Promise<void> => {
-  await db
-    .update(vocabs)
-    .set({
-      front: vocab.front,
-      back: vocab.back,
-      frontAlternatives: vocab.frontAlternatives,
-      backAlternatives: vocab.backAlternatives,
-      reading: vocab.reading,
-      updatedAt: new Date(),
-    })
-    .where(eq(vocabs.id, vocabId));
+export const updateVocab = async (
+  vocabId: number,
+  vocab: UpdateVocabInput,
+  userId: string,
+): Promise<number> => {
+  return db.transaction(async tx => {
+    const [target] = await tx
+      .select({ deckId: lessons.deckId })
+      .from(vocabs)
+      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .where(and(eq(vocabs.id, vocabId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .for('update')
+      .limit(1);
+    if (!target) throw new Error('Vocabulary not found or access denied.');
+
+    await tx
+      .update(vocabs)
+      .set({
+        front: vocab.front,
+        back: vocab.back,
+        frontAlternatives: vocab.frontAlternatives,
+        backAlternatives: vocab.backAlternatives,
+        reading: vocab.reading,
+        updatedAt: new Date(),
+      })
+      .where(eq(vocabs.id, vocabId));
+    return target.deckId;
+  });
 };
 
-export const deleteVocab = async (vocabId: number): Promise<void> => {
-  await db.delete(vocabs).where(eq(vocabs.id, vocabId));
+export const deleteVocab = async (vocabId: number, userId: string): Promise<number> => {
+  return db.transaction(async tx => {
+    const [target] = await tx
+      .select({ deckId: lessons.deckId })
+      .from(vocabs)
+      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .where(and(eq(vocabs.id, vocabId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .for('update')
+      .limit(1);
+    if (!target) throw new Error('Vocabulary not found or access denied.');
+
+    await tx.delete(vocabs).where(eq(vocabs.id, vocabId));
+    return target.deckId;
+  });
 };
