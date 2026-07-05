@@ -4,6 +4,7 @@ import { RefObject, useEffect } from 'react';
 
 const VIEWPORT_CLEARANCE = 24;
 const KEYBOARD_SETTLE_DELAY = 100;
+const BLUR_CLEANUP_DELAY = 200;
 const MINIMUM_SCROLL_BUFFER = 80;
 
 export function useKeepAboveKeyboard(
@@ -61,8 +62,10 @@ export function useKeepAboveKeyboard(
 
     const clearKeyboardState = () => {
       window.clearTimeout(settleTimer);
-      context.dataset.keyboardOpen = 'false';
-      context.style.marginBottom = '';
+      settleTimer = window.setTimeout(() => {
+        context.dataset.keyboardOpen = 'false';
+        context.style.marginBottom = '';
+      }, BLUR_CLEANUP_DELAY);
     };
 
     viewport.addEventListener('resize', updatePosition);
