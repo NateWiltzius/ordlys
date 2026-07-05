@@ -31,7 +31,10 @@ export default function RootLayout({ children }: PropsWithChildren) {
       >
         <Navbar />
         <main className="flex-1">{children}</main>
-        <footer className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500">
+        <footer
+          data-app-footer
+          className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500"
+        >
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
         </footer>

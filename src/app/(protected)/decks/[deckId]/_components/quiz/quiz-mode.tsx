@@ -17,11 +17,13 @@ import {
   QuizProgressStats,
 } from '@/types/quiz.types';
 import { LearnItem, ReviewItem, SrsTransition } from '@/types/review.types';
-import { Button, Card, ProgressBar, Toast } from '@heroui/react';
+import { buttonVariants, Button, Card, ProgressBar, Toast } from '@heroui/react';
 import { useEffect, useMemo, useState } from 'react';
 import ButtonLink from '@/components/shared/button-link';
 import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
 import { StudyTone } from '@/lib/study-colors';
+import Link from 'next/link';
+import { HomeIcon } from '@heroicons/react/24/outline';
 
 type Props = {
   quizItems: LearnItem[] | ReviewItem[];
@@ -53,6 +55,14 @@ export default function QuizMode({
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
+    document.documentElement.dataset.quizActive = 'true';
+
+    return () => {
+      delete document.documentElement.dataset.quizActive;
+    };
+  }, []);
+
+  useEffect(() => {
     setHasMounted(true);
     setAnswer('');
     setFailedCardIds(new Set());
@@ -69,6 +79,20 @@ export default function QuizMode({
   }, [quizItems]);
 
   const currentQuizItem = quizQueue?.[0];
+  const exitQuizButton = (
+    <Link
+      href="/"
+      aria-label="Exit quiz and go to dashboard"
+      className={buttonVariants({
+        variant: 'tertiary',
+        size: 'sm',
+        className:
+          'fixed right-4 top-4 z-50 size-10 rounded-full border border-default-200 bg-background/95 p-0 shadow-md backdrop-blur',
+      })}
+    >
+      <HomeIcon className="size-5" aria-hidden="true" />
+    </Link>
+  );
 
   const progressStats: QuizProgressStats = useMemo(() => {
     const progressItems = Object.values(quizProgress);
@@ -183,6 +207,7 @@ export default function QuizMode({
   if (quizQueue === null) {
     return (
       <>
+        {exitQuizButton}
         <Toast.Provider placement="bottom" />
         <div className="w-full">
           <Card>
@@ -210,6 +235,7 @@ export default function QuizMode({
   if (!currentQuizItem) {
     return (
       <>
+        {exitQuizButton}
         <Toast.Provider placement="bottom" />
         <div className="w-full space-y-4">
           <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
@@ -248,6 +274,7 @@ export default function QuizMode({
 
   return (
     <>
+      {exitQuizButton}
       <Toast.Provider placement="bottom" />
       <div className="w-full space-y-4">
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />

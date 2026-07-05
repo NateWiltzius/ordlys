@@ -7,6 +7,11 @@
   --font-sans: 'font', sans-serif;
 }
 
+html[data-quiz-active='true'] [data-app-navigation],
+html[data-quiz-active='true'] [data-app-footer] {
+  display: none;
+}
+
 @media (max-width: 639px) {
   .quiz-answer-card {
     overflow: visible;

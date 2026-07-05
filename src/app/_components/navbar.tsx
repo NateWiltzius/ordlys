@@ -9,7 +9,10 @@ export default async function Navbar() {
   const loggedIn = Boolean(await getCurrentUserIdOrNull());
 
   return (
-    <nav className="sticky top-0 z-50 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:flex-nowrap sm:py-4">
+    <nav
+      data-app-navigation
+      className="sticky top-0 z-50 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:flex-nowrap sm:py-4"
+    >
       <div className="shrink-0">
         <Link href="/">
           <Typography type="h1" className="text-2xl">
