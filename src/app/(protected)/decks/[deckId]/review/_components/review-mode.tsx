@@ -5,6 +5,7 @@ import { reviewVocabAction } from '@/server/review.actions';
 import { ReviewItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
+import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 
 type Props = {
   deckId: number;
@@ -31,12 +32,18 @@ export default function ReviewMode({ deckId, dueReviews }: Props) {
   }
 
   return (
-    <QuizMode
-      quizItems={dueReviews}
-      completionHref={`/decks/${deckId}`}
-      onVocabComplete={async (vocabId, wasCorrect) => {
-        return await reviewVocabAction(vocabId, wasCorrect);
-      }}
-    />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.review.text}`}>
+        Review due cards
+      </h1>
+      <QuizMode
+        quizItems={dueReviews}
+        tone="review"
+        completionHref={`/decks/${deckId}`}
+        onVocabComplete={async (vocabId, wasCorrect) => {
+          return await reviewVocabAction(vocabId, wasCorrect);
+        }}
+      />
+    </div>
   );
 }

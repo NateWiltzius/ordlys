@@ -2,6 +2,7 @@ import { QuizFeedback } from '@/types/quiz.types';
 import { Button, Card, Chip } from '@heroui/react';
 import { useEffect } from 'react';
 import AnswerRow from '@/app/(protected)/decks/[deckId]/_components/quiz/answer-row';
+import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
 
 type Props = {
   feedback: QuizFeedback;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
+  const styles = feedback.isCorrect ? QUIZ_FEEDBACK_STYLES.correct : QUIZ_FEEDBACK_STYLES.incorrect;
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Enter' || event.repeat || event.isComposing) {
@@ -25,10 +27,12 @@ export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
   }, [onContinue]);
 
   return (
-    <Card className={feedback.isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}>
+    <Card className={`border ${styles.surface}`}>
       <Card.Header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Card.Title>{feedback.isCorrect ? 'Correct' : 'Not quite'}</Card.Title>
+          <Card.Title className={styles.text}>
+            {feedback.isCorrect ? 'Correct' : 'Not quite'}
+          </Card.Title>
           <Card.Description>
             {feedback.isCorrect
               ? 'Good answer. Continue to the next card.'
@@ -54,7 +58,11 @@ export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
       </Card.Content>
 
       <Card.Footer>
-        <Button variant="primary" onPress={onContinue} className="w-full sm:w-auto">
+        <Button
+          variant="primary"
+          onPress={onContinue}
+          className={`w-full sm:w-auto ${styles.button}`}
+        >
           Continue
         </Button>
       </Card.Footer>

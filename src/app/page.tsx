@@ -1,8 +1,20 @@
 import FeatureCard from '@/app/_components/feature-card';
 import ButtonLink from '@/components/shared/button-link';
 import { Card, Chip } from '@heroui/react';
+import { STUDY_TONE_STYLES } from '@/lib/study-colors';
+import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
+import PageShell from '@/components/shared/layout/page-shell';
+import DashboardContent from '@/app/_components/dashboard/dashboard-content';
 
-export default function Home() {
+export default async function Home() {
+  if (await getCurrentUserIdOrNull()) {
+    return (
+      <PageShell>
+        <DashboardContent />
+      </PageShell>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl flex-col justify-center px-4 py-10">
       <section className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -38,14 +50,14 @@ export default function Home() {
           </Card.Header>
 
           <Card.Content className="space-y-3">
-            <div className="rounded-lg bg-default-100 px-4 py-3">
+            <div className={`rounded-lg border px-4 py-3 ${STUDY_TONE_STYLES.learning.surface}`}>
               <p className="text-sm text-default-500">Ready to learn</p>
-              <p className="text-2xl font-semibold">12</p>
+              <p className={`text-2xl font-semibold ${STUDY_TONE_STYLES.learning.text}`}>12</p>
             </div>
 
-            <div className="rounded-lg bg-default-100 px-4 py-3">
+            <div className={`rounded-lg border px-4 py-3 ${STUDY_TONE_STYLES.review.surface}`}>
               <p className="text-sm text-default-500">Reviews due</p>
-              <p className="text-2xl font-semibold">28</p>
+              <p className={`text-2xl font-semibold ${STUDY_TONE_STYLES.review.text}`}>28</p>
             </div>
 
             <div className="rounded-lg bg-default-100 px-4 py-3">

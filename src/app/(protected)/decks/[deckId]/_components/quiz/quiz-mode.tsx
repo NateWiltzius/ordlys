@@ -21,14 +21,21 @@ import { Button, Card, ProgressBar, Toast } from '@heroui/react';
 import { useEffect, useMemo, useState } from 'react';
 import ButtonLink from '@/components/shared/button-link';
 import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
+import { StudyTone } from '@/lib/study-colors';
 
 type Props = {
   quizItems: LearnItem[] | ReviewItem[];
   onVocabComplete: (vocabId: number, wasCorrect: boolean) => Promise<SrsTransition>;
   completionHref: string;
+  tone?: StudyTone;
 };
 
-export default function QuizMode({ quizItems, onVocabComplete, completionHref }: Props) {
+export default function QuizMode({
+  quizItems,
+  onVocabComplete,
+  completionHref,
+  tone = 'neutral',
+}: Props) {
   const [answer, setAnswer] = useState('');
   const [failedCardIds, setFailedCardIds] = useState<Set<number>>(() => new Set());
   const [quizQueue, setQuizQueue] = useState<QuizQueueItem[] | null>(null);
@@ -205,7 +212,7 @@ export default function QuizMode({ quizItems, onVocabComplete, completionHref }:
       <>
         <Toast.Provider placement="bottom" />
         <div className="mx-auto max-w-2xl space-y-4">
-          <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
+          <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
           <Card variant="tertiary">
             <Card.Header>
               <Card.Title>Quiz complete</Card.Title>
@@ -243,7 +250,7 @@ export default function QuizMode({ quizItems, onVocabComplete, completionHref }:
     <>
       <Toast.Provider placement="bottom" />
       <div className="mx-auto max-w-2xl space-y-4">
-        <QuizStats progressStats={progressStats} attemptStats={attemptStats} />
+        <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
 
         {feedback ? (
           <QuizFeedbackPanel feedback={feedback} onContinue={handleContinue} />
@@ -252,6 +259,7 @@ export default function QuizMode({ quizItems, onVocabComplete, completionHref }:
             prompt={currentQuizItem.prompt}
             answer={answer}
             direction={currentQuizItem.direction}
+            tone={tone}
             onAnswerChange={setAnswer}
             onSubmit={handleAnswerSubmit}
           />

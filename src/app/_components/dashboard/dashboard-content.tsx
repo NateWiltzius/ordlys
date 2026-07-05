@@ -3,10 +3,10 @@ import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
 import StudySummary from '@/components/shared/study-summary';
 import EmptyState from '@/components/shared/empty-state';
-import DashboardDeckRow from '@/app/(protected)/dashboard/_components/dashboard-deck-row';
+import DashboardDeckRow from '@/app/_components/dashboard/dashboard-deck-row';
 import { getDashboardDataAction } from '@/server/deck.actions';
 
-export default async function DashboardPage() {
+export default async function DashboardContent() {
   const { activeDecks, allDeckStats, deckStats } = await getDashboardDataAction();
 
   return (

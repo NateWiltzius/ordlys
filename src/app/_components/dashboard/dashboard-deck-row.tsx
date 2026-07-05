@@ -21,7 +21,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
           <div className="flex min-w-0 items-center gap-2">
             <span
               className={`size-2 shrink-0 rounded-full ${
-                hasReviewsDue ? 'bg-warning' : 'bg-success'
+                hasReviewsDue ? 'bg-success' : 'bg-default-300'
               }`}
             />
 
@@ -40,7 +40,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
             {stats.totalWords} cards
           </Chip>
 
-          <Chip variant="soft" size="sm" color={hasReviewsDue ? 'warning' : 'success'}>
+          <Chip variant="soft" size="sm" color={hasReviewsDue ? 'success' : 'default'}>
             {stats.reviewsDue} due
           </Chip>
 

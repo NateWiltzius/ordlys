@@ -2,6 +2,7 @@ import { LearnItem } from '@/types/review.types';
 import { Button, Card, ProgressBar } from '@heroui/react';
 import { useState } from 'react';
 import WordSide from '@/app/(protected)/decks/[deckId]/learn/_components/word-side';
+import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 
 type Props = {
   learnItems: LearnItem[];
@@ -37,9 +38,9 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
             {currentIndex + 1} / {learnItems.length}
           </span>
         </div>
-        <ProgressBar aria-label="Learning progress" value={progress} color="success">
+        <ProgressBar aria-label="Learning progress" value={progress}>
           <ProgressBar.Track>
-            <ProgressBar.Fill />
+            <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
           </ProgressBar.Track>
         </ProgressBar>
       </div>
@@ -61,7 +62,11 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
           >
             Previous
           </Button>
-          <Button variant="primary" className="w-full" onPress={nextItemHandler}>
+          <Button
+            variant="primary"
+            className={`w-full ${STUDY_TONE_STYLES.learning.button}`}
+            onPress={nextItemHandler}
+          >
             {isLastItem ? 'Start quiz' : 'Next word'}
           </Button>
         </Card.Footer>

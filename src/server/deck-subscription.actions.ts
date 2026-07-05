@@ -25,7 +25,7 @@ export async function subscribeUserToDeckAction(deckId: number) {
   await createDeckSubscription(newDeckSubscription);
   revalidatePath('/decks');
   revalidatePath(`/decks/${parsedDeckId}`);
-  revalidatePath('/dashboard');
+  revalidatePath('/');
 }
 
 export async function unsubscribeUserFromDeckAction(deckId: number) {
@@ -37,5 +37,5 @@ export async function unsubscribeUserFromDeckAction(deckId: number) {
   await deleteDeckSubscription(parsedDeckId, await getCurrentUserId());
   revalidatePath('/decks');
   revalidatePath(`/decks/${parsedDeckId}`);
-  revalidatePath('/dashboard');
+  revalidatePath('/');
 }

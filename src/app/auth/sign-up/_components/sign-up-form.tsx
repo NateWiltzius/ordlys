@@ -39,7 +39,7 @@ export function SignUpForm() {
         return;
       }
 
-      router.replace('/dashboard');
+      router.replace('/');
       router.refresh();
     } catch {
       setErrorMessage('Unable to create your account right now. Please try again.');

@@ -7,6 +7,7 @@ import {
   unsubscribeUserFromDeckAction,
 } from '@/server/deck-subscription.actions';
 import { Deck } from '@/types/deck.types';
+import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import { Button, Card, Chip, ListBox, Popover } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
@@ -110,7 +111,7 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
 
   const badge =
     tab === 'learning' ? (
-      <Chip size="sm" variant="primary">
+      <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
         Learning
       </Chip>
     ) : tab === 'owned' ? (
@@ -168,7 +169,7 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
               <Button
                 variant="primary"
                 size="sm"
-                className="flex-1"
+                className={`flex-1 ${tab === 'learning' ? STUDY_TONE_STYLES.learning.button : ''}`}
                 onPress={() => router.push(`/decks/${deck.id}`)}
               >
                 View deck
@@ -177,7 +178,7 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
               <Button
                 variant="primary"
                 size="sm"
-                className="flex-1"
+                className={`flex-1 ${STUDY_TONE_STYLES.learning.button}`}
                 isPending={isSubscribing}
                 onPress={handleSubscribe}
               >

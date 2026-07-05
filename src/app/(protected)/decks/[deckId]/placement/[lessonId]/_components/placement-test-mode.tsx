@@ -13,7 +13,7 @@ type Props = {
 
 export default function PlacementTestMode({ deckId, placementItems }: Props) {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <Card variant="tertiary">
         <Card.Header>
           <Card.Title>Placement test: {placementItems[0].lessonTitle}</Card.Title>

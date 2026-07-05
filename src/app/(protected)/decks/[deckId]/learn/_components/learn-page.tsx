@@ -8,6 +8,7 @@ import { Card } from '@heroui/react';
 import { useState } from 'react';
 import ButtonLink from '@/components/shared/button-link';
 import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
+import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 
 type Props = {
   deckId: number;
@@ -50,13 +51,16 @@ export default function LearnPage({ deckId, learnItems, lessonProgress }: Props)
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">{mode === 'quiz' ? 'Quiz' : 'Learn new words'}</h1>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.learning.text}`}>
+        {mode === 'quiz' ? 'Learning quiz' : 'Learn new words'}
+      </h1>
       {mode === 'learn' ? (
         <LearnMode learnItems={learnItems} onStartQuiz={() => setMode('quiz')} />
       ) : (
         <QuizMode
           quizItems={learnItems}
+          tone="learning"
           completionHref={`/decks/${deckId}`}
           onVocabComplete={async vocabId => {
             return await startVocabAction(vocabId);

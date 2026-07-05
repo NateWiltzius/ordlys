@@ -1,10 +1,12 @@
 import { Button, Card, Chip, Input } from '@heroui/react';
 import { FormEvent } from 'react';
+import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
 
 type Props = {
   prompt: string;
   answer: string;
   direction: 'btf' | 'ftb';
+  tone: StudyTone;
   onAnswerChange: (answer: string) => void;
   onSubmit: () => void;
 };
@@ -13,6 +15,7 @@ export default function QuizAnswerForm({
   prompt,
   answer,
   direction,
+  tone,
   onAnswerChange,
   onSubmit,
 }: Props) {
@@ -61,7 +64,11 @@ export default function QuizAnswerForm({
         </Card.Content>
 
         <Card.Footer>
-          <Button type="submit" variant="primary" className="w-full sm:w-auto mt-2">
+          <Button
+            type="submit"
+            variant="primary"
+            className={`mt-4 w-full sm:w-auto ${STUDY_TONE_STYLES[tone].button}`}
+          >
             Submit answer
           </Button>
         </Card.Footer>

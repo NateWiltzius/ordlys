@@ -32,7 +32,7 @@ export function SignInForm() {
         return;
       }
 
-      router.replace('/dashboard');
+      router.replace('/');
       router.refresh();
     } catch {
       setErrorMessage('Unable to sign in right now. Please try again.');

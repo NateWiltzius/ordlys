@@ -3,6 +3,7 @@ import ButtonLink from '@/components/shared/button-link';
 import PageHeader from '@/components/shared/layout/page-header';
 import { Deck } from '@/types/deck.types';
 import { Chip } from '@heroui/react';
+import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 
 type Props = {
   deck: Deck;
@@ -43,7 +44,7 @@ export default function DeckHeader({ deck, isOwned, isSubscribed }: Props) {
           Retained subscription
         </Chip>
       ) : isSubscribed ? (
-        <Chip color="success" size="sm">
+        <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
           You are learning this deck
         </Chip>
       ) : (

@@ -17,7 +17,7 @@ export default function UpdatePasswordPage() {
     try {
       const { error: authError } = await createClient().auth.updateUser({ password });
       if (authError) throw authError;
-      router.replace('/dashboard');
+      router.replace('/');
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not update your password.');

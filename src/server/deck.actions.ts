@@ -114,5 +114,5 @@ export const deleteDeckAction = async (id: number): Promise<void> => {
   if (!deckId) throw new Error('Invalid deck ID.');
   await deleteDeck(deckId, await getCurrentUserId());
   revalidatePath('/decks');
-  revalidatePath('/dashboard');
+  revalidatePath('/');
 };

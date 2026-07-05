@@ -11,7 +11,7 @@ export default async function Navbar() {
   return (
     <nav className="sticky top-0 z-50 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:flex-nowrap sm:py-4">
       <div className="shrink-0">
-        <Link href={loggedIn ? '/dashboard' : '/'}>
+        <Link href="/">
           <Typography type="h1" className="text-2xl">
             Ordlys
           </Typography>
@@ -20,9 +20,6 @@ export default async function Navbar() {
       <div className="flex min-w-0 items-center gap-1 text-sm sm:gap-2 sm:text-base">
         {loggedIn ? (
           <>
-            <HeroLink href="/dashboard" className="rounded-md px-2 py-2 text-primary sm:px-3">
-              Dashboard
-            </HeroLink>
             <HeroLink href="/decks" className="rounded-md px-2 py-2 text-primary sm:px-3">
               Decks
             </HeroLink>
