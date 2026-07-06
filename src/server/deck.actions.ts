@@ -26,17 +26,22 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
 import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
 import { getVocabByDeckId } from '@/db/queries/vocab.queries';
-import { getNewVocabCountsForDecks, getReviewForecastCounts } from '@/db/queries/review.queries';
+import {
+  getNewVocabCountsForDecks,
+  getNextReviewBatch,
+  getReviewForecastCounts,
+} from '@/db/queries/review.queries';
 import { buildReviewForecast } from '@/lib/review-forecast';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
   const activeDecks = await getUserActiveDecks(userId);
   const activeDeckIds = activeDecks.map(deck => deck.id);
-  const [deckStudyCounts, newVocabCounts, forecastCounts] = await Promise.all([
+  const [deckStudyCounts, newVocabCounts, forecastCounts, nextReview] = await Promise.all([
     getDeckCardStudyCounts(activeDeckIds, userId),
     getNewVocabCountsForDecks(activeDeckIds, userId),
     getReviewForecastCounts(userId, activeDeckIds),
+    getNextReviewBatch(userId, activeDeckIds),
   ]);
 
   const deckStats = Object.fromEntries(
@@ -63,33 +68,29 @@ export async function getDashboardDataAction() {
     allDeckStats,
     deckStats,
     reviewForecast: buildReviewForecast(forecastCounts),
+    nextReview,
   };
 }
 
 export async function getDecksPageDataAction() {
   const userId = await getCurrentUserId();
-  const [ownedDecks, publicDecks, learningDecks, forecastCounts] = await Promise.all([
+  const [ownedDecks, publicDecks, learningDecks] = await Promise.all([
     getDecksByOwnerId(userId),
     getPublicDecks(userId),
     getUserSubscribedDecks(userId),
-    getReviewForecastCounts(userId),
   ]);
-  return {
-    ownedDecks,
-    publicDecks,
-    learningDecks,
-    reviewForecast: buildReviewForecast(forecastCounts),
-  };
+  return { ownedDecks, publicDecks, learningDecks };
 }
 
 export async function getDeckPageDataAction(id: number) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
-  const [deck, isSubscribed, forecastCounts] = await Promise.all([
+  const [deck, isSubscribed, forecastCounts, nextReview] = await Promise.all([
     getAccessibleDeckById(deckId, userId),
     hasDeckSubscription(deckId, userId),
     getReviewForecastCounts(userId, [deckId]),
+    getNextReviewBatch(userId, [deckId]),
   ]);
   if (!deck) return null;
   const isOwned = deck.ownerId === userId;
@@ -99,6 +100,7 @@ export async function getDeckPageDataAction(id: number) {
     isSubscribed,
     canStudy: isOwned || isSubscribed,
     reviewForecast: buildReviewForecast(forecastCounts),
+    nextReview,
   };
 }
 
@@ -164,5 +166,5 @@ export const deleteDeckAction = async (id: number): Promise<void> => {
   if (!deckId) throw new Error('Invalid deck ID.');
   await deleteDeck(deckId, await getCurrentUserId());
   revalidatePath('/decks');
-  revalidatePath('/');
+  revalidatePath('/dashboard');
 };

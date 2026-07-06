@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Terms',
+  description: 'Terms for using Ordlys.',
+};
+
 export default function TermsPage() {
   return (
     <article className="mx-auto max-w-3xl px-6 py-12">

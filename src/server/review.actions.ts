@@ -4,6 +4,7 @@ import { SrsTransition } from '@/types/review.types';
 import {
   getDueReviewsForDeck,
   getLessonProgressForDeck,
+  getNextReviewBatch,
   getNewVocabsForDeck,
   getPlacementTestVocabs,
   placeVocab,
@@ -37,7 +38,11 @@ export async function getReviewPageDataAction(id: number) {
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
   if (!(await canStudyDeck(deckId, userId))) return null;
-  return await getDueReviewsForDeck(deckId, userId);
+  const [dueReviews, nextReview] = await Promise.all([
+    getDueReviewsForDeck(deckId, userId),
+    getNextReviewBatch(userId, [deckId]),
+  ]);
+  return { dueReviews, nextReview };
 }
 
 export async function getPlacementPageDataAction(deckIdInput: number, lessonIdInput: number) {

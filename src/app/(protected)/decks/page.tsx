@@ -5,10 +5,25 @@ import PageHeader from '@/components/shared/layout/page-header';
 import { Tabs } from '@heroui/react';
 import { getDecksPageDataAction } from '@/server/deck.actions';
 import ImportDeckModal from '@/app/(protected)/decks/_components/import-deck-modal';
-import ReviewForecastCard from '@/components/shared/review-forecast-card';
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import DecksLoading from '@/app/(protected)/decks/loading';
 
-export default async function DeckPage() {
-  const { ownedDecks, publicDecks, learningDecks, reviewForecast } = await getDecksPageDataAction();
+export const metadata: Metadata = {
+  title: 'Decks',
+  description: 'Manage your vocabulary decks and discover public decks.',
+};
+
+export default function DeckPage() {
+  return (
+    <Suspense fallback={<DecksLoading />}>
+      <DecksContent />
+    </Suspense>
+  );
+}
+
+async function DecksContent() {
+  const { ownedDecks, publicDecks, learningDecks } = await getDecksPageDataAction();
   const libraryDeckIds = [...new Set([...ownedDecks, ...learningDecks].map(deck => deck.id))];
 
   return (
@@ -23,7 +38,6 @@ export default async function DeckPage() {
           </div>
         }
       />
-      <ReviewForecastCard forecast={reviewForecast} />
       <Tabs className="w-full">
         <Tabs.ListContainer className="max-w-full overflow-x-auto">
           <Tabs.List aria-label="Deck categories" className="min-w-max">

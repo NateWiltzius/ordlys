@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, count, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { deckSubscriptions, decks, lessons, vocabs, userVocabState } from '@/db/schema';
 import { getInitialSrsState, getNextSrsState, getSrsStateForLevel } from '@/lib/srs/srs-scheduler';
@@ -192,7 +192,10 @@ export async function getReviewForecastCounts(
   `;
   const deckScope = deckIds
     ? inArray(decks.id, deckIds)
-    : or(eq(decks.ownerId, userId), eq(deckSubscriptions.userId, userId));
+    : or(
+        and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
+        eq(deckSubscriptions.userId, userId),
+      );
 
   const rows = await db
     .select({
@@ -211,13 +214,59 @@ export async function getReviewForecastCounts(
       and(
         eq(userVocabState.userId, userId),
         sql`${roundedDueAt} < ${getReviewForecastEnd().toISOString()}::timestamp`,
-        isNull(decks.deletedAt),
         deckScope,
       ),
     )
     .groupBy(bucketExpression);
 
   return Object.fromEntries(rows.map(row => [row.bucket, Number(row.count)]));
+}
+
+export async function getNextReviewBatch(
+  userId: string,
+  deckIds?: number[],
+): Promise<{ hour: string; count: number } | null> {
+  if (deckIds?.length === 0) return null;
+
+  const roundedDueAt = sql<Date>`
+    case
+      when ${userVocabState.dueAt} = date_trunc('hour', ${userVocabState.dueAt})
+        then ${userVocabState.dueAt}
+      else date_trunc('hour', ${userVocabState.dueAt}) + interval '1 hour'
+    end
+  `;
+  const deckScope = deckIds
+    ? inArray(decks.id, deckIds)
+    : or(
+        and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
+        eq(deckSubscriptions.userId, userId),
+      );
+
+  const [nextBatch] = await db
+    .select({
+      hour: sql<string>`to_char(${roundedDueAt}, 'YYYY-MM-DD"T"HH24:00:00"Z"')`,
+      count: count(userVocabState.id),
+    })
+    .from(userVocabState)
+    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .leftJoin(
+      deckSubscriptions,
+      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    )
+    .where(
+      and(
+        eq(userVocabState.userId, userId),
+        gt(roundedDueAt, sql`date_trunc('hour', now())`),
+        deckScope,
+      ),
+    )
+    .groupBy(roundedDueAt)
+    .orderBy(roundedDueAt)
+    .limit(1);
+
+  return nextBatch ? { hour: nextBatch.hour, count: Number(nextBatch.count) } : null;
 }
 
 async function getNextUnlockedLessonWithNewVocab(deckId: number, userId: string) {

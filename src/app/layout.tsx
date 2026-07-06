@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import { fontSans } from '@/config/font';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, Suspense } from 'react';
 import Navbar from '@/app/_components/navbar';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Ordlys',
+  title: {
+    default: 'Ordlys',
+    template: '%s | Ordlys',
+  },
   description:
     'Ordlys is an SRS-based flashcard app built around consistent quizzing rather than self-review.',
 };
@@ -30,7 +33,9 @@ export default function RootLayout({ children }: PropsWithChildren) {
       <body
         className={`flex min-h-screen flex-col bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
       >
-        <Navbar />
+        <Suspense fallback={<NavbarLoading />}>
+          <Navbar />
+        </Suspense>
         <main className="flex-1">{children}</main>
         <footer
           data-app-footer
@@ -41,5 +46,24 @@ export default function RootLayout({ children }: PropsWithChildren) {
         </footer>
       </body>
     </html>
+  );
+}
+
+function NavbarLoading() {
+  return (
+    <nav
+      data-app-navigation
+      className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
+      aria-label="Loading navigation"
+      aria-busy="true"
+    >
+      <div className="h-8 w-20 animate-pulse rounded-md bg-default-200" />
+      <div className="hidden items-center gap-2 sm:flex">
+        <div className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
+        <div className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
+        <div className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
+      </div>
+      <div className="h-10 w-10 animate-pulse rounded-md bg-default-200 sm:hidden" />
+    </nav>
   );
 }

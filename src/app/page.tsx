@@ -2,19 +2,8 @@ import FeatureCard from '@/app/_components/feature-card';
 import ButtonLink from '@/components/shared/button-link';
 import { Card, Chip } from '@heroui/react';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
-import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
-import PageShell from '@/components/shared/layout/page-shell';
-import DashboardContent from '@/app/_components/dashboard/dashboard-content';
 
-export default async function Home() {
-  if (await getCurrentUserIdOrNull()) {
-    return (
-      <PageShell>
-        <DashboardContent />
-      </PageShell>
-    );
-  }
-
+export default function Home() {
   return (
     <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl flex-col justify-center px-4 py-10">
       <section className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">

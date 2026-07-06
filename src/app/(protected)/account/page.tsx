@@ -3,8 +3,25 @@ import PageHeader from '@/components/shared/layout/page-header';
 import ButtonLink from '@/components/shared/button-link';
 import { createClient } from '@/lib/supabase/server';
 import { signOutAction } from '@/server/auth.actions';
+import DeleteAccountModal from '@/app/(protected)/account/_components/delete-account-modal';
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import AccountLoading from '@/app/(protected)/account/loading';
 
-export default async function AccountPage() {
+export const metadata: Metadata = {
+  title: 'Account',
+  description: 'View and manage your Ordlys account.',
+};
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<AccountLoading />}>
+      <AccountContent />
+    </Suspense>
+  );
+}
+
+async function AccountContent() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const email = typeof data?.claims?.email === 'string' ? data.claims.email : 'Not available';
@@ -43,6 +60,20 @@ export default async function AccountPage() {
             </Button>
           </form>
         </Card.Content>
+      </Card>
+
+      <Card className="border-danger/30">
+        <Card.Header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="card__title">Delete account</h2>
+            <Card.Description>
+              Permanently remove your account and learning history.
+            </Card.Description>
+          </div>
+          <div className="shrink-0">
+            <DeleteAccountModal />
+          </div>
+        </Card.Header>
       </Card>
     </div>
   );

@@ -4,7 +4,7 @@ export type NavigationItem = {
 };
 
 const authenticatedItems: NavigationItem[] = [
-  { href: '/', label: 'Dashboard' },
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/decks', label: 'Decks' },
   { href: '/account', label: 'Account' },
 ];

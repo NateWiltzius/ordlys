@@ -2,6 +2,12 @@ import PlacementTestMode from '@/app/(protected)/decks/[deckId]/placement/[lesso
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { getPlacementPageDataAction } from '@/server/review.actions';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Placement test',
+  description: 'Test existing vocabulary knowledge and place words into review.',
+};
 
 type Props = {
   params: Promise<{

@@ -8,6 +8,13 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { getDeckPageDataAction } from '@/server/deck.actions';
 import ReviewForecastCard from '@/components/shared/review-forecast-card';
+import type { Metadata } from 'next';
+import DeckLoading from '@/app/(protected)/decks/[deckId]/loading';
+
+export const metadata: Metadata = {
+  title: 'Deck',
+  description: 'Study vocabulary, review progress, and browse deck lessons.',
+};
 
 type Props = {
   params: Promise<{
@@ -20,20 +27,29 @@ export default async function DeckPage({ params }: Props) {
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
-  const data = await getDeckPageDataAction(parsedDeckId);
+  return (
+    <Suspense fallback={<DeckLoading />}>
+      <DeckContent deckId={parsedDeckId} />
+    </Suspense>
+  );
+}
+
+async function DeckContent({ deckId }: { deckId: number }) {
+  const data = await getDeckPageDataAction(deckId);
   if (!data) notFound();
-  const { deck, isOwned, isSubscribed, canStudy, reviewForecast } = data;
+  const { deck, isOwned, isSubscribed, canStudy, reviewForecast, nextReview } = data;
 
   return (
     <div className="space-y-6">
       <DeckHeader deck={deck} isOwned={isOwned} isSubscribed={isSubscribed} />
 
       <Suspense fallback={<StudyContentSkeleton />}>
-        <DeckStudyContent deck={deck} canStudy={canStudy} />
+        <DeckStudyContent deck={deck} canStudy={canStudy} nextReview={nextReview} />
       </Suspense>
 
       <ReviewForecastCard
         forecast={reviewForecast}
+        nextReview={nextReview}
         description="Reviews from this deck scheduled over the next 24 hours."
       />
 

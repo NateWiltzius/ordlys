@@ -1,4 +1,10 @@
 import { SignInForm } from '@/app/auth/sign-in/_components/sign-in-form';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Sign in',
+  description: 'Sign in to your Ordlys account.',
+};
 
 export default function SignInPage() {
   return (

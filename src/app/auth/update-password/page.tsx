@@ -15,7 +15,7 @@ export default function UpdatePasswordPage() {
     try {
       const { error: authError } = await createClient().auth.updateUser({ password });
       if (authError) throw authError;
-      window.location.replace('/');
+      window.location.replace('/dashboard');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not update your password.');
     } finally {

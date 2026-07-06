@@ -37,7 +37,7 @@ export function SignUpForm() {
         return;
       }
 
-      window.location.replace('/');
+      window.location.replace('/dashboard');
     } catch {
       setErrorMessage('Unable to create your account right now. Please try again.');
     } finally {

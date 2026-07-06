@@ -3,6 +3,12 @@ import { Vocab } from '@/types/vocab.types';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { getEditDeckPageDataAction } from '@/server/deck.actions';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Edit deck',
+  description: 'Edit deck details, lessons, and vocabulary.',
+};
 
 type Props = {
   params: Promise<{

@@ -30,7 +30,7 @@ export function SignInForm() {
         return;
       }
 
-      window.location.replace('/');
+      window.location.replace('/dashboard');
     } catch {
       setErrorMessage('Unable to sign in right now. Please try again.');
     } finally {

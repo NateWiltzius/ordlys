@@ -3,18 +3,21 @@
 import { Card } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
-import type { ReviewForecast } from '@/types/review.types';
+import type { NextReviewBatch, ReviewForecast } from '@/types/review.types';
+import NextReviewText from '@/components/shared/next-review-text';
 
 type Props = {
   forecast: ReviewForecast;
   title?: string;
   description?: string;
+  nextReview?: NextReviewBatch | null;
 };
 
 export default function ReviewForecastCard({
   forecast,
   title = 'Review forecast',
   description = 'Reviews scheduled over the next 24 hours.',
+  nextReview,
 }: Props) {
   const [hasMounted, setHasMounted] = useState(false);
   const maxCount = Math.max(...forecast.hours.map(item => item.count), 1);
@@ -29,6 +32,12 @@ export default function ReviewForecastCard({
         <div>
           <h2 className="card__title">{title}</h2>
           <Card.Description>{description}</Card.Description>
+          {nextReview !== undefined && forecast.dueNow === 0 ? (
+            <NextReviewText
+              nextReview={nextReview}
+              className="mt-1 block text-sm text-default-500"
+            />
+          ) : null}
         </div>
         <div
           className={`flex shrink-0 items-center justify-between gap-3 rounded-lg border px-3 py-2 sm:block sm:text-right ${

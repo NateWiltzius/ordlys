@@ -93,7 +93,7 @@ export default function QuizMode({
       size="sm"
       aria-label="Exit quiz and go to dashboard"
       className="fixed right-4 top-4 z-50 size-10 rounded-full border border-default-200 bg-background/95 p-0 shadow-md backdrop-blur"
-      onPress={() => window.location.assign('/')}
+      onPress={() => window.location.assign('/dashboard')}
     >
       <HomeIcon className="size-5" aria-hidden="true" />
     </Button>

@@ -7,13 +7,16 @@ import { Button, Card, ProgressBar } from '@heroui/react';
 import SubscribeDeckButton from '@/app/(protected)/decks/[deckId]/_components/subscribe-deck-button';
 import { ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import StudyActionCard from '@/app/(protected)/decks/[deckId]/_components/study-action-card';
+import NextReviewText from '@/components/shared/next-review-text';
+import type { NextReviewBatch } from '@/types/review.types';
 
 type Props = {
   deck: Deck;
   canStudy: boolean;
+  nextReview: NextReviewBatch | null;
 };
 
-export default async function DeckStudyContent({ deck, canStudy }: Props) {
+export default async function DeckStudyContent({ deck, canStudy, nextReview }: Props) {
   const [counts, lessonProgress] = await Promise.all([
     getDeckStudyCountsAction(deck.id),
     getCachedLessonProgress(deck.id),
@@ -37,7 +40,13 @@ export default async function DeckStudyContent({ deck, canStudy }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         <StudyActionCard
           title="Review due cards"
-          description="Practice words that are ready for review and keep your memory fresh."
+          description={
+            counts.reviewsDue === 0 && canStudy ? (
+              <NextReviewText nextReview={nextReview} />
+            ) : (
+              'Practice words that are ready for review and keep your memory fresh.'
+            )
+          }
           count={counts.reviewsDue}
           countLabel="reviews due"
           actionLabel="Review now"

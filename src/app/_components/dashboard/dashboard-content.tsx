@@ -8,7 +8,8 @@ import { getDashboardDataAction } from '@/server/deck.actions';
 import ReviewForecastCard from '@/components/shared/review-forecast-card';
 
 export default async function DashboardContent() {
-  const { activeDecks, allDeckStats, deckStats, reviewForecast } = await getDashboardDataAction();
+  const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview } =
+    await getDashboardDataAction();
 
   return (
     <div className="space-y-6">
@@ -24,7 +25,7 @@ export default async function DashboardContent() {
 
       <StudySummary counts={allDeckStats} description="Your progress across all active decks." />
 
-      <ReviewForecastCard forecast={reviewForecast} />
+      <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} />
 
       <Card>
         <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">

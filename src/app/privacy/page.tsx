@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacy',
+  description: 'How Ordlys stores, uses, and retains account and learning data.',
+};
+
 export default function PrivacyPage() {
   return (
     <article className="prose mx-auto max-w-3xl px-6 py-12">
@@ -14,7 +21,9 @@ export default function PrivacyPage() {
       <h2 className="mt-8 text-xl font-semibold">Retention and control</h2>
       <p className="mt-2">
         Your data is retained while your account exists. You can delete individual vocabulary,
-        lessons, and decks using their corresponding controls.
+        lessons, and decks using their corresponding controls, or permanently delete your account
+        from the account page. Public decks with active followers may be retained in an archived,
+        read-only form so those learners keep access to their study material.
       </p>
       <p className="mt-8 text-sm text-default-500">Effective July 5, 2026.</p>
     </article>

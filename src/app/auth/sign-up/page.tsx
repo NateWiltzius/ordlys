@@ -1,4 +1,10 @@
 import { SignUpForm } from '@/app/auth/sign-up/_components/sign-up-form';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Create account',
+  description: 'Create an Ordlys account and start learning vocabulary.',
+};
 
 export default function SignUpPage() {
   return (

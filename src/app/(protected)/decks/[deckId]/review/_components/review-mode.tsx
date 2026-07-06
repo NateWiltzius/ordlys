@@ -7,13 +7,16 @@ import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
+import NextReviewText from '@/components/shared/next-review-text';
+import type { NextReviewBatch } from '@/types/review.types';
 
 type Props = {
   deckId: number;
   dueReviews: ReviewItem[];
+  nextReview: NextReviewBatch | null;
 };
 
-export default function ReviewMode({ deckId, dueReviews }: Props) {
+export default function ReviewMode({ deckId, dueReviews, nextReview }: Props) {
   if (dueReviews.length === 0) {
     return (
       <StudySession>
@@ -21,7 +24,7 @@ export default function ReviewMode({ deckId, dueReviews }: Props) {
           <Card.Header>
             <Card.Title>No reviews due</Card.Title>
             <Card.Description>
-              You are caught up for now. Come back later or learn new words.
+              <NextReviewText nextReview={nextReview} />
             </Card.Description>
           </Card.Header>
           <Card.Footer>

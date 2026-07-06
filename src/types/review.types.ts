@@ -20,6 +20,11 @@ export type ReviewForecast = {
   }[];
 };
 
+export type NextReviewBatch = {
+  hour: string;
+  count: number;
+};
+
 export type LessonProgress = {
   lessonId: number;
   lessonTitle: string;

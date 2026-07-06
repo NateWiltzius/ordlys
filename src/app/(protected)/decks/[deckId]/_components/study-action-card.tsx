@@ -8,7 +8,7 @@ type ActionTone = Exclude<StudyTone, 'neutral'>;
 
 type Props = {
   title: string;
-  description: string;
+  description: ReactNode;
   count: number;
   countLabel: string;
   actionLabel: string;
