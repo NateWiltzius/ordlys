@@ -4,6 +4,7 @@ import { Typography } from '@heroui/react';
 import { signOutAction } from '@/server/auth.actions';
 import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import ThemeToggle from '@/app/_components/theme-toggle';
+import MobileNavigation from '@/app/_components/mobile-navigation';
 
 export default async function Navbar() {
   const loggedIn = Boolean(await getCurrentUserIdOrNull());
@@ -11,7 +12,7 @@ export default async function Navbar() {
   return (
     <nav
       data-app-navigation
-      className="sticky top-0 z-50 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:flex-nowrap sm:py-4"
+      className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
     >
       <div className="shrink-0">
         <Link href="/">
@@ -20,7 +21,7 @@ export default async function Navbar() {
           </Typography>
         </Link>
       </div>
-      <div className="flex min-w-0 items-center gap-1 text-sm sm:gap-2 sm:text-base">
+      <div className="hidden min-w-0 items-center gap-2 text-base sm:flex">
         {loggedIn ? (
           <>
             <HeroLink href="/" className="rounded-md px-2 py-2 text-primary sm:px-3">
@@ -50,6 +51,7 @@ export default async function Navbar() {
         )}
         <ThemeToggle />
       </div>
+      <MobileNavigation loggedIn={loggedIn} />
     </nav>
   );
 }
