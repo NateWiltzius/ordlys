@@ -119,6 +119,57 @@ export async function getNewVocabCountForDeck(deckId: number, userId: string): P
   return Number(result?.count ?? 0);
 }
 
+export async function getNewVocabCountsForDecks(
+  deckIds: number[],
+  userId: string,
+): Promise<Record<number, number>> {
+  if (deckIds.length === 0) return {};
+
+  const rows = await db
+    .select({
+      deckId: lessons.deckId,
+      lessonId: lessons.id,
+      totalWords: count(vocabs.id),
+      learnedWords: count(userVocabState.id),
+      masteredWords: sql<number>`
+        count(${userVocabState.id}) filter (
+          where ${userVocabState.srsLevel} >= ${LESSON_PROGRESSION_CONFIG.unlockSrsLevel}
+        )
+      `,
+    })
+    .from(lessons)
+    .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
+    .leftJoin(
+      userVocabState,
+      and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
+    )
+    .where(inArray(lessons.deckId, deckIds))
+    .groupBy(lessons.deckId, lessons.id, lessons.orderIndex)
+    .orderBy(lessons.deckId, lessons.orderIndex, lessons.id);
+
+  const counts: Record<number, number> = Object.fromEntries(deckIds.map(deckId => [deckId, 0]));
+  const previousLessonPassed: Record<number, boolean> = {};
+
+  for (const row of rows) {
+    const totalWords = Number(row.totalWords);
+    const learnedWords = Number(row.learnedWords);
+    const masteredWords = Number(row.masteredWords);
+    const previousPassed = previousLessonPassed[row.deckId] ?? true;
+    const isUnlocked = totalWords === 0 || previousPassed;
+
+    if (isUnlocked && totalWords > learnedWords && counts[row.deckId] === 0) {
+      counts[row.deckId] = totalWords - learnedWords;
+    }
+
+    if (totalWords > 0) {
+      const requiredWords = Math.ceil(totalWords * LESSON_PROGRESSION_CONFIG.unlockRatio);
+      previousLessonPassed[row.deckId] = isUnlocked && masteredWords >= requiredWords;
+    }
+  }
+
+  return counts;
+}
+
 async function getNextUnlockedLessonWithNewVocab(deckId: number, userId: string) {
   const lessonProgress = await getLessonProgressForDeck(deckId, userId);
   const unlockedLessonIds = lessonProgress

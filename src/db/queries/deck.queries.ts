@@ -232,7 +232,7 @@ export async function getAllDecksStudyCounts(
 export async function getDeckCardStudyCounts(
   deckIds: number[],
   userId: string,
-): Promise<Record<number, Pick<ReviewCounts, 'totalWords' | 'reviewsDue'>>> {
+): Promise<Record<number, Pick<ReviewCounts, 'totalWords' | 'reviewsDue' | 'wordsInReview'>>> {
   if (deckIds.length === 0) return {};
 
   const rows = await db
@@ -244,6 +244,7 @@ export async function getDeckCardStudyCounts(
           where ${userVocabState.dueAt} <= now()
         )
       `,
+      wordsInReview: count(userVocabState.id),
     })
     .from(decks)
     .innerJoin(lessons, eq(lessons.deckId, decks.id))
@@ -261,6 +262,7 @@ export async function getDeckCardStudyCounts(
       {
         totalWords: Number(row.totalWords),
         reviewsDue: Number(row.reviewsDue),
+        wordsInReview: Number(row.wordsInReview),
       },
     ]),
   );

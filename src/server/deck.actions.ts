@@ -4,7 +4,6 @@ import {
   createDeck,
   deleteDeck,
   getAccessibleDeckById,
-  getAllDecksStudyCounts,
   getDeckCardStudyCounts,
   getDecksByOwnerId,
   getDeckStudyCounts,
@@ -27,15 +26,36 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
 import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
 import { getVocabByDeckId } from '@/db/queries/vocab.queries';
+import { getNewVocabCountsForDecks } from '@/db/queries/review.queries';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
   const activeDecks = await getUserActiveDecks(userId);
   const activeDeckIds = activeDecks.map(deck => deck.id);
-  const [allDeckStats, deckStats] = await Promise.all([
-    getAllDecksStudyCounts(userId, activeDeckIds),
+  const [deckStudyCounts, newVocabCounts] = await Promise.all([
     getDeckCardStudyCounts(activeDeckIds, userId),
+    getNewVocabCountsForDecks(activeDeckIds, userId),
   ]);
+
+  const deckStats = Object.fromEntries(
+    activeDeckIds.map(deckId => [
+      deckId,
+      {
+        totalWords: deckStudyCounts[deckId]?.totalWords ?? 0,
+        reviewsDue: deckStudyCounts[deckId]?.reviewsDue ?? 0,
+      },
+    ]),
+  );
+  const allDeckStats = activeDeckIds.reduce(
+    (totals, deckId) => ({
+      totalWords: totals.totalWords + (deckStudyCounts[deckId]?.totalWords ?? 0),
+      newWordsAvailable: totals.newWordsAvailable + (newVocabCounts[deckId] ?? 0),
+      reviewsDue: totals.reviewsDue + (deckStudyCounts[deckId]?.reviewsDue ?? 0),
+      wordsInReview: totals.wordsInReview + (deckStudyCounts[deckId]?.wordsInReview ?? 0),
+    }),
+    { totalWords: 0, newWordsAvailable: 0, reviewsDue: 0, wordsInReview: 0 },
+  );
+
   return { activeDecks, allDeckStats, deckStats };
 }
 
