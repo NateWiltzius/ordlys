@@ -21,18 +21,18 @@ export default async function DeckPage({ params }: Props) {
 
   const data = await getDeckPageDataAction(parsedDeckId);
   if (!data) notFound();
-  const { deck, isOwned, isSubscribed } = data;
+  const { deck, isOwned, isSubscribed, canStudy } = data;
 
   return (
     <div className="space-y-6">
       <DeckHeader deck={deck} isOwned={isOwned} isSubscribed={isSubscribed} />
 
       <Suspense fallback={<StudyContentSkeleton />}>
-        <DeckStudyContent deck={deck} canStudy={isSubscribed} />
+        <DeckStudyContent deck={deck} canStudy={canStudy} />
       </Suspense>
 
       <Suspense fallback={<LessonsSkeleton />}>
-        <DeckLessons deckId={deck.id} canStudy={isSubscribed} />
+        <DeckLessons deckId={deck.id} canStudy={canStudy} />
       </Suspense>
     </div>
   );

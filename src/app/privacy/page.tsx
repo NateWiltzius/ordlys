@@ -3,7 +3,7 @@ export default function PrivacyPage() {
     <article className="prose mx-auto max-w-3xl px-6 py-12">
       <h1 className="text-3xl font-semibold">Privacy notice</h1>
       <p className="mt-4">
-        Ordlys stores your email address for authentication and your decks, subscriptions,
+        Ordlys stores your email address for authentication and your decks, followed decks,
         vocabulary, and learning history to provide study and review features.
       </p>
       <h2 className="mt-8 text-xl font-semibold">How data is used</h2>

@@ -1,6 +1,7 @@
 'use server';
 
 import {
+  createEditableDeckCopy,
   createDeckSubscription,
   deleteDeckSubscription,
 } from '@/db/queries/deck-subscription.queries';
@@ -38,4 +39,13 @@ export async function unsubscribeUserFromDeckAction(deckId: number) {
   revalidatePath('/decks');
   revalidatePath(`/decks/${parsedDeckId}`);
   revalidatePath('/');
+}
+
+export async function makeEditableDeckCopyAction(deckId: number): Promise<number> {
+  const parsedDeckId = parsePositiveInteger(deckId);
+  if (!parsedDeckId) {
+    throw new Error('Invalid deck ID.');
+  }
+
+  return await createEditableDeckCopy(parsedDeckId, await getCurrentUserId());
 }

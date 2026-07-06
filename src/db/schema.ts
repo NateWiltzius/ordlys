@@ -1,4 +1,6 @@
 import {
+  AnyPgColumn,
+  boolean,
   check,
   index,
   integer,
@@ -22,12 +24,17 @@ export const decks = pgTable(
     title: varchar('title', { length: 255 }).notNull(),
     description: varchar('description', { length: 255 }),
     visibility: visibilityEnum(),
+    sourceDeckId: integer('source_deck_id').references((): AnyPgColumn => decks.id, {
+      onDelete: 'set null',
+    }),
+    isEditableCopy: boolean('is_editable_copy').default(false).notNull(),
     deletedAt: timestamp('deleted_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   table => [
     index('decks_owner_id_idx').on(table.ownerId),
+    index('decks_source_deck_id_idx').on(table.sourceDeckId),
     index('decks_visibility_deleted_at_idx').on(table.visibility, table.deletedAt),
   ],
 );
@@ -67,6 +74,9 @@ export const vocabs = pgTable(
   'vocabs',
   {
     id: serial('id').primaryKey(),
+    sourceVocabId: integer('source_vocab_id').references((): AnyPgColumn => vocabs.id, {
+      onDelete: 'set null',
+    }),
     lessonId: integer('lesson_id')
       .notNull()
       .references(() => lessons.id, { onDelete: 'cascade' }),
@@ -85,7 +95,10 @@ export const vocabs = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
-  table => [index('vocabs_lesson_id_order_index_idx').on(table.lessonId, table.orderIndex)],
+  table => [
+    index('vocabs_lesson_id_order_index_idx').on(table.lessonId, table.orderIndex),
+    index('vocabs_source_vocab_id_idx').on(table.sourceVocabId),
+  ],
 );
 
 export const userVocabState = pgTable(

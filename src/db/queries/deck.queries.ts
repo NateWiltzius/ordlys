@@ -51,15 +51,23 @@ export const getUserSubscribedDecks = async (userId: string) => {
     .selectDistinct({ ...getTableColumns(decks) })
     .from(decks)
     .innerJoin(deckSubscriptions, eq(deckSubscriptions.deckId, decks.id))
-    .where(eq(deckSubscriptions.userId, userId));
+    .where(and(eq(deckSubscriptions.userId, userId), ne(decks.ownerId, userId)));
 };
 
 export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
   return db
     .selectDistinct({ ...getTableColumns(decks) })
     .from(decks)
-    .innerJoin(deckSubscriptions, eq(deckSubscriptions.deckId, decks.id))
-    .where(eq(deckSubscriptions.userId, userId));
+    .leftJoin(
+      deckSubscriptions,
+      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    )
+    .where(
+      or(
+        and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
+        eq(deckSubscriptions.userId, userId),
+      ),
+    );
 };
 
 export const getPublicDecks = async (userId: string): Promise<Deck[]> => {
@@ -125,6 +133,10 @@ export const deleteDeck = async (deckId: number, userId: string) => {
     if (archivedDecks.length === 0) {
       throw new Error('Deck not found or access denied');
     }
+
+    await tx
+      .delete(deckSubscriptions)
+      .where(and(eq(deckSubscriptions.deckId, deckId), eq(deckSubscriptions.userId, userId)));
 
     await tx
       .delete(decks)

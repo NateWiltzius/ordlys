@@ -19,7 +19,7 @@ export default function SubscribeDeckButton({ deckId }: { deckId: number }) {
       await subscribeUserToDeckAction(deckId);
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not start learning this deck.');
+      setError(cause instanceof Error ? cause.message : 'Could not follow this deck.');
     } finally {
       setIsSubscribing(false);
     }
@@ -34,7 +34,7 @@ export default function SubscribeDeckButton({ deckId }: { deckId: number }) {
         isPending={isSubscribing}
         onPress={handleSubscribe}
       >
-        Start learning this deck
+        Follow deck to start learning
       </Button>
       {error ? (
         <p role="alert" className="text-sm text-danger">

@@ -4,11 +4,14 @@ import EmptyState from '@/components/shared/empty-state';
 
 type Props = {
   decks: Deck[];
-  learningDecks: Deck[];
+  libraryDeckIds: number[];
 };
 
-export default function PublicDecks({ decks, learningDecks }: Props) {
-  if (!decks.length) {
+export default function PublicDecks({ decks, libraryDeckIds }: Props) {
+  const libraryIds = new Set(libraryDeckIds);
+  const discoverableDecks = decks.filter(deck => !libraryIds.has(deck.id));
+
+  if (!discoverableDecks.length) {
     return (
       <EmptyState
         title="Nothing to discover yet"
@@ -16,17 +19,10 @@ export default function PublicDecks({ decks, learningDecks }: Props) {
       />
     );
   }
-  const learningDeckIds = new Set(learningDecks.map(deck => deck.id));
-
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {decks.map(deck => (
-        <DeckCard
-          key={deck.id}
-          deck={deck}
-          tab="public"
-          isSubscribed={learningDeckIds.has(deck.id)}
-        />
+      {discoverableDecks.map(deck => (
+        <DeckCard key={deck.id} deck={deck} relationship="discover" />
       ))}
     </div>
   );

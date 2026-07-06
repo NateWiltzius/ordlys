@@ -19,8 +19,8 @@ export default function UnsubscribeDeckButton({ deckId, deckTitle, isArchived }:
   const handleUnsubscribe = async () => {
     if (isUnsubscribing) return;
     const warning = isArchived
-      ? `Unsubscribe from “${deckTitle}”? If you are the final subscriber, this archived deck and its learning history will be permanently removed.`
-      : `Unsubscribe from “${deckTitle}”? Your current progress can be resumed if the deck remains available and you subscribe again.`;
+      ? `Unfollow “${deckTitle}”? If you are the final follower, this archived deck and its learning history will be permanently removed.`
+      : `Unfollow “${deckTitle}”? You will stop receiving updates from its author. Your current progress can be resumed if the deck remains available and you follow it again.`;
     if (!window.confirm(warning)) return;
 
     try {
@@ -30,7 +30,7 @@ export default function UnsubscribeDeckButton({ deckId, deckTitle, isArchived }:
       router.push('/decks');
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not unsubscribe. Please try again.');
+      setError(cause instanceof Error ? cause.message : 'Could not unfollow. Please try again.');
     } finally {
       setIsUnsubscribing(false);
     }
@@ -39,7 +39,7 @@ export default function UnsubscribeDeckButton({ deckId, deckTitle, isArchived }:
   return (
     <div className="flex flex-col gap-2">
       <Button variant="danger-soft" isPending={isUnsubscribing} onPress={handleUnsubscribe}>
-        Unsubscribe
+        Unfollow
       </Button>
       {error ? (
         <p role="alert" className="text-sm text-danger">

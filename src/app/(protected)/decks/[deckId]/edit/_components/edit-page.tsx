@@ -57,7 +57,11 @@ export default function EditPage({ lessons, lessonVocabs, parsedDeckId, deck }: 
     <div className="space-y-6">
       <PageHeader
         title="Edit deck"
-        description="Organize lessons and vocabulary for this deck."
+        description={
+          deck.isEditableCopy
+            ? 'This is your independent editable copy. Your changes stay here, and updates from the original author will not be applied.'
+            : 'Organize lessons and vocabulary for this deck.'
+        }
         actions={
           <div className="flex flex-wrap gap-2">
             <ButtonLink href={`/decks/${parsedDeckId}`} variant="secondary">

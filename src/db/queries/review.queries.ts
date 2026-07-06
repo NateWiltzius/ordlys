@@ -210,12 +210,12 @@ export async function startVocab(vocabId: number, userId: string): Promise<SrsTr
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .innerJoin(
+      .leftJoin(
         deckSubscriptions,
         and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
       )
       .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
-      .for('update')
+      .for('update', { of: vocabs })
       .limit(1);
 
     if (!vocabAccess) throw new Error('Vocab not found or access denied');
@@ -258,7 +258,7 @@ export async function reviewVocab(
       .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .innerJoin(
+      .leftJoin(
         deckSubscriptions,
         and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
       )
@@ -270,7 +270,7 @@ export async function reviewVocab(
           lte(userVocabState.dueAt, now),
         ),
       )
-      .for('update')
+      .for('update', { of: userVocabState })
       .limit(1);
     if (!state) throw new Error('User vocab state not found or access denied');
 
@@ -305,12 +305,12 @@ export async function placeVocab(
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .innerJoin(
+      .leftJoin(
         deckSubscriptions,
         and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
       )
       .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
-      .for('update')
+      .for('update', { of: vocabs })
       .limit(1);
     if (!vocabAccess) throw new Error('Vocab not found or access denied');
 

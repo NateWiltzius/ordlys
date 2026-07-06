@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { deleteDeckAction } from '@/server/deck.actions';
 import {
+  makeEditableDeckCopyAction,
   subscribeUserToDeckAction,
   unsubscribeUserFromDeckAction,
 } from '@/server/deck-subscription.actions';
@@ -15,19 +16,20 @@ import { errorMessage } from '@/lib/validation/content';
 
 type Props = {
   deck: Deck;
-  tab: 'learning' | 'public' | 'owned';
+  relationship: 'owned' | 'copy' | 'following' | 'discover';
   isSubscribed?: boolean;
 };
 
 type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'unsubscribe';
 
-export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
+export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
   const router = useRouter();
 
   const [subscribed, setSubscribed] = useState(isSubscribed);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isUnsubscribing, setIsUnsubscribing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
@@ -45,7 +47,7 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
       setSubscribed(true);
       router.refresh();
     } catch (error) {
-      setMutationError(errorMessage(error, 'Could not subscribe. Please try again.'));
+      setMutationError(errorMessage(error, 'Could not follow the deck. Please try again.'));
     } finally {
       setIsSubscribing(false);
     }
@@ -70,8 +72,8 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
   const handleUnsubscribe = async () => {
     if (!subscribed || isUnsubscribing) return;
     const warning = deck.deletedAt
-      ? `Unsubscribe from “${deck.title}”? If you are the final subscriber, this archived deck and its learning history will be permanently removed.`
-      : `Unsubscribe from “${deck.title}”? Your current progress can be resumed if the deck remains available and you subscribe again.`;
+      ? `Unfollow “${deck.title}”? If you are the final follower, this archived deck and its learning history will be permanently removed.`
+      : `Unfollow “${deck.title}”? You will stop receiving author updates. Your progress can be resumed if the deck remains available and you follow it again.`;
     if (!window.confirm(warning)) return;
 
     try {
@@ -81,9 +83,28 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
       setSubscribed(false);
       router.refresh();
     } catch (error) {
-      setMutationError(errorMessage(error, 'Could not unsubscribe. Please try again.'));
+      setMutationError(errorMessage(error, 'Could not unfollow the deck. Please try again.'));
     } finally {
       setIsUnsubscribing(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (isCopying) return;
+
+    const explanation = subscribed
+      ? 'Your lessons, words, and current progress will be copied into a new private deck that you own. You will stop following the original, and future author updates will not affect your copy.'
+      : 'The lessons and words will be copied into a new private deck that you own. The copy will be independent and will not receive future updates from the original author.';
+    if (!window.confirm(`Make an editable copy of “${deck.title}”?\n\n${explanation}`)) return;
+
+    try {
+      setMutationError(null);
+      setIsCopying(true);
+      const copiedDeckId = await makeEditableDeckCopyAction(deck.id);
+      window.location.assign(`/decks/${copiedDeckId}/edit`);
+    } catch (error) {
+      setMutationError(errorMessage(error, 'Could not create an editable copy. Please try again.'));
+      setIsCopying(false);
     }
   };
 
@@ -109,32 +130,37 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
     }
   };
 
-  const badge =
-    tab === 'learning' ? (
-      <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
-        Learning
-      </Chip>
-    ) : tab === 'owned' ? (
+  const badge = {
+    owned: (
       <Chip size="sm" variant="secondary">
         Owned
       </Chip>
-    ) : subscribed ? (
-      <Chip size="sm" variant="soft" color="success">
-        Subscribed
+    ),
+    copy: (
+      <Chip size="sm" variant="secondary">
+        Editable copy
       </Chip>
-    ) : (
+    ),
+    following: (
+      <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
+        Following
+      </Chip>
+    ),
+    discover: (
       <Chip size="sm" variant="tertiary">
         Public
       </Chip>
-    );
+    ),
+  }[relationship];
 
   const helperText = {
-    learning: deck.deletedAt
-      ? 'The owner removed this deck, but your subscription and progress are preserved.'
-      : 'Keep studying this deck and review any cards that are due.',
-    owned: 'Manage the deck, edit its content, or start learning it.',
-    public: 'Discover this deck and add it to your active learning list.',
-  }[tab];
+    owned: 'You own this deck. Open it to study, edit, publish, or manage its content.',
+    copy: 'Your independent editable copy. Changes from the original author are not applied.',
+    following: deck.deletedAt
+      ? 'The author removed this deck, but your read-only access and progress are preserved.'
+      : 'Read-only. Updates from the author are applied automatically.',
+    discover: 'Follow for author updates, or create a private editable copy.',
+  }[relationship];
 
   return (
     <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm transition">
@@ -165,14 +191,16 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
             </p>
           ) : null}
           <div className="flex items-start gap-2">
-            {tab === 'learning' || subscribed ? (
+            {relationship !== 'discover' || subscribed ? (
               <Button
                 variant="primary"
                 size="sm"
-                className={`flex-1 ${tab === 'learning' ? STUDY_TONE_STYLES.learning.button : ''}`}
+                className={`flex-1 ${
+                  relationship === 'following' ? STUDY_TONE_STYLES.learning.button : ''
+                }`}
                 onPress={() => router.push(`/decks/${deck.id}`)}
               >
-                View deck
+                Open deck
               </Button>
             ) : (
               <Button
@@ -182,9 +210,25 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
                 isPending={isSubscribing}
                 onPress={handleSubscribe}
               >
-                Start learning
+                Follow deck
               </Button>
             )}
+
+            {relationship === 'discover' || relationship === 'following' ? (
+              <Button variant="secondary" size="sm" isPending={isCopying} onPress={handleCopy}>
+                Copy &amp; edit
+              </Button>
+            ) : null}
+
+            {relationship === 'owned' || relationship === 'copy' ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onPress={() => router.push(`/decks/${deck.id}/edit`)}
+              >
+                Edit
+              </Button>
+            ) : null}
 
             <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <Button variant="tertiary" size="sm" aria-label={`More actions for ${deck.title}`}>
@@ -198,36 +242,30 @@ export function DeckCard({ deck, tab, isSubscribed = false }: Props) {
                     selectionMode="none"
                     onAction={handleMenuAction}
                   >
-                    {tab === 'learning' ? (
+                    {relationship !== 'discover' ? (
                       <ListBox.Item id="review" textValue="Review">
                         Review
                       </ListBox.Item>
                     ) : null}
 
-                    {tab === 'owned' ? (
-                      <ListBox.Item id="edit" textValue="Edit deck">
-                        Edit deck
-                      </ListBox.Item>
-                    ) : null}
-
-                    {subscribed ? (
+                    {relationship === 'following' && subscribed ? (
                       <ListBox.Item
                         id="unsubscribe"
-                        textValue="Unsubscribe"
+                        textValue="Unfollow"
                         variant="danger"
                         isDisabled={isUnsubscribing}
                       >
-                        {isUnsubscribing ? 'Unsubscribing...' : 'Unsubscribe'}
+                        {isUnsubscribing ? 'Unfollowing...' : 'Unfollow'}
                       </ListBox.Item>
                     ) : null}
 
-                    {(tab === 'public' || tab === 'owned') && !subscribed && (
+                    {relationship === 'discover' && !subscribed ? (
                       <ListBox.Item id="view" textValue="View deck">
-                        View deck
+                        Preview deck
                       </ListBox.Item>
-                    )}
+                    ) : null}
 
-                    {tab === 'owned' ? (
+                    {relationship === 'owned' || relationship === 'copy' ? (
                       <ListBox.Item
                         id="delete"
                         textValue="Delete"

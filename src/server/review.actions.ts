@@ -12,7 +12,7 @@ import {
 } from '@/db/queries/review.queries';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
+import { canStudyDeck } from '@/db/queries/deck-subscription.queries';
 
 export async function getLessonProgressForDeckAction(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -24,7 +24,7 @@ export async function getLearnPageDataAction(id: number) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
-  if (!(await hasDeckSubscription(deckId, userId))) return null;
+  if (!(await canStudyDeck(deckId, userId))) return null;
   const [learnItems, lessonProgress] = await Promise.all([
     getNewVocabsForDeck(deckId, userId, 5),
     getLessonProgressForDeck(deckId, userId),
@@ -36,7 +36,7 @@ export async function getReviewPageDataAction(id: number) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
-  if (!(await hasDeckSubscription(deckId, userId))) return null;
+  if (!(await canStudyDeck(deckId, userId))) return null;
   return await getDueReviewsForDeck(deckId, userId);
 }
 
@@ -45,7 +45,7 @@ export async function getPlacementPageDataAction(deckIdInput: number, lessonIdIn
   const lessonId = parsePositiveInteger(lessonIdInput);
   if (!deckId || !lessonId) throw new Error('Invalid deck or lesson ID.');
   const userId = await getCurrentUserId();
-  if (!(await hasDeckSubscription(deckId, userId))) return null;
+  if (!(await canStudyDeck(deckId, userId))) return null;
   return await getPlacementTestVocabs(deckId, lessonId, userId);
 }
 

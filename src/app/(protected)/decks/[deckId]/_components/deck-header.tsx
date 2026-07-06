@@ -4,6 +4,7 @@ import PageHeader from '@/components/shared/layout/page-header';
 import { Deck } from '@/types/deck.types';
 import { Chip } from '@heroui/react';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
+import MakeEditableCopyButton from '@/app/(protected)/decks/[deckId]/_components/make-editable-copy-button';
 
 type Props = {
   deck: Deck;
@@ -24,28 +25,40 @@ export default function DeckHeader({ deck, isOwned, isSubscribed }: Props) {
                 Edit deck
               </ButtonLink>
             ) : null}
-            {isSubscribed ? (
-              <UnsubscribeDeckButton
-                deckId={deck.id}
-                deckTitle={deck.title}
-                isArchived={Boolean(deck.deletedAt)}
-              />
+            {isSubscribed && !isOwned ? (
+              <>
+                <MakeEditableCopyButton deckId={deck.id} deckTitle={deck.title} />
+                <UnsubscribeDeckButton
+                  deckId={deck.id}
+                  deckTitle={deck.title}
+                  isArchived={Boolean(deck.deletedAt)}
+                />
+              </>
             ) : null}
           </div>
         ) : null
       }
     >
       {isOwned ? (
-        <Chip color="warning" size="sm">
-          You own this deck
-        </Chip>
+        <>
+          <Chip color="warning" size="sm">
+            {deck.isEditableCopy ? 'Your editable copy' : 'You own this deck'}
+          </Chip>
+          <Chip
+            size="sm"
+            variant="soft"
+            color={deck.visibility === 'public' ? 'success' : 'default'}
+          >
+            {deck.visibility === 'public' ? 'Public' : 'Private'}
+          </Chip>
+        </>
       ) : deck.deletedAt ? (
         <Chip color="warning" size="sm">
-          Retained subscription
+          Following an archived deck
         </Chip>
       ) : isSubscribed ? (
         <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
-          You are learning this deck
+          Following · updates from the author
         </Chip>
       ) : (
         <Chip size="sm">Public deck</Chip>

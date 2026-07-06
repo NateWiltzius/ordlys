@@ -2,7 +2,10 @@ import { deckSubscriptions, decks } from '@/db/schema';
 import { and, eq, isNull, or } from 'drizzle-orm';
 
 export function studyDeckAccess(userId: string) {
-  return eq(deckSubscriptions.userId, userId);
+  return or(
+    and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
+    eq(deckSubscriptions.userId, userId),
+  );
 }
 
 export function viewDeckAccess(userId: string) {

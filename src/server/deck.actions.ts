@@ -53,7 +53,8 @@ export async function getDeckPageDataAction(id: number) {
     hasDeckSubscription(deckId, userId),
   ]);
   if (!deck) return null;
-  return { deck, isOwned: deck.ownerId === userId, isSubscribed };
+  const isOwned = deck.ownerId === userId;
+  return { deck, isOwned, isSubscribed, canStudy: isOwned || isSubscribed };
 }
 
 export async function getEditDeckPageDataAction(id: number) {
