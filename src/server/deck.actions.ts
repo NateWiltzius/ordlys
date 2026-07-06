@@ -17,7 +17,12 @@ import {
 import { CreateDeck, CreateDeckInput } from '@/types/deck.types';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
-import { CONTENT_LIMITS, optionalText, requiredText } from '@/lib/validation/content';
+import {
+  CONTENT_LIMITS,
+  optionalLanguageTag,
+  optionalText,
+  requiredText,
+} from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
 import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
@@ -85,6 +90,8 @@ export const createDeckAction = async (deck: CreateDeckInput): Promise<void> => 
   const deckWithOwner: CreateDeck = {
     title: requiredText(deck.title, 'Deck title', CONTENT_LIMITS.deckTitle),
     description: optionalText(deck.description, 'Description', CONTENT_LIMITS.deckDescription),
+    frontLanguage: optionalLanguageTag(deck.frontLanguage, 'Front language'),
+    backLanguage: optionalLanguageTag(deck.backLanguage, 'Back language'),
     visibility: deck.visibility,
     ownerId: userId,
   };
@@ -103,6 +110,8 @@ export async function updateDeckAction(id: number, input: CreateDeckInput): Prom
   await updateDeck(deckId, userId, {
     title: requiredText(input.title, 'Deck title', CONTENT_LIMITS.deckTitle),
     description: optionalText(input.description, 'Description', CONTENT_LIMITS.deckDescription),
+    frontLanguage: optionalLanguageTag(input.frontLanguage, 'Front language'),
+    backLanguage: optionalLanguageTag(input.backLanguage, 'Back language'),
     visibility: input.visibility,
   });
   revalidatePath('/decks');

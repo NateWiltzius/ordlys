@@ -1,6 +1,7 @@
 export const CONTENT_LIMITS = {
   deckTitle: 255,
   deckDescription: 255,
+  languageTag: 35,
   lessonTitle: 255,
   vocabText: 255,
   alternatives: 20,
@@ -21,6 +22,17 @@ export function optionalText(value: unknown, label: string, maxLength: number): 
   if (text.length > maxLength)
     throw new Error(`${label} must be ${maxLength} characters or fewer.`);
   return text || null;
+}
+
+export function optionalLanguageTag(value: unknown, label: string): string | null {
+  const tag = optionalText(value, label, CONTENT_LIMITS.languageTag);
+  if (!tag) return null;
+
+  try {
+    return Intl.getCanonicalLocales(tag)[0];
+  } catch {
+    throw new Error(`${label} must be a valid language tag, such as en, nb, or pt-BR.`);
+  }
 }
 
 export function errorMessage(error: unknown, fallback: string): string {

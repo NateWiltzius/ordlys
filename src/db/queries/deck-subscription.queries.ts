@@ -102,6 +102,8 @@ export async function createEditableDeckCopy(
         id: decks.id,
         title: decks.title,
         description: decks.description,
+        frontLanguage: decks.frontLanguage,
+        backLanguage: decks.backLanguage,
       })
       .from(decks)
       .leftJoin(
@@ -130,6 +132,8 @@ export async function createEditableDeckCopy(
         ownerId: userId,
         title: sourceDeck.title,
         description: sourceDeck.description,
+        frontLanguage: sourceDeck.frontLanguage,
+        backLanguage: sourceDeck.backLanguage,
         visibility: 'private',
         sourceDeckId: sourceDeck.id,
         isEditableCopy: true,

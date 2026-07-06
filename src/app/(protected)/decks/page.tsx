@@ -4,6 +4,7 @@ import PublicDecks from '@/app/(protected)/decks/_components/public-decks';
 import PageHeader from '@/components/shared/layout/page-header';
 import { Tabs } from '@heroui/react';
 import { getDecksPageDataAction } from '@/server/deck.actions';
+import ImportDeckModal from '@/app/(protected)/decks/_components/import-deck-modal';
 
 export default async function DeckPage() {
   const { ownedDecks, publicDecks, learningDecks } = await getDecksPageDataAction();
@@ -14,7 +15,12 @@ export default async function DeckPage() {
       <PageHeader
         title="Decks"
         description="Your library shows decks you own, copied, or follow. Discover public decks to follow or copy."
-        actions={<CreateDeckModal />}
+        actions={
+          <div className="flex gap-2">
+            <ImportDeckModal />
+            <CreateDeckModal />
+          </div>
+        }
       />
       <Tabs className="w-full">
         <Tabs.ListContainer className="max-w-full overflow-x-auto">

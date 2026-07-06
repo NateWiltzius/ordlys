@@ -6,6 +6,9 @@ import { TextArea } from '@heroui/react';
 import { CreateDeckInput, DeckVisibility } from '@/types/deck.types';
 import { createDeckAction } from '@/server/deck.actions';
 import { useRouter } from 'next/navigation';
+import DeckLanguageSelect, {
+  languageFormValue,
+} from '@/app/(protected)/decks/_components/deck-language-select';
 
 type CreateDeckModalProps = {
   triggerLabel?: string;
@@ -24,11 +27,15 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
     const formData = new FormData(form);
     const rawTitle = formData.get('title');
     const rawDescription = formData.get('description');
+    const rawFrontLanguage = formData.get('frontLanguage');
+    const rawBackLanguage = formData.get('backLanguage');
     const rawVisibility = formData.get('visibility');
 
     const deck: CreateDeckInput = {
       title: rawTitle as string,
       description: rawDescription as string,
+      frontLanguage: languageFormValue(rawFrontLanguage),
+      backLanguage: languageFormValue(rawBackLanguage),
       visibility: rawVisibility as DeckVisibility,
     };
 
@@ -84,6 +91,13 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
                     maxLength={255}
                     className="w-full"
                   />
+                </div>
+                <div className="flex flex-col gap-4">
+                  <DeckLanguageSelect name="frontLanguage" label="Front language" />
+                  <DeckLanguageSelect name="backLanguage" label="Back language" />
+                  <p className="mt-1 text-xs text-default-500">
+                    Choose “Not specified” for decks that are not tied to a language.
+                  </p>
                 </div>
                 <div>
                   <Select name="visibility" defaultValue="public">

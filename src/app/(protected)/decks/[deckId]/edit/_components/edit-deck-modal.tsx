@@ -14,6 +14,9 @@ import {
 } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import DeckLanguageSelect, {
+  languageFormValue,
+} from '@/app/(protected)/decks/_components/deck-language-select';
 
 export default function EditDeckModal({ deck }: { deck: Deck }) {
   const state = useOverlayState();
@@ -30,6 +33,8 @@ export default function EditDeckModal({ deck }: { deck: Deck }) {
       await updateDeckAction(deck.id, {
         title: String(data.get('title') ?? ''),
         description: String(data.get('description') ?? ''),
+        frontLanguage: languageFormValue(data.get('frontLanguage')),
+        backLanguage: languageFormValue(data.get('backLanguage')),
         visibility: String(data.get('visibility')) as DeckVisibility,
       });
       state.close();
@@ -70,6 +75,19 @@ export default function EditDeckModal({ deck }: { deck: Deck }) {
                   defaultValue={deck.description ?? ''}
                   maxLength={255}
                 />
+                <DeckLanguageSelect
+                  name="frontLanguage"
+                  defaultValue={deck.frontLanguage}
+                  label="Front language"
+                />
+                <DeckLanguageSelect
+                  name="backLanguage"
+                  defaultValue={deck.backLanguage}
+                  label="Back language"
+                />
+                <p className="text-xs text-default-500">
+                  Choose “Not specified” for decks that are not tied to a language.
+                </p>
                 <Select name="visibility" defaultValue={deck.visibility ?? 'private'}>
                   <Label>Visibility</Label>
                   <Select.Trigger>

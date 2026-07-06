@@ -23,6 +23,8 @@ export const decks = pgTable(
     ownerId: uuid('owner_id').notNull(),
     title: varchar('title', { length: 255 }).notNull(),
     description: varchar('description', { length: 255 }),
+    frontLanguage: varchar('front_language', { length: 35 }),
+    backLanguage: varchar('back_language', { length: 35 }),
     visibility: visibilityEnum(),
     sourceDeckId: integer('source_deck_id').references((): AnyPgColumn => decks.id, {
       onDelete: 'set null',

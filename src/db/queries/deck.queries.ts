@@ -22,6 +22,8 @@ export const createDeck = async (deck: CreateDeck) => {
     title: deck.title,
     ownerId: deck.ownerId,
     description: deck.description,
+    frontLanguage: deck.frontLanguage,
+    backLanguage: deck.backLanguage,
     visibility: deck.visibility,
   });
 };
@@ -29,7 +31,7 @@ export const createDeck = async (deck: CreateDeck) => {
 export const updateDeck = async (
   deckId: number,
   userId: string,
-  deck: Pick<CreateDeck, 'title' | 'description' | 'visibility'>,
+  deck: Pick<CreateDeck, 'title' | 'description' | 'frontLanguage' | 'backLanguage' | 'visibility'>,
 ) => {
   const updated = await db
     .update(decks)
