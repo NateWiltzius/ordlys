@@ -1,6 +1,5 @@
 import { Link as HeroLink } from '@heroui/react';
 import Link from 'next/link';
-import { Typography } from '@heroui/react';
 import { signOutAction } from '@/server/auth.actions';
 import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import ThemeToggle from '@/app/_components/theme-toggle';
@@ -17,10 +16,8 @@ export default async function Navbar() {
       className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
     >
       <div className="shrink-0">
-        <Link href="/">
-          <Typography type="h1" className="text-2xl">
-            Ordlys
-          </Typography>
+        <Link href="/" className="text-2xl font-semibold">
+          Ordlys
         </Link>
       </div>
       <div className="hidden min-w-0 items-center gap-2 text-base sm:flex">

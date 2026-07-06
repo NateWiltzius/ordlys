@@ -12,7 +12,7 @@ export default function StudySummary({ counts, description }: Props) {
   return (
     <Card>
       <Card.Header>
-        <Card.Title>Study summary</Card.Title>
+        <h2 className="card__title">Study summary</h2>
         <Card.Description>{description}</Card.Description>
       </Card.Header>
       <Card.Content>

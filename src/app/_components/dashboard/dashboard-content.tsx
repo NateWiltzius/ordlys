@@ -5,9 +5,10 @@ import StudySummary from '@/components/shared/study-summary';
 import EmptyState from '@/components/shared/empty-state';
 import DashboardDeckRow from '@/app/_components/dashboard/dashboard-deck-row';
 import { getDashboardDataAction } from '@/server/deck.actions';
+import ReviewForecastCard from '@/components/shared/review-forecast-card';
 
 export default async function DashboardContent() {
-  const { activeDecks, allDeckStats, deckStats } = await getDashboardDataAction();
+  const { activeDecks, allDeckStats, deckStats, reviewForecast } = await getDashboardDataAction();
 
   return (
     <div className="space-y-6">
@@ -23,10 +24,12 @@ export default async function DashboardContent() {
 
       <StudySummary counts={allDeckStats} description="Your progress across all active decks." />
 
+      <ReviewForecastCard forecast={reviewForecast} />
+
       <Card>
         <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <Card.Title>Active decks</Card.Title>
+            <h2 className="card__title">Active decks</h2>
             <Card.Description>
               Continue learning or review due cards from each deck.
             </Card.Description>

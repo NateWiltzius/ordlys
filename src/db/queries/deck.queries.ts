@@ -164,7 +164,7 @@ export async function getDeckStudyCounts(deckId: number, userId: string): Promis
         newWordsAvailable: sql<number>`0`,
         reviewsDue: sql<number>`
           count(${userVocabState.id}) filter (
-            where ${userVocabState.dueAt} <= now()
+            where ${userVocabState.dueAt} <= date_trunc('hour', now())
           )
         `,
         wordsInReview: count(userVocabState.id),
@@ -205,7 +205,7 @@ export async function getAllDecksStudyCounts(
       newWordsAvailable: sql<number>`0`,
       reviewsDue: sql<number>`
         count(${userVocabState.id}) filter (
-          where ${userVocabState.dueAt} <= now()
+          where ${userVocabState.dueAt} <= date_trunc('hour', now())
         )
       `,
       wordsInReview: count(userVocabState.id),
@@ -241,7 +241,7 @@ export async function getDeckCardStudyCounts(
       totalWords: count(vocabs.id),
       reviewsDue: sql<number>`
         count(${userVocabState.id}) filter (
-          where ${userVocabState.dueAt} <= now()
+          where ${userVocabState.dueAt} <= date_trunc('hour', now())
         )
       `,
       wordsInReview: count(userVocabState.id),

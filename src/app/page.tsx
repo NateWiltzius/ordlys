@@ -45,7 +45,7 @@ export default async function Home() {
 
         <Card variant="secondary" className="w-full">
           <Card.Header>
-            <Card.Title>Today&apos;s study plan</Card.Title>
+            <h2 className="card__title">Today&apos;s study plan</h2>
             <Card.Description>A simple queue for learning and review.</Card.Description>
           </Card.Header>
 

@@ -3,11 +3,12 @@ import '@/styles/globals.css';
 import { fontSans } from '@/config/font';
 import { PropsWithChildren } from 'react';
 import Navbar from '@/app/_components/navbar';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Ordlys',
   description:
-    'Ordlys is a SRS based flashcard app that is build around consistent quizing rather than self review.',
+    'Ordlys is an SRS-based flashcard app built around consistent quizzing rather than self-review.',
 };
 
 export const viewport: Viewport = {
@@ -35,8 +36,8 @@ export default function RootLayout({ children }: PropsWithChildren) {
           data-app-footer
           className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500"
         >
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
         </footer>
       </body>
     </html>

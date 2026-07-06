@@ -5,9 +5,10 @@ import PageHeader from '@/components/shared/layout/page-header';
 import { Tabs } from '@heroui/react';
 import { getDecksPageDataAction } from '@/server/deck.actions';
 import ImportDeckModal from '@/app/(protected)/decks/_components/import-deck-modal';
+import ReviewForecastCard from '@/components/shared/review-forecast-card';
 
 export default async function DeckPage() {
-  const { ownedDecks, publicDecks, learningDecks } = await getDecksPageDataAction();
+  const { ownedDecks, publicDecks, learningDecks, reviewForecast } = await getDecksPageDataAction();
   const libraryDeckIds = [...new Set([...ownedDecks, ...learningDecks].map(deck => deck.id))];
 
   return (
@@ -22,6 +23,7 @@ export default async function DeckPage() {
           </div>
         }
       />
+      <ReviewForecastCard forecast={reviewForecast} />
       <Tabs className="w-full">
         <Tabs.ListContainer className="max-w-full overflow-x-auto">
           <Tabs.List aria-label="Deck categories" className="min-w-max">

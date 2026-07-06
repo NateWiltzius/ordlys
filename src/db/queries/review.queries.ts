@@ -1,10 +1,11 @@
-import { and, count, eq, inArray, isNull, lte, sql } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { deckSubscriptions, decks, lessons, vocabs, userVocabState } from '@/db/schema';
 import { getInitialSrsState, getNextSrsState, getSrsStateForLevel } from '@/lib/srs/srs-scheduler';
 import { LESSON_PROGRESSION_CONFIG, PLACEMENT_TEST_CONFIG } from '@/lib/srs/srs-config';
 import type { LessonProgress, SrsTransition } from '@/types/review.types';
 import { studyDeckAccess, viewDeckAccess } from '@/db/queries/deck-access';
+import { getReviewForecastEnd } from '@/lib/review-forecast';
 
 export async function getLessonProgressForDeck(
   deckId: number,
@@ -170,6 +171,55 @@ export async function getNewVocabCountsForDecks(
   return counts;
 }
 
+export async function getReviewForecastCounts(
+  userId: string,
+  deckIds?: number[],
+): Promise<Record<string, number>> {
+  if (deckIds?.length === 0) return {};
+
+  const roundedDueAt = sql<Date>`
+    case
+      when ${userVocabState.dueAt} = date_trunc('hour', ${userVocabState.dueAt})
+        then ${userVocabState.dueAt}
+      else date_trunc('hour', ${userVocabState.dueAt}) + interval '1 hour'
+    end
+  `;
+  const bucketExpression = sql<string>`
+    case
+      when ${roundedDueAt} <= date_trunc('hour', now()) then 'due'
+      else to_char(${roundedDueAt}, 'YYYY-MM-DD"T"HH24:00:00"Z"')
+    end
+  `;
+  const deckScope = deckIds
+    ? inArray(decks.id, deckIds)
+    : or(eq(decks.ownerId, userId), eq(deckSubscriptions.userId, userId));
+
+  const rows = await db
+    .select({
+      bucket: bucketExpression,
+      count: count(userVocabState.id),
+    })
+    .from(userVocabState)
+    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .leftJoin(
+      deckSubscriptions,
+      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    )
+    .where(
+      and(
+        eq(userVocabState.userId, userId),
+        sql`${roundedDueAt} < ${getReviewForecastEnd().toISOString()}::timestamp`,
+        isNull(decks.deletedAt),
+        deckScope,
+      ),
+    )
+    .groupBy(bucketExpression);
+
+  return Object.fromEntries(rows.map(row => [row.bucket, Number(row.count)]));
+}
+
 async function getNextUnlockedLessonWithNewVocab(deckId: number, userId: string) {
   const lessonProgress = await getLessonProgressForDeck(deckId, userId);
   const unlockedLessonIds = lessonProgress
@@ -194,8 +244,6 @@ async function getNextUnlockedLessonWithNewVocab(deckId: number, userId: string)
 }
 
 export async function getDueReviewsForDeck(deckId: number, userId: string) {
-  const now = new Date();
-
   return db
     .select({
       id: vocabs.id,
@@ -222,7 +270,7 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
         eq(userVocabState.userId, userId),
         eq(decks.id, deckId),
         studyDeckAccess(userId),
-        lte(userVocabState.dueAt, now),
+        lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
       ),
     )
     .orderBy(userVocabState.dueAt);
@@ -318,7 +366,7 @@ export async function reviewVocab(
           eq(userVocabState.vocabId, vocabId),
           eq(userVocabState.userId, userId),
           studyDeckAccess(userId),
-          lte(userVocabState.dueAt, now),
+          lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
         ),
       )
       .for('update', { of: userVocabState })

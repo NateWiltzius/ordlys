@@ -11,6 +11,15 @@ export type ReviewCounts = {
   wordsInReview: number;
 };
 
+export type ReviewForecast = {
+  dueNow: number;
+  hours: {
+    hour: string;
+    label: string;
+    count: number;
+  }[];
+};
+
 export type LessonProgress = {
   lessonId: number;
   lessonTitle: string;

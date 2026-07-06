@@ -7,6 +7,7 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { getDeckPageDataAction } from '@/server/deck.actions';
+import ReviewForecastCard from '@/components/shared/review-forecast-card';
 
 type Props = {
   params: Promise<{
@@ -21,7 +22,7 @@ export default async function DeckPage({ params }: Props) {
 
   const data = await getDeckPageDataAction(parsedDeckId);
   if (!data) notFound();
-  const { deck, isOwned, isSubscribed, canStudy } = data;
+  const { deck, isOwned, isSubscribed, canStudy, reviewForecast } = data;
 
   return (
     <div className="space-y-6">
@@ -30,6 +31,11 @@ export default async function DeckPage({ params }: Props) {
       <Suspense fallback={<StudyContentSkeleton />}>
         <DeckStudyContent deck={deck} canStudy={canStudy} />
       </Suspense>
+
+      <ReviewForecastCard
+        forecast={reviewForecast}
+        description="Reviews from this deck scheduled over the next 24 hours."
+      />
 
       <Suspense fallback={<LessonsSkeleton />}>
         <DeckLessons deckId={deck.id} canStudy={canStudy} />

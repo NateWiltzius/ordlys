@@ -4,6 +4,21 @@ function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60 * 1000);
 }
 
+export function roundUpToHour(date: Date) {
+  const rounded = new Date(date);
+  const isOnTheHour =
+    rounded.getUTCMinutes() === 0 &&
+    rounded.getUTCSeconds() === 0 &&
+    rounded.getUTCMilliseconds() === 0;
+
+  if (!isOnTheHour) {
+    rounded.setUTCHours(rounded.getUTCHours() + 1);
+    rounded.setUTCMinutes(0, 0, 0);
+  }
+
+  return rounded;
+}
+
 function getIntervalMinutesForLevel(srsLevel: number) {
   const intervals = DEFAULT_SRS_CONFIG.intervalsMinutes;
 
@@ -20,7 +35,7 @@ export function getSrsStateForLevel(srsLevel: number, now = new Date()) {
   return {
     srsLevel: normalizedLevel,
     intervalMinutes,
-    dueAt: addMinutes(now, intervalMinutes),
+    dueAt: roundUpToHour(addMinutes(now, intervalMinutes)),
   };
 }
 
@@ -54,6 +69,6 @@ export function getNextSrsState(params: {
   return {
     srsLevel: nextSrsLevel,
     intervalMinutes,
-    dueAt: addMinutes(now, intervalMinutes),
+    dueAt: roundUpToHour(addMinutes(now, intervalMinutes)),
   };
 }

@@ -15,7 +15,7 @@ export default async function AccountPage() {
 
       <Card>
         <Card.Header>
-          <Card.Title>Profile</Card.Title>
+          <h2 className="card__title">Profile</h2>
           <Card.Description>Your account details.</Card.Description>
         </Card.Header>
         <Card.Content>
@@ -30,7 +30,7 @@ export default async function AccountPage() {
 
       <Card>
         <Card.Header>
-          <Card.Title>Security</Card.Title>
+          <h2 className="card__title">Security</h2>
           <Card.Description>Manage your password or sign out of this device.</Card.Description>
         </Card.Header>
         <Card.Content className="flex flex-wrap gap-3">
