@@ -5,6 +5,9 @@ export const CONTENT_LIMITS = {
   lessonTitle: 255,
   vocabText: 255,
   alternatives: 20,
+  feedbackMessage: 2000,
+  feedbackPagePath: 255,
+  feedbackContactEmail: 320,
 } as const;
 
 export function requiredText(value: unknown, label: string, maxLength: number): string {

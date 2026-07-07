@@ -7,6 +7,7 @@ import {
   pgEnum,
   pgTable,
   serial,
+  text,
   timestamp,
   unique,
   uuid,
@@ -124,4 +125,18 @@ export const userVocabState = pgTable(
     index('user_vocab_state_user_id_due_at_idx').on(table.userId, table.dueAt),
     check('user_vocab_state_srs_level_range', sql`${table.srsLevel} between 0 and 8`),
   ],
+);
+
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: serial('id').primaryKey(),
+    userId: uuid('user_id').notNull(),
+    category: varchar('category', { length: 40 }).notNull(),
+    message: text('message').notNull(),
+    pagePath: varchar('page_path', { length: 255 }),
+    contactEmail: varchar('contact_email', { length: 320 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => [index('feedback_created_at_idx').on(table.createdAt)],
 );

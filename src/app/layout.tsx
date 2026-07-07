@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   },
   description:
     'Ordlys is an SRS-based flashcard app built around consistent quizzing rather than self-review.',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: '/icon.svg',
+  },
 };
 
 export const viewport: Viewport = {
@@ -41,6 +45,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
           data-app-footer
           className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500"
         >
+          <Link href="/feedback">Feedback</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
         </footer>
