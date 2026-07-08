@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import ThemeToggle from '@/app/_components/theme-toggle';
 import { signOutAction } from '@/server/auth.actions';
-import { getNavigationItems } from '@/app/_components/navigation-items';
+import { getNavigationItems, navigationItemClassName } from '@/app/_components/navigation-items';
 
 type Props = {
   loggedIn: boolean;
@@ -37,17 +37,17 @@ export default function MobileNavigation({ loggedIn }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-lg px-3 py-2 text-sm text-foreground hover:bg-default-100"
+                  className={navigationItemClassName.mobile}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
                 </Link>
               ))}
               {loggedIn && (
-                <form action={signOutAction}>
+                <form action={signOutAction} onSubmit={() => setIsOpen(false)}>
                   <button
                     type="submit"
-                    className="w-full rounded-lg bg-transparent px-3 py-2 text-left text-sm text-foreground hover:bg-default-100"
+                    className={`w-full bg-transparent text-left ${navigationItemClassName.mobile}`}
                   >
                     Sign Out
                   </button>

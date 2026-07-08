@@ -3,6 +3,11 @@ export type NavigationItem = {
   label: string;
 };
 
+export const navigationItemClassName = {
+  desktop: 'rounded-md px-2 py-2 text-primary sm:px-3',
+  mobile: 'rounded-lg px-3 py-2 text-sm text-foreground hover:bg-default-100',
+};
+
 const authenticatedItems: NavigationItem[] = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/decks', label: 'Decks' },

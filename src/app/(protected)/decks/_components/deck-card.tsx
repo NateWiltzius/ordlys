@@ -153,15 +153,6 @@ export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
     ),
   }[relationship];
 
-  const helperText = {
-    owned: 'You own this deck. Open it to study, edit, publish, or manage its content.',
-    copy: 'Your independent editable copy. Changes from the original author are not applied.',
-    following: deck.deletedAt
-      ? 'The author removed this deck, but your read-only access and progress are preserved.'
-      : 'Read-only. Updates from the author are applied automatically.',
-    discover: 'Follow for author updates, or create a private editable copy.',
-  }[relationship];
-
   return (
     <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm transition">
       <Card.Header className="flex items-start justify-between gap-3 pb-2">
@@ -177,13 +168,9 @@ export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
         <div className="shrink-0">{badge}</div>
       </Card.Header>
 
-      <Card.Content className="flex-1 py-2">
-        <div className="rounded-lg bg-default-100 px-3 py-2 text-sm text-default-600">
-          {helperText}
-        </div>
-      </Card.Content>
+      <div className="flex-1" />
 
-      <Card.Footer className="pt-2">
+      <Card.Footer>
         <div className="flex w-full flex-col gap-2">
           {mutationError ? (
             <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">

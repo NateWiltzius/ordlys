@@ -3,7 +3,7 @@ import { signOutAction } from '@/server/auth.actions';
 import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import ThemeToggle from '@/app/_components/theme-toggle';
 import MobileNavigation from '@/app/_components/mobile-navigation';
-import { getNavigationItems } from '@/app/_components/navigation-items';
+import { getNavigationItems, navigationItemClassName } from '@/app/_components/navigation-items';
 
 export default async function Navbar() {
   const loggedIn = Boolean(await getCurrentUserIdOrNull());
@@ -22,20 +22,13 @@ export default async function Navbar() {
       </div>
       <div className="hidden min-w-0 items-center gap-2 text-base sm:flex">
         {navigationItems.map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="rounded-md px-2 py-2 text-primary sm:px-3"
-          >
+          <Link key={item.href} href={item.href} className={navigationItemClassName.desktop}>
             {item.label}
           </Link>
         ))}
         {loggedIn && (
           <form action={signOutAction} className="inline-flex">
-            <button
-              type="submit"
-              className="link rounded-md bg-transparent px-2 py-2 text-primary sm:px-3"
-            >
+            <button type="submit" className={`${navigationItemClassName.desktop} bg-transparent`}>
               Sign Out
             </button>
           </form>
