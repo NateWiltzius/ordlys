@@ -28,7 +28,10 @@ export default async function Navbar() {
         ))}
         {loggedIn && (
           <form action={signOutAction} className="inline-flex">
-            <button type="submit" className={`${navigationItemClassName.desktop} bg-transparent`}>
+            <button
+              type="submit"
+              className={`${navigationItemClassName.desktop} bg-transparent hover:cursor-pointer`}
+            >
               Sign Out
             </button>
           </form>
