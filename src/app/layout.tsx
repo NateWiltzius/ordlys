@@ -4,6 +4,7 @@ import { fontSans } from '@/config/font';
 import { PropsWithChildren, Suspense } from 'react';
 import Navbar from '@/app/_components/navbar';
 import Link from 'next/link';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: {
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         <Suspense fallback={<NavbarLoading />}>
           <Navbar />
         </Suspense>
+        <Analytics />
         <main className="flex-1">{children}</main>
         <footer
           data-app-footer
