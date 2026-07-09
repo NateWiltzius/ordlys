@@ -1,5 +1,6 @@
 import { parse } from 'csv-parse/sync';
 import { CONTENT_LIMITS } from '@/lib/validation/content';
+import type { JsonValue, VocabMetadata } from '@/db/schema';
 
 const REQUIRED_HEADERS = ['front', 'back'] as const;
 const SUPPORTED_HEADERS = new Set([
@@ -8,6 +9,9 @@ const SUPPORTED_HEADERS = new Set([
   'reading',
   'front_alternatives',
   'back_alternatives',
+  'tags',
+  'metadata',
+  'notes',
 ]);
 
 export const CSV_IMPORT_LIMITS = {
@@ -22,6 +26,9 @@ export type ImportedVocab = {
   reading: string | null;
   frontAlternatives: string[];
   backAlternatives: string[];
+  tags: string[];
+  metadata: VocabMetadata;
+  notes: string | null;
 };
 
 type CsvRecord = Record<string, string>;
@@ -72,6 +79,7 @@ function parseRecord(record: CsvRecord, rowNumber: number): ImportedVocab {
   const back = requiredCell(record.back, 'back', rowNumber);
   const lesson = optionalCell(record.lesson, 'lesson', rowNumber, CONTENT_LIMITS.lessonTitle);
   const reading = optionalCell(record.reading, 'reading', rowNumber, CONTENT_LIMITS.vocabText);
+  const notes = optionalCell(record.notes, 'notes', rowNumber, CONTENT_LIMITS.vocabNotes);
 
   return {
     front,
@@ -84,6 +92,9 @@ function parseRecord(record: CsvRecord, rowNumber: number): ImportedVocab {
       rowNumber,
     ),
     backAlternatives: parseAlternatives(record.back_alternatives, 'back_alternatives', rowNumber),
+    tags: parseDelimitedValues(record.tags, 'tags', rowNumber, CONTENT_LIMITS.vocabTag),
+    metadata: parseMetadata(record.metadata, rowNumber),
+    notes,
   };
 }
 
@@ -113,11 +124,7 @@ function optionalCell(
 }
 
 function parseAlternatives(value: string | undefined, column: string, row: number): string[] {
-  if (!value?.trim()) return [];
-  const alternatives = value
-    .split('|')
-    .map(alternative => alternative.trim())
-    .filter(Boolean);
+  const alternatives = parseDelimitedValues(value, column, row, CONTENT_LIMITS.vocabText);
 
   if (alternatives.length > CONTENT_LIMITS.alternatives) {
     throw new Error(
@@ -131,6 +138,59 @@ function parseAlternatives(value: string | undefined, column: string, row: numbe
     );
   }
   return alternatives;
+}
+
+function parseDelimitedValues(
+  value: string | undefined,
+  column: string,
+  row: number,
+  maxLength: number,
+): string[] {
+  if (!value?.trim()) return [];
+  const values = value
+    .split('|')
+    .map(item => item.trim())
+    .filter(Boolean);
+
+  const tooLong = values.find(item => item.length > maxLength);
+  if (tooLong) {
+    throw new Error(
+      `Row ${row}: each â€œ${column}â€ value must be ${maxLength} characters or fewer.`,
+    );
+  }
+
+  return [...new Map(values.map(item => [item.normalize('NFKC').toLowerCase(), item])).values()];
+}
+
+function parseMetadata(value: string | undefined, row: number): VocabMetadata {
+  if (!value?.trim()) return {};
+
+  let metadata: unknown;
+  try {
+    metadata = JSON.parse(value);
+  } catch {
+    throw new Error(`Row ${row}: â€œmetadataâ€ must be valid JSON.`);
+  }
+
+  if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) {
+    throw new Error(`Row ${row}: â€œmetadataâ€ must be a JSON object.`);
+  }
+
+  for (const metadataValue of Object.values(metadata)) {
+    if (!isJsonValue(metadataValue)) {
+      throw new Error(`Row ${row}: â€œmetadataâ€ must contain only JSON values.`);
+    }
+  }
+
+  return metadata as VocabMetadata;
+}
+
+function isJsonValue(value: unknown): value is JsonValue {
+  if (value === null) return true;
+  if (['string', 'number', 'boolean'].includes(typeof value)) return true;
+  if (Array.isArray(value)) return value.every(isJsonValue);
+  if (typeof value === 'object') return Object.values(value).every(isJsonValue);
+  return false;
 }
 
 function normalizeHeader(header: unknown): string {

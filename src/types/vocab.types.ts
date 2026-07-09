@@ -6,5 +6,12 @@ export type Vocab = typeof vocabs.$inferSelect;
 
 export type UpdateVocabInput = Pick<
   CreateVocab,
-  'front' | 'back' | 'frontAlternatives' | 'backAlternatives' | 'reading'
+  | 'front'
+  | 'back'
+  | 'frontAlternatives'
+  | 'backAlternatives'
+  | 'reading'
+  | 'tags'
+  | 'metadata'
+  | 'notes'
 >;

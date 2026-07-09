@@ -4,6 +4,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   serial,
@@ -14,6 +15,10 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+export type VocabMetadata = Record<string, JsonValue>;
 
 export const visibilityEnum = pgEnum('visibility', ['private', 'public']);
 
@@ -94,6 +99,15 @@ export const vocabs = pgTable(
       .default(sql`ARRAY[]::varchar[]`)
       .notNull(),
     reading: varchar('reading', { length: 255 }),
+    tags: varchar('tags', { length: 64 })
+      .array()
+      .default(sql`ARRAY[]::varchar[]`)
+      .notNull(),
+    metadata: jsonb('metadata')
+      .$type<VocabMetadata>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+    notes: text('notes'),
     orderIndex: integer('order_index').notNull().default(0),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

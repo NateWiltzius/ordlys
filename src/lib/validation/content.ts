@@ -4,6 +4,8 @@ export const CONTENT_LIMITS = {
   languageTag: 35,
   lessonTitle: 255,
   vocabText: 255,
+  vocabTag: 64,
+  vocabNotes: 2000,
   alternatives: 20,
   feedbackMessage: 2000,
   feedbackPagePath: 255,

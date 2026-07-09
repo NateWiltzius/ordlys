@@ -20,15 +20,13 @@ export default function VocabCard({
 }: Props) {
   return (
     <div
-      className={`grid gap-3 bg-background px-4 py-3 transition-colors hover:bg-default-50 sm:gap-4 ${
+      className={`grid gap-3 bg-background px-4 py-3 transition-colors hover:bg-default-50 sm:gap-4 items-center ${
         actions
-          ? 'sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_auto]'
+          ? 'sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_12rem]'
           : 'sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)]'
       }`}
     >
-      <span className="hidden self-center text-sm tabular-nums text-default-400 sm:block">
-        {index}
-      </span>
+      <span className="hidden text-sm tabular-nums text-default-400 sm:block">{index}</span>
 
       <VocabSide label="Front" value={vocab.front} alternatives={vocab.frontAlternatives}>
         {showSrsLevel ? <SrsLevelChip srsLevel={srsLevel} /> : null}
@@ -39,7 +37,9 @@ export default function VocabCard({
 
       <VocabSide label="Back" value={vocab.back} alternatives={vocab.backAlternatives} />
 
-      {actions}
+      {actions ? (
+        <div className="flex items-center justify-start sm:justify-end gap-2">{actions}</div>
+      ) : null}
     </div>
   );
 }

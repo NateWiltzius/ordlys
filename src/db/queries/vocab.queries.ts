@@ -64,6 +64,9 @@ export const createVocab = async (vocab: CreateVocab, userId: string): Promise<n
       frontAlternatives: vocab.frontAlternatives,
       backAlternatives: vocab.backAlternatives,
       reading: vocab.reading,
+      tags: vocab.tags,
+      metadata: vocab.metadata,
+      notes: vocab.notes,
       orderIndex: Number(order.nextIndex),
     });
     return lesson.deckId;
@@ -141,6 +144,9 @@ export const updateVocab = async (
         frontAlternatives: vocab.frontAlternatives,
         backAlternatives: vocab.backAlternatives,
         reading: vocab.reading,
+        ...(vocab.tags === undefined ? {} : { tags: vocab.tags }),
+        ...(vocab.metadata === undefined ? {} : { metadata: vocab.metadata }),
+        ...(vocab.notes === undefined ? {} : { notes: vocab.notes }),
         updatedAt: new Date(),
       })
       .where(eq(vocabs.id, vocabId));

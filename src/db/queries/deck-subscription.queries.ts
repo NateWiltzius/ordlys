@@ -192,6 +192,9 @@ export async function createEditableDeckCopy(
               frontAlternatives: sourceVocab.frontAlternatives,
               backAlternatives: sourceVocab.backAlternatives,
               reading: sourceVocab.reading,
+              tags: sourceVocab.tags,
+              metadata: sourceVocab.metadata,
+              notes: sourceVocab.notes,
               orderIndex: sourceVocab.orderIndex,
             })),
           )

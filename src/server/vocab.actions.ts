@@ -16,6 +16,7 @@ import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { CONTENT_LIMITS, optionalText, requiredText } from '@/lib/validation/content';
+import type { JsonValue, VocabMetadata } from '@/db/schema';
 
 export async function getLessonVocabularyAction(deckId: number, lessonId: number) {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -46,11 +47,13 @@ export async function getLessonVocabularyAction(deckId: number, lessonId: number
 }
 
 export async function createVocabAction(vocab: CreateVocab) {
-  const { front, back, frontAlternatives, backAlternatives, lessonId, reading } = vocab;
+  const { front, back, frontAlternatives, backAlternatives, lessonId, reading, tags, metadata } =
+    vocab;
 
   const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
   const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
   const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
+  const normalizedNotes = optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes);
 
   if (typeof lessonId !== 'number' || !Number.isInteger(lessonId) || lessonId <= 0) {
     throw new Error('Invalid lesson ID.');
@@ -67,6 +70,9 @@ export async function createVocabAction(vocab: CreateVocab) {
       frontAlternatives: normalizedFrontAlternatives,
       backAlternatives: normalizedBackAlternatives,
       reading: normalizedReading,
+      tags: normalizeTags(tags),
+      metadata: normalizeMetadata(metadata),
+      notes: normalizedNotes,
     },
     await getCurrentUserId(),
   );
@@ -92,11 +98,12 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
     throw new Error('Invalid vocabulary ID.');
   }
 
-  const { front, back, frontAlternatives, backAlternatives, reading } = vocab;
+  const { front, back, frontAlternatives, backAlternatives, reading, tags, metadata } = vocab;
 
   const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
   const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
   const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
+  const normalizedNotes = optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes);
 
   const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
   const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, normalizedBack);
@@ -109,6 +116,9 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
       frontAlternatives: normalizedFrontAlternatives,
       backAlternatives: normalizedBackAlternatives,
       reading: normalizedReading,
+      tags: tags === undefined ? undefined : normalizeTags(tags),
+      metadata: metadata === undefined ? undefined : normalizeMetadata(metadata),
+      notes: vocab.notes === undefined ? undefined : normalizedNotes,
     },
     await getCurrentUserId(),
   );
@@ -158,4 +168,61 @@ function normalizeAlternatives(
   }
 
   return [...uniqueAlternatives.values()];
+}
+
+function normalizeTags(tags: string[] | undefined): string[] {
+  if (tags === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(tags)) {
+    throw new Error('Tags must be a list of text values.');
+  }
+
+  const uniqueTags = new Map<string, string>();
+  for (const tag of tags) {
+    if (typeof tag !== 'string') {
+      throw new Error('Each tag must be text.');
+    }
+
+    const normalizedTag = tag.trim();
+    if (!normalizedTag) continue;
+    if (normalizedTag.length > CONTENT_LIMITS.vocabTag) {
+      throw new Error(`Each tag must be ${CONTENT_LIMITS.vocabTag} characters or fewer.`);
+    }
+
+    uniqueTags.set(normalizedTag.normalize('NFKC').toLowerCase(), normalizedTag);
+  }
+
+  return [...uniqueTags.values()];
+}
+
+function normalizeMetadata(metadata: VocabMetadata | null | undefined): VocabMetadata {
+  if (metadata === undefined || metadata === null) {
+    return {};
+  }
+
+  if (!isPlainObject(metadata)) {
+    throw new Error('Metadata must be an object.');
+  }
+
+  for (const value of Object.values(metadata)) {
+    if (!isJsonValue(value)) {
+      throw new Error('Metadata must contain only JSON values.');
+    }
+  }
+
+  return metadata;
+}
+
+function isJsonValue(value: unknown): value is JsonValue {
+  if (value === null) return true;
+  if (['string', 'number', 'boolean'].includes(typeof value)) return true;
+  if (Array.isArray(value)) return value.every(isJsonValue);
+  if (isPlainObject(value)) return Object.values(value).every(isJsonValue);
+  return false;
+}
+
+function isPlainObject(value: unknown): value is Record<string, JsonValue> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -37,6 +37,9 @@ export async function importDeck(input: ImportDeckInput, rows: ImportedVocab[]):
         reading: row.reading,
         frontAlternatives: row.frontAlternatives,
         backAlternatives: row.backAlternatives,
+        tags: row.tags,
+        metadata: row.metadata,
+        notes: row.notes,
         orderIndex,
       };
     });

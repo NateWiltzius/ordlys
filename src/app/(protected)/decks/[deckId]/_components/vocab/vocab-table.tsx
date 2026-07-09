@@ -27,9 +27,9 @@ export default function VocabTable({
   return (
     <div className="overflow-hidden rounded-xl border border-default-200">
       <div
-        className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-default-500 sm:grid ${
+        className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-default-500 sm:grid sm:items-center ${
           renderActions
-            ? 'grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_auto]'
+            ? 'grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_12rem]'
             : 'grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)]'
         }`}
       >
