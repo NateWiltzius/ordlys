@@ -16,6 +16,7 @@ type Props = {
   tone: ActionTone;
   href?: string;
   unavailableAction?: ReactNode;
+  isDisabled?: boolean;
 };
 
 const TONE_CARD_STYLES: Record<ActionTone, { gradient: string; hover: string; focus: string }> = {
@@ -41,17 +42,24 @@ export default function StudyActionCard({
   tone,
   href,
   unavailableAction,
+  isDisabled = false,
 }: Props) {
   const toneStyles = STUDY_TONE_STYLES[tone];
   const cardStyles = TONE_CARD_STYLES[tone];
 
   const card = (
     <Card
-      className={`h-full overflow-hidden border bg-gradient-to-br shadow-md transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${toneStyles.surface} ${cardStyles.gradient} ${cardStyles.hover}`}
+      className={`h-full overflow-hidden border transition duration-200 ${
+        isDisabled
+          ? 'border-default-200 bg-default-50 shadow-sm'
+          : `bg-gradient-to-br shadow-md group-hover:-translate-y-0.5 group-hover:shadow-lg ${toneStyles.surface} ${cardStyles.gradient} ${cardStyles.hover}`
+      }`}
     >
       <Card.Header className="flex-row items-start gap-3">
         <span
-          className={`flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm ${toneStyles.accent}`}
+          className={`flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm ${
+            isDisabled ? 'bg-default-100 text-default-400' : toneStyles.accent
+          }`}
         >
           <Icon className="size-6" aria-hidden="true" />
         </span>
@@ -62,7 +70,13 @@ export default function StudyActionCard({
       </Card.Header>
 
       <Card.Content className="flex items-baseline gap-2">
-        <p className={`text-4xl font-bold tracking-tight ${toneStyles.text}`}>{count}</p>
+        <p
+          className={`text-4xl font-bold tracking-tight ${
+            isDisabled ? 'text-default-400' : toneStyles.text
+          }`}
+        >
+          {count}
+        </p>
         <p className="font-medium text-default-600">{countLabel}</p>
       </Card.Content>
 

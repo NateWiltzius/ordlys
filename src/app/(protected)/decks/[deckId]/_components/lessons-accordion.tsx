@@ -51,7 +51,7 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
             </Accordion.Heading>
             <Accordion.Panel>
               <Accordion.Body>
-                {canStudy && lesson.totalWords > 0 ? (
+                {canStudy && lesson.canTakePlacementTest ? (
                   <div className="mb-4 flex justify-end">
                     <ButtonLink
                       href={`/decks/${deckId}/placement/${lesson.lessonId}`}
@@ -61,6 +61,12 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
                       Take placement test
                     </ButtonLink>
                   </div>
+                ) : canStudy && lesson.totalWords > lesson.learnedWords ? (
+                  <p className="mb-4 text-right text-sm text-default-500">
+                    Reach level {LESSON_PROGRESSION_CONFIG.unlockSrsLevel} with at least{' '}
+                    {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}% of the previous
+                    lesson to unlock this placement test.
+                  </p>
                 ) : null}
                 {lesson.totalWords > 0 ? (
                   <LessonVocabulary

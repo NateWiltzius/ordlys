@@ -46,6 +46,7 @@ export async function getLessonProgressForDeck(
     const masteredWords = Number(row.masteredWords);
     const requiredWords = Math.ceil(totalWords * LESSON_PROGRESSION_CONFIG.unlockRatio);
     const isUnlocked = totalWords === 0 || previousNonEmptyLessonPassed;
+    const canTakePlacementTest = totalWords > learnedWords && isUnlocked;
 
     if (totalWords > 0) {
       previousNonEmptyLessonPassed = isUnlocked && masteredWords >= requiredWords;
@@ -59,6 +60,7 @@ export async function getLessonProgressForDeck(
       masteredWords,
       requiredWords,
       isUnlocked,
+      canTakePlacementTest,
     };
   });
 }
@@ -326,6 +328,10 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
 }
 
 export async function getPlacementTestVocabs(deckId: number, lessonId: number, userId: string) {
+  const lessonProgress = await getLessonProgressForDeck(deckId, userId);
+  const requestedLesson = lessonProgress.find(lesson => lesson.lessonId === lessonId);
+  if (!requestedLesson?.canTakePlacementTest) return [];
+
   return db
     .select({
       id: vocabs.id,
@@ -344,7 +350,18 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
       deckSubscriptions,
       and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
     )
-    .where(and(eq(decks.id, deckId), eq(lessons.id, lessonId), studyDeckAccess(userId)))
+    .leftJoin(
+      userVocabState,
+      and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
+    )
+    .where(
+      and(
+        eq(decks.id, deckId),
+        eq(lessons.id, lessonId),
+        studyDeckAccess(userId),
+        isNull(userVocabState.id),
+      ),
+    )
     .orderBy(vocabs.orderIndex, vocabs.id);
 }
 
@@ -449,7 +466,7 @@ export async function placeVocab(
 
   return db.transaction(async tx => {
     const [vocabAccess] = await tx
-      .select({ id: vocabs.id })
+      .select({ id: vocabs.id, deckId: decks.id, lessonId: lessons.id })
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
@@ -461,6 +478,14 @@ export async function placeVocab(
       .for('update', { of: vocabs })
       .limit(1);
     if (!vocabAccess) throw new Error('Vocab not found or access denied');
+
+    const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
+    const placementLesson = lessonProgress.find(lesson => lesson.lessonId === vocabAccess.lessonId);
+    if (!placementLesson?.canTakePlacementTest) {
+      throw new Error(
+        'Reach the required SRS level in the previous lesson before taking this test',
+      );
+    }
 
     const [existingState] = await tx
       .select({ srsLevel: userVocabState.srsLevel })

@@ -33,6 +33,7 @@ export type LessonProgress = {
   masteredWords: number;
   requiredWords: number;
   isUnlocked: boolean;
+  canTakePlacementTest: boolean;
 };
 
 export type SrsTransition = {

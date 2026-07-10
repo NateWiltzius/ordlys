@@ -52,10 +52,11 @@ export default async function DeckStudyContent({ deck, canStudy, nextReview }: P
           actionLabel="Review now"
           icon={ClockIcon}
           tone="review"
-          href={canStudy ? `/decks/${deck.id}/review` : undefined}
+          href={canStudy && counts.reviewsDue > 0 ? `/decks/${deck.id}/review` : undefined}
+          isDisabled={!canStudy || counts.reviewsDue === 0}
           unavailableAction={
-            <Button variant="primary" size="lg" className="w-full" isDisabled>
-              Review now
+            <Button variant="secondary" size="lg" className="w-full" isDisabled>
+              {canStudy ? 'No reviews due' : 'Review now'}
             </Button>
           }
         />
@@ -68,8 +69,17 @@ export default async function DeckStudyContent({ deck, canStudy, nextReview }: P
           actionLabel="Start learning"
           icon={SparklesIcon}
           tone="learning"
-          href={canStudy ? `/decks/${deck.id}/learn` : undefined}
-          unavailableAction={<SubscribeDeckButton deckId={deck.id} />}
+          href={canStudy && counts.newWordsAvailable > 0 ? `/decks/${deck.id}/learn` : undefined}
+          isDisabled={canStudy && counts.newWordsAvailable === 0}
+          unavailableAction={
+            canStudy ? (
+              <Button variant="secondary" size="lg" className="w-full" isDisabled>
+                No words to learn
+              </Button>
+            ) : (
+              <SubscribeDeckButton deckId={deck.id} />
+            )
+          }
         />
       </div>
 
