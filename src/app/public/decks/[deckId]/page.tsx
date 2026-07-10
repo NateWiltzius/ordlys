@@ -1,0 +1,251 @@
+import ButtonLink from '@/components/shared/button-link';
+import PageShell from '@/components/shared/layout/page-shell';
+import { getPublicDeckPageData, getPublicDeckSummaryById } from '@/db/queries/public-deck.queries';
+import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
+import { LANGUAGE_OPTIONS } from '@/lib/languages';
+import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
+import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
+import { Card, Chip } from '@heroui/react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+
+type Props = {
+  params: Promise<{ deckId: string }>;
+};
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const deckId = parsePositiveInteger((await params).deckId);
+  if (!deckId) return missingDeckMetadata;
+
+  const deck = await getPublicDeckSummaryById(deckId);
+  if (!deck) return missingDeckMetadata;
+
+  const description = deckDescription(deck);
+  const canonical = `/public/decks/${deck.id}`;
+
+  return {
+    title: deck.title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: 'website',
+      url: canonical,
+      siteName: 'Ordlys',
+      title: deck.title,
+      description,
+      images: [OPEN_GRAPH_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: deck.title,
+      description,
+      images: [TWITTER_IMAGE],
+    },
+  };
+}
+
+export default async function PublicDeckPage({ params }: Props) {
+  const deckId = parsePositiveInteger((await params).deckId);
+  if (!deckId) notFound();
+
+  const [deck, userId] = await Promise.all([
+    getPublicDeckPageData(deckId),
+    getCurrentUserIdOrNull(),
+  ]);
+  if (!deck) notFound();
+
+  const appDeckPath = `/decks/${deck.id}`;
+  const nextQuery = encodeURIComponent(appDeckPath);
+  const languagePair = formatLanguagePair(deck.frontLanguage, deck.backLanguage);
+
+  return (
+    <PageShell>
+      <nav aria-label="Breadcrumb" className="text-sm text-default-500">
+        <Link href="/public/decks" className="hover:text-primary hover:underline">
+          Public decks
+        </Link>{' '}
+        <span aria-hidden="true">/</span> <span>{deck.title}</span>
+      </nav>
+
+      <Card className="overflow-hidden border border-default-200">
+        <Card.Header className="flex-col items-start gap-4 bg-default-50 px-6 py-7 sm:flex-row sm:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Chip size="sm" variant="soft" color="success">
+                Public deck
+              </Chip>
+              {languagePair ? (
+                <Chip size="sm" variant="secondary">
+                  {languagePair}
+                </Chip>
+              ) : null}
+            </div>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{deck.title}</h1>
+            <p className="text-base text-default-600 sm:text-lg">{deckDescription(deck)}</p>
+          </div>
+
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:min-w-56">
+            {userId ? (
+              <ButtonLink href={appDeckPath} size="lg" className="w-full">
+                Open in Ordlys
+              </ButtonLink>
+            ) : (
+              <>
+                <ButtonLink href={`/auth/sign-up?next=${nextQuery}`} size="lg" className="w-full">
+                  Create account to study
+                </ButtonLink>
+                <ButtonLink
+                  href={`/auth/sign-in?next=${nextQuery}`}
+                  variant="secondary"
+                  className="w-full"
+                >
+                  Sign in
+                </ButtonLink>
+              </>
+            )}
+          </div>
+        </Card.Header>
+
+        <Card.Content className="px-6 py-5">
+          <dl className="grid max-w-lg grid-cols-2 gap-4">
+            <div>
+              <dt className="text-sm text-default-500">Lessons</dt>
+              <dd className="text-2xl font-semibold">{deck.lessonCount}</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-default-500">Vocabulary words</dt>
+              <dd className="text-2xl font-semibold">{deck.wordCount}</dd>
+            </div>
+          </dl>
+        </Card.Content>
+      </Card>
+
+      <section aria-labelledby="lesson-outline-heading" className="space-y-4">
+        <div>
+          <h2 id="lesson-outline-heading" className="text-2xl font-semibold">
+            Lesson outline
+          </h2>
+          <p className="mt-1 text-default-500">See how the vocabulary is organized.</p>
+        </div>
+
+        {deck.lessons.length > 0 ? (
+          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {deck.lessons.map((lesson, index) => (
+              <li key={lesson.id}>
+                <Card className="h-full border border-default-200">
+                  <Card.Header className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-default-500">
+                      Lesson {index + 1}
+                    </p>
+                    <h3 className="font-semibold">{lesson.title}</h3>
+                    <Card.Description>
+                      {lesson.wordCount} {lesson.wordCount === 1 ? 'word' : 'words'}
+                    </Card.Description>
+                  </Card.Header>
+                </Card>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="rounded-xl border border-default-200 bg-default-50 px-5 py-6 text-default-500">
+            This deck does not have any lessons yet.
+          </p>
+        )}
+      </section>
+
+      {deck.vocabularyPreview.length > 0 ? (
+        <section aria-labelledby="vocabulary-preview-heading" className="space-y-4">
+          <div>
+            <h2 id="vocabulary-preview-heading" className="text-2xl font-semibold">
+              Vocabulary preview
+            </h2>
+            <p className="mt-1 text-default-500">
+              Showing {deck.vocabularyPreview.length} of {deck.wordCount} words. Create an account
+              to study the deck with spaced repetition and save your progress.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-default-200">
+            <table className="w-full border-collapse text-left">
+              <thead className="bg-default-50 text-sm text-default-500">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Word
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Translation
+                  </th>
+                  <th scope="col" className="hidden px-4 py-3 font-medium sm:table-cell">
+                    Lesson
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-default-200">
+                {deck.vocabularyPreview.map(word => (
+                  <tr key={word.id}>
+                    <td className="px-4 py-3 font-medium">
+                      {word.front}
+                      {word.reading ? (
+                        <span className="ml-2 text-sm font-normal text-default-500">
+                          {word.reading}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3">{word.back}</td>
+                    <td className="hidden px-4 py-3 text-sm text-default-500 sm:table-cell">
+                      {word.lessonTitle}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      {!userId ? (
+        <section className="rounded-xl border border-primary/20 bg-primary/5 px-6 py-8 text-center">
+          <h2 className="text-2xl font-semibold">Ready to learn this deck?</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-default-600">
+            Create an account to follow the deck, start learning, and keep your review schedule and
+            progress in sync.
+          </p>
+          <ButtonLink href={`/auth/sign-up?next=${nextQuery}`} size="lg" className="mt-5">
+            Create account to study
+          </ButtonLink>
+        </section>
+      ) : null}
+    </PageShell>
+  );
+}
+
+const missingDeckMetadata: Metadata = {
+  title: 'Deck not found',
+  robots: { index: false, follow: false },
+};
+
+function deckDescription(deck: {
+  description: string | null;
+  lessonCount: number;
+  wordCount: number;
+}) {
+  return (
+    deck.description ||
+    `Preview ${deck.wordCount} vocabulary words across ${deck.lessonCount} lessons in this public Ordlys deck.`
+  );
+}
+
+function formatLanguagePair(frontLanguage: string | null, backLanguage: string | null) {
+  const front = languageName(frontLanguage);
+  const back = languageName(backLanguage);
+  if (front && back) return `${front} → ${back}`;
+  return front ?? back;
+}
+
+function languageName(code: string | null) {
+  if (!code) return null;
+  return LANGUAGE_OPTIONS.find(language => language.code === code)?.name ?? code;
+}

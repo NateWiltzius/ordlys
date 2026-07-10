@@ -21,6 +21,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+For production, set `NEXT_PUBLIC_SITE_URL` in Vercel to the canonical custom-domain origin (for
+example, `https://www.example.com`). Ordlys uses it for canonical links, social previews,
+`robots.txt`, and `sitemap.xml`.
+
 ## Commands
 
 ```bash

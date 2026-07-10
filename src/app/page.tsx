@@ -1,11 +1,58 @@
 import FeatureCard from '@/app/_components/feature-card';
+import PublicDeckCard from '@/components/public-deck-card';
 import ButtonLink from '@/components/shared/button-link';
+import { getPublicDeckSummaries } from '@/db/queries/public-deck.queries';
+import { absoluteUrl, OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import { Card, Chip } from '@heroui/react';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
+import type { Metadata } from 'next';
 
-export default function Home() {
+const title = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
+const description =
+  'Build vocabulary decks, learn with active recall, and review words at the right time with Ordlys spaced repetition flashcards.';
+
+export const metadata: Metadata = {
+  title: { absolute: title },
+  description,
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    url: '/',
+    siteName: 'Ordlys',
+    title,
+    description,
+    images: [OPEN_GRAPH_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title,
+    description,
+    images: [TWITTER_IMAGE],
+  },
+};
+
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const publicDecks = await getPublicDeckSummaries(3);
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Ordlys',
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'Web',
+    url: absoluteUrl('/'),
+    description,
+  };
+
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl flex-col justify-center px-4 py-10">
+    <div className="mx-auto flex max-w-6xl flex-col px-4 py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replaceAll('<', '\\u003c'),
+        }}
+      />
       <section className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           <Chip size="sm" variant="soft" color="success">
@@ -26,8 +73,8 @@ export default function Home() {
             <ButtonLink href="/auth/sign-up" size="lg">
               Start learning
             </ButtonLink>
-            <ButtonLink href="/auth/sign-in" variant="secondary" size="lg">
-              Log in
+            <ButtonLink href="/public/decks" variant="secondary" size="lg">
+              Browse public decks
             </ButtonLink>
           </div>
         </div>
@@ -70,6 +117,41 @@ export default function Home() {
           title="Review on schedule"
           description="Ordlys keeps track of what is due so you can focus on the next useful session."
         />
+      </section>
+
+      <section aria-labelledby="public-decks-heading" className="mt-16 space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              Try before you sign up
+            </p>
+            <h2 id="public-decks-heading" className="mt-2 text-3xl font-semibold tracking-tight">
+              Preview public vocabulary decks
+            </h2>
+            <p className="mt-2 text-default-500">
+              Browse lesson outlines and sample words without an account. Sign up only when you want
+              to study a deck and save your progress.
+            </p>
+          </div>
+          <ButtonLink href="/public/decks" variant="secondary">
+            Browse public decks
+          </ButtonLink>
+        </div>
+
+        {publicDecks.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {publicDecks.map(deck => (
+              <PublicDeckCard key={deck.id} deck={deck} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-default-200 bg-default-50 px-6 py-8 text-center">
+            <h3 className="text-lg font-semibold">Public decks are coming soon</h3>
+            <p className="mt-1 text-default-500">
+              You can still create an account and start building your own vocabulary library.
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

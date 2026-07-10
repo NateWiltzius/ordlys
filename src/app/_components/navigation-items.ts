@@ -15,6 +15,7 @@ const authenticatedItems: NavigationItem[] = [
 ];
 
 const publicItems: NavigationItem[] = [
+  { href: '/public/decks', label: 'Discover' },
   { href: '/auth/sign-in', label: 'Sign In' },
   { href: '/auth/sign-up', label: 'Sign Up' },
 ];

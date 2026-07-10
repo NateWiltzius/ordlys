@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Privacy',
   description: 'How Ordlys stores, uses, and retains account and learning data.',
+  alternates: { canonical: '/privacy' },
 };
 
 export default function PrivacyPage() {
@@ -15,8 +16,9 @@ export default function PrivacyPage() {
       </p>
       <h2 className="mt-8 text-xl font-semibold">How data is used</h2>
       <p className="mt-2">
-        We use this information only to operate, secure, and improve the service. Public decks and
-        their vocabulary are visible to other users; private decks are restricted to you.
+        We use this information only to operate, secure, and improve the service. Public deck
+        titles, descriptions, lesson outlines, and sample vocabulary can be viewed without an
+        account and may be indexed by search engines. Private decks are restricted to you.
       </p>
       <h2 className="mt-8 text-xl font-semibold">Retention and control</h2>
       <p className="mt-2">

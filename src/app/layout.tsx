@@ -5,14 +5,33 @@ import { PropsWithChildren, Suspense } from 'react';
 import Navbar from '@/app/_components/navbar';
 import Link from 'next/link';
 import { Analytics } from '@vercel/analytics/next';
+import { OPEN_GRAPH_IMAGE, SITE_URL, TWITTER_IMAGE } from '@/lib/site';
+
+const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
+const siteDescription =
+  'Build vocabulary decks, learn with active recall, and review words at the right time with Ordlys spaced repetition flashcards.';
 
 export const metadata: Metadata = {
+  metadataBase: SITE_URL,
+  applicationName: 'Ordlys',
   title: {
-    default: 'Ordlys',
+    default: siteTitle,
     template: '%s | Ordlys',
   },
-  description:
-    'Ordlys is an SRS-based flashcard app built around consistent quizzing rather than self-review.',
+  description: siteDescription,
+  openGraph: {
+    type: 'website',
+    siteName: 'Ordlys',
+    title: siteTitle,
+    description: siteDescription,
+    images: [OPEN_GRAPH_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteTitle,
+    description: siteDescription,
+    images: [TWITTER_IMAGE],
+  },
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     shortcut: '/icon.svg',

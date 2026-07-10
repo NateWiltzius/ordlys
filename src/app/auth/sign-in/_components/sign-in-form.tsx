@@ -5,7 +5,11 @@ import { Button, Card, Input, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
-export function SignInForm() {
+type Props = {
+  nextPath: string;
+};
+
+export function SignInForm({ nextPath }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -30,7 +34,7 @@ export function SignInForm() {
         return;
       }
 
-      window.location.replace('/dashboard');
+      window.location.replace(nextPath);
     } catch {
       setErrorMessage('Unable to sign in right now. Please try again.');
     } finally {
@@ -98,7 +102,10 @@ export function SignInForm() {
       <Card.Footer className="justify-center border-t border-default-200 bg-default-50 px-6 py-4">
         <p className="text-sm text-default-500">
           New to Ordlys?{' '}
-          <Link href="/auth/sign-up" className="font-medium text-primary hover:underline">
+          <Link
+            href={`/auth/sign-up?next=${encodeURIComponent(nextPath)}`}
+            className="font-medium text-primary hover:underline"
+          >
             Create an account
           </Link>
         </p>

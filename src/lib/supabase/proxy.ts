@@ -39,15 +39,21 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  const publicPaths = new Set(['/', '/privacy', '/terms']);
-  const isPublicPath =
-    publicPaths.has(request.nextUrl.pathname) || request.nextUrl.pathname.startsWith('/auth/');
+  const protectedPrefixes = ['/account', '/dashboard', '/decks', '/feedback'];
+  const isProtectedPath = protectedPrefixes.some(
+    prefix =>
+      request.nextUrl.pathname === prefix || request.nextUrl.pathname.startsWith(`${prefix}/`),
+  );
 
-  if (!user && !isPublicPath) {
+  if (!user && isProtectedPath) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = '/auth/sign-in';
-    return NextResponse.redirect(url);
+    url.search = '';
+    url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach(cookie => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

@@ -5,7 +5,11 @@ import { Button, Card, Input, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
-export function SignUpForm() {
+type Props = {
+  nextPath: string;
+};
+
+export function SignUpForm({ nextPath }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -37,7 +41,7 @@ export function SignUpForm() {
         return;
       }
 
-      window.location.replace('/dashboard');
+      window.location.replace(nextPath);
     } catch {
       setErrorMessage('Unable to create your account right now. Please try again.');
     } finally {
@@ -107,7 +111,10 @@ export function SignUpForm() {
       <Card.Footer className="justify-center border-t border-default-200 bg-default-50 px-6 py-4">
         <p className="text-sm text-default-500">
           Already have an account?{' '}
-          <Link href="/auth/sign-in" className="font-medium text-primary hover:underline">
+          <Link
+            href={`/auth/sign-in?next=${encodeURIComponent(nextPath)}`}
+            className="font-medium text-primary hover:underline"
+          >
             Sign in
           </Link>
         </p>
