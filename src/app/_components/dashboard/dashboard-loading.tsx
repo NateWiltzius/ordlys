@@ -2,6 +2,7 @@ import {
   DashboardDeckListSkeleton,
   PageHeaderSkeleton,
   ReviewForecastSkeleton,
+  StudyActionCardSkeleton,
   StudySummarySkeleton,
 } from '@/components/shared/skeleton';
 
@@ -11,6 +12,7 @@ export default function DashboardLoading() {
       <span className="sr-only">Loading dashboard…</span>
       <PageHeaderSkeleton actionCount={1} />
       <StudySummarySkeleton />
+      <StudyActionCardSkeleton />
       <ReviewForecastSkeleton />
       <DashboardDeckListSkeleton />
     </div>

@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import DeckLanguageSelect, {
   languageFormValue,
 } from '@/app/(protected)/decks/_components/deck-language-select';
+import StatusAlert from '@/components/shared/status-alert';
 
 type CreateDeckModalProps = {
   triggerLabel?: string;
@@ -103,12 +104,8 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
                 </p>
               </Modal.Body>
               <Modal.Footer>
-                {error ? (
-                  <p role="alert" className="text-sm text-danger">
-                    {error}
-                  </p>
-                ) : null}
-                <Button className="w-full" type="submit" isDisabled={isSubmitting}>
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
+                <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create Deck'}
                 </Button>
               </Modal.Footer>

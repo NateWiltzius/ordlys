@@ -1,12 +1,13 @@
 'use server';
 
-import { getAccessibleDeckById } from '@/db/queries/deck.queries';
+import { getAccessibleDeckById, getOwnedDeckById } from '@/db/queries/deck.queries';
 import { getActiveReleaseId } from '@/db/queries/deck-access';
 import { getReleaseLessonVocabs } from '@/db/queries/deck-release.queries';
 import { getLessonById } from '@/db/queries/lesson.queries';
 import {
   createVocab,
   deleteVocab,
+  getVocabByLessonId,
   getUserVocabLevelsByLessonId,
   moveVocab,
   replaceVocab,
@@ -49,6 +50,26 @@ export async function getLessonVocabularyAction(deckId: number, lessonId: number
     vocabs: lessonVocabs,
     srsLevels: Object.fromEntries(userVocabLevels.map(state => [state.vocabId, state.srsLevel])),
   };
+}
+
+export async function getEditableLessonVocabularyAction(deckId: number, lessonId: number) {
+  const parsedDeckId = parsePositiveInteger(deckId);
+  const parsedLessonId = parsePositiveInteger(lessonId);
+  if (!parsedDeckId || !parsedLessonId) {
+    throw new Error('Invalid deck or lesson ID.');
+  }
+
+  const userId = await getCurrentUserId();
+  const [deck, lesson] = await Promise.all([
+    getOwnedDeckById(parsedDeckId, userId),
+    getLessonById(parsedLessonId),
+  ]);
+
+  if (!deck || !lesson || lesson.deckId !== deck.id || lesson.removedAt) {
+    throw new Error('Lesson not found or access denied.');
+  }
+
+  return getVocabByLessonId(parsedLessonId);
 }
 
 export async function createVocabAction(vocab: CreateVocab) {

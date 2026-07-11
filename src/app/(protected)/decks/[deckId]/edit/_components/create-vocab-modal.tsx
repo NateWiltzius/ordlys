@@ -1,7 +1,6 @@
 import { createVocabAction } from '@/server/vocab.actions';
 import { CreateVocab } from '@/types/vocab.types';
 import { Button, Modal, useOverlayState } from '@heroui/react';
-import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import VocabFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/vocab-form-fields';
 import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
@@ -9,15 +8,16 @@ import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
 type CreateVocabModalProps = {
   triggerLabel?: string;
   lessonId: number;
+  onCreated: () => void | Promise<void>;
 };
 
 export default function CreateVocabModal({
   triggerLabel = 'New vocab',
   lessonId,
+  onCreated,
 }: CreateVocabModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   const handleCreateVocab = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,9 +48,9 @@ export default function CreateVocabModal({
 
     try {
       await createVocabAction(vocab);
+      await onCreated();
       form.reset();
       modalState.close();
-      router.refresh();
     } finally {
       setIsSubmitting(false);
     }
@@ -58,7 +58,7 @@ export default function CreateVocabModal({
 
   return (
     <Modal state={modalState}>
-      <Button variant="secondary" onPress={modalState.open}>
+      <Button size="sm" variant="secondary" onPress={modalState.open}>
         {triggerLabel}
       </Button>
 
@@ -74,7 +74,7 @@ export default function CreateVocabModal({
                 <VocabFormFields />
               </Modal.Body>
               <Modal.Footer>
-                <Button className="w-full" type="submit" isDisabled={isSubmitting}>
+                <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create vocab'}
                 </Button>
               </Modal.Footer>

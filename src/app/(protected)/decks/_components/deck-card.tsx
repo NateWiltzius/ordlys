@@ -10,6 +10,8 @@ import { Button, Card, Chip, ListBox, Popover } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { errorMessage } from '@/lib/validation/content';
+import ConfirmationDialog from '@/components/shared/confirmation-dialog';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Relationship = 'owned' | 'copy' | 'following' | 'discover' | 'restorable';
 type Props = { deck: Deck; relationship: Relationship; isFollowing?: boolean };
@@ -21,6 +23,7 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
   const [pending, setPending] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<'copy' | 'delete' | 'unfollow' | null>(null);
 
   useEffect(() => setFollowing(isFollowing), [isFollowing]);
 
@@ -49,8 +52,6 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
     );
 
   const handleUnfollow = async () => {
-    if (!window.confirm(`Unfollow “${deck.title}”? Your learning progress will be retained.`))
-      return;
     await run(
       'unfollow',
       async () => {
@@ -62,18 +63,10 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Soft-delete “${deck.title}”? It can be restored during retention.`))
-      return;
     await run('delete', () => deleteDeckAction(deck.id), 'Could not delete the deck.');
   };
 
   const handleCopy = async () => {
-    if (
-      !window.confirm(
-        `Copy “${deck.title}”? The published release becomes an independent private deck; source learning progress is not copied.`,
-      )
-    )
-      return;
     if (pending) return;
     try {
       setPending('copy');
@@ -99,10 +92,10 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
         router.push(`/decks/${deck.id}/edit`);
         break;
       case 'delete':
-        await handleDelete();
+        setConfirmation('delete');
         break;
       case 'unfollow':
-        await handleUnfollow();
+        setConfirmation('unfollow');
         break;
     }
   };
@@ -155,11 +148,7 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
       <div className="flex-1" />
       <Card.Footer>
         <div className="flex w-full flex-col gap-2">
-          {mutationError ? (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-              {mutationError}
-            </p>
-          ) : null}
+          {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
           <div className="flex items-start gap-2">
             {relationship === 'restorable' ? (
               <Button
@@ -197,7 +186,7 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
                 variant="secondary"
                 size="sm"
                 isPending={pending === 'copy'}
-                onPress={handleCopy}
+                onPress={() => setConfirmation('copy')}
               >
                 Copy &amp; edit
               </Button>
@@ -214,7 +203,12 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
 
             {relationship !== 'restorable' ? (
               <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <Button variant="tertiary" size="sm" aria-label={`More actions for ${deck.title}`}>
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  isIconOnly
+                  aria-label={`More actions for ${deck.title}`}
+                >
                   <EllipsisVerticalIcon className="h-5 w-5" />
                 </Button>
                 <Popover.Content placement="bottom end">
@@ -248,6 +242,41 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
           </div>
         </div>
       </Card.Footer>
+      <ConfirmationDialog
+        isOpen={confirmation !== null}
+        onOpenChange={isOpen => {
+          if (!isOpen && !pending) setConfirmation(null);
+        }}
+        title={
+          confirmation === 'copy'
+            ? `Copy “${deck.title}”?`
+            : confirmation === 'unfollow'
+              ? `Unfollow “${deck.title}”?`
+              : `Delete “${deck.title}”?`
+        }
+        description={
+          confirmation === 'copy'
+            ? 'The published release becomes an independent private deck. Source learning progress is not copied.'
+            : confirmation === 'unfollow'
+              ? 'Updates will stop, but your learning progress will be retained.'
+              : 'The deck will be soft-deleted and can be restored during the retention period.'
+        }
+        confirmLabel={
+          confirmation === 'copy'
+            ? 'Copy deck'
+            : confirmation === 'unfollow'
+              ? 'Unfollow deck'
+              : 'Delete deck'
+        }
+        isPending={pending !== null}
+        onConfirm={async () => {
+          const action = confirmation;
+          if (action === 'copy') await handleCopy();
+          if (action === 'delete') await handleDelete();
+          if (action === 'unfollow') await handleUnfollow();
+          setConfirmation(null);
+        }}
+      />
     </Card>
   );
 }

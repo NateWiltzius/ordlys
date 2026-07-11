@@ -6,6 +6,7 @@ import EmptyState from '@/components/shared/empty-state';
 import DashboardDeckRow from '@/app/_components/dashboard/dashboard-deck-row';
 import { getDashboardDataAction } from '@/server/deck.actions';
 import ReviewForecastCard from '@/components/shared/review-forecast-card';
+import DashboardReviewCard from '@/app/_components/dashboard/dashboard-review-card';
 
 export default async function DashboardContent() {
   const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview } =
@@ -24,6 +25,12 @@ export default async function DashboardContent() {
       />
 
       <StudySummary counts={allDeckStats} description="Your progress across all active decks." />
+
+      <DashboardReviewCard
+        decks={activeDecks}
+        deckStats={deckStats}
+        reviewsDue={allDeckStats.reviewsDue}
+      />
 
       <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} />
 

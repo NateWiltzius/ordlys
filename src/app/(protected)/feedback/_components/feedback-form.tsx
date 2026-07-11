@@ -4,6 +4,7 @@ import { createFeedbackAction } from '@/server/feedback.actions';
 import { CreateFeedbackInput, FeedbackCategory } from '@/types/feedback.types';
 import { Button, Input, Label, ListBox, Select, TextArea } from '@heroui/react';
 import { FormEvent, useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 const categoryLabels: Record<FeedbackCategory, string> = {
   bug: 'Something is broken',
@@ -112,15 +113,9 @@ export default function FeedbackForm() {
         </div>
       </div>
 
-      {error ? (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+      {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
       {success ? (
-        <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">
-          Thanks, your feedback was saved.
-        </p>
+        <StatusAlert status="success">Thanks, your feedback was saved.</StatusAlert>
       ) : null}
 
       <div>

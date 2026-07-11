@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button, Card, Input, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   nextPath: string;
@@ -85,14 +86,7 @@ export function SignInForm({ nextPath }: Props) {
               Forgot password?
             </Link>
           </div>
-          {errorMessage ? (
-            <p
-              role="alert"
-              className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger"
-            >
-              {errorMessage}
-            </p>
-          ) : null}
+          {errorMessage ? <StatusAlert status="danger">{errorMessage}</StatusAlert> : null}
           <Button type="submit" variant="primary" className="mt-1 w-full" isPending={isSubmitting}>
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </Button>

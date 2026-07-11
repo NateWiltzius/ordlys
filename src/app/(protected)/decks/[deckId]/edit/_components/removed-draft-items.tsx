@@ -6,6 +6,7 @@ import { restoreVocabAction } from '@/server/vocab.actions';
 import { Button, Card } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   items: RemovedDraftItem[];
@@ -58,11 +59,7 @@ export default function RemovedDraftItems({ items }: Props) {
             </Button>
           </div>
         ))}
-        {error ? (
-          <p role="alert" className="text-sm text-danger">
-            {error}
-          </p>
-        ) : null}
+        {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
       </Card.Content>
     </Card>
   );

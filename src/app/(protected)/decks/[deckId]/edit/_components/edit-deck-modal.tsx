@@ -8,6 +8,7 @@ import { FormEvent, useState } from 'react';
 import DeckLanguageSelect, {
   languageFormValue,
 } from '@/app/(protected)/decks/_components/deck-language-select';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   deck: Deck;
@@ -82,14 +83,10 @@ export default function EditDeckModal({ deck }: Props) {
                 <p className="text-xs text-default-500">
                   Choose “Not specified” for decks that are not tied to a language.
                 </p>
-                {error ? (
-                  <p role="alert" className="text-sm text-danger">
-                    {error}
-                  </p>
-                ) : null}
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button type="submit" isPending={pending}>
+                <Button type="submit" isPending={pending} className="w-full sm:w-auto">
                   Save changes
                 </Button>
               </Modal.Footer>

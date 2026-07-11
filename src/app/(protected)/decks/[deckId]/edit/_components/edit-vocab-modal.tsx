@@ -4,20 +4,24 @@ import VocabFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/v
 import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
 import { replaceVocabAction, updateVocabAction } from '@/server/vocab.actions';
 import { Vocab } from '@/types/vocab.types';
-import { PencilSquareIcon } from '@heroicons/react/24/outline';
 import { Button, Modal, useOverlayState } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 type Props = {
-  vocab: Vocab;
+  vocab: Vocab | null;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onSaved: () => void | Promise<void>;
 };
 
-export default function EditVocabModal({ vocab }: Props) {
-  const modalState = useOverlayState();
-  const router = useRouter();
+export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }: Props) {
+  const modalState = useOverlayState({ isOpen, onOpenChange });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replaceIdentity, setReplaceIdentity] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setReplaceIdentity(false);
+  }, [isOpen, vocab?.id]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,7 +31,7 @@ export default function EditVocabModal({ vocab }: Props) {
     const back = String(formData.get('back') ?? '').trim();
     const reading = String(formData.get('reading') ?? '').trim();
 
-    if (!front || !back) return;
+    if (!vocab || !front || !back) return;
 
     try {
       setIsSubmitting(true);
@@ -40,8 +44,8 @@ export default function EditVocabModal({ vocab }: Props) {
       };
       if (replaceIdentity) await replaceVocabAction(vocab.id, input);
       else await updateVocabAction(vocab.id, input);
+      await onSaved();
       modalState.close();
-      router.refresh();
     } finally {
       setIsSubmitting(false);
     }
@@ -49,16 +53,6 @@ export default function EditVocabModal({ vocab }: Props) {
 
   return (
     <Modal state={modalState}>
-      <Button
-        size="sm"
-        variant="tertiary"
-        isIconOnly
-        aria-label={`Edit ${vocab.front}`}
-        onPress={modalState.open}
-      >
-        <PencilSquareIcon className="h-4 w-4" />
-      </Button>
-
       <Modal.Backdrop>
         <Modal.Container>
           <Modal.Dialog className="sm:max-w-[360px]">
@@ -68,7 +62,7 @@ export default function EditVocabModal({ vocab }: Props) {
             </Modal.Header>
             <form onSubmit={handleSubmit}>
               <Modal.Body>
-                <VocabFormFields vocab={vocab} />
+                {vocab ? <VocabFormFields key={vocab.id} vocab={vocab} /> : null}
                 <label className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm">
                   <input
                     type="checkbox"
@@ -83,7 +77,7 @@ export default function EditVocabModal({ vocab }: Props) {
                 </label>
               </Modal.Body>
               <Modal.Footer>
-                <Button className="w-full" type="submit" isPending={isSubmitting}>
+                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
                   {replaceIdentity ? 'Replace vocabulary' : 'Save changes'}
                 </Button>
               </Modal.Footer>

@@ -80,7 +80,7 @@ export default function CreateLessonModal({
                 />
               </Modal.Body>
               <Modal.Footer>
-                <Button className="w-full" type="submit" isDisabled={isSubmitting}>
+                <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create lesson'}
                 </Button>
               </Modal.Footer>

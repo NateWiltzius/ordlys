@@ -3,8 +3,7 @@
 import LessonCard from '@/app/(protected)/decks/[deckId]/edit/_components/lesson-card';
 import CreateLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/create-lesson-modal';
 import PageHeader from '@/components/shared/layout/page-header';
-import { Lesson } from '@/types/lesson.types';
-import { Vocab } from '@/types/vocab.types';
+import { EditLessonSummary } from '@/types/lesson.types';
 import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
@@ -22,8 +21,7 @@ import type { RemovedDraftItem } from '@/db/queries/deck-release.queries';
 import RemovedDraftItems from './removed-draft-items';
 
 type Props = {
-  lessons: Lesson[];
-  lessonVocabs: Record<number, Vocab[]>;
+  lessons: EditLessonSummary[];
   parsedDeckId: number;
   deck: Deck;
   releases: DeckRelease[];
@@ -34,7 +32,6 @@ type Props = {
 
 export default function EditPage({
   lessons,
-  lessonVocabs,
   parsedDeckId,
   deck,
   releases,
@@ -120,12 +117,12 @@ export default function EditPage({
               action={<CreateLessonModal deckId={parsedDeckId} />}
             />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {orderedLessons.map((lesson, index) => (
                 <LessonCard
                   key={lesson.id}
+                  deckId={parsedDeckId}
                   lesson={lesson}
-                  vocabs={lessonVocabs[lesson.id] ?? []}
                   canMoveUp={index > 0}
                   canMoveDown={index < orderedLessons.length - 1}
                   isLessonOrderPending={movingLessonId !== null}

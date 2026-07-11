@@ -5,6 +5,7 @@ import { getLessonVocabularyAction } from '@/server/vocab.actions';
 import { Vocab } from '@/types/vocab.types';
 import { Button } from '@heroui/react';
 import { useCallback, useEffect, useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   deckId: number;
@@ -55,11 +56,7 @@ export default function LessonVocabulary({ deckId, lessonId, isExpanded }: Props
   return (
     <div className="rounded-lg bg-default-100 px-4 py-5 text-center">
       {!errorMessage ? <p className="text-sm text-default-500">Loading vocabulary...</p> : null}
-      {errorMessage ? (
-        <p role="alert" className="text-sm text-danger">
-          {errorMessage}
-        </p>
-      ) : null}
+      {errorMessage ? <StatusAlert status="danger">{errorMessage}</StatusAlert> : null}
       {errorMessage ? (
         <Button size="sm" variant="secondary" className="mt-3" onPress={loadVocabulary}>
           Try again

@@ -7,6 +7,7 @@ import { importCsvDeckAction } from '@/server/deck-import.actions';
 import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 const CSV_TEMPLATE = `front,back,lesson,reading,front_alternatives,back_alternatives
 hei,hello,Greetings,,hallo|heisann,
@@ -113,14 +114,10 @@ export default function ImportDeckModal() {
                     “Imported vocabulary.”
                   </p>
                 </div>
-                {error ? (
-                  <p role="alert" className="text-sm text-danger">
-                    {error}
-                  </p>
-                ) : null}
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button type="submit" isPending={pending}>
+                <Button type="submit" isPending={pending} className="w-full sm:w-auto">
                   Import deck
                 </Button>
               </Modal.Footer>

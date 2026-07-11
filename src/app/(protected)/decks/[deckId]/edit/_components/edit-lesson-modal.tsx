@@ -5,6 +5,7 @@ import type { Lesson } from '@/types/lesson.types';
 import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   lesson: Lesson;
@@ -52,14 +53,10 @@ export default function EditLessonModal({ lesson }: Props) {
                   required
                   maxLength={255}
                 />
-                {error ? (
-                  <p role="alert" className="text-sm text-danger">
-                    {error}
-                  </p>
-                ) : null}
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button type="submit" isPending={pending}>
+                <Button type="submit" isPending={pending} className="w-full sm:w-auto">
                   Save
                 </Button>
               </Modal.Footer>

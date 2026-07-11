@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, Input, Label } from '@heroui/react';
 import { FormEvent, useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('');
@@ -26,7 +27,7 @@ export default function UpdatePasswordPage() {
     <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] w-full max-w-6xl items-center justify-center px-4 py-8 sm:px-6">
       <Card className="w-full max-w-md overflow-hidden border border-default-200 shadow-sm">
         <Card.Header className="space-y-1 border-b border-default-200 bg-default-50 px-6 py-5">
-          <Card.Title>Choose a new password</Card.Title>
+          <Card.Title className="text-2xl">Choose a new password</Card.Title>
           <Card.Description>Enter a secure password for your Ordlys account.</Card.Description>
         </Card.Header>
         <Card.Content className="px-6 py-6">
@@ -40,14 +41,7 @@ export default function UpdatePasswordPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
             />
-            {error ? (
-              <p
-                role="alert"
-                className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger"
-              >
-                {error}
-              </p>
-            ) : null}
+            {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
             <Button type="submit" variant="primary" className="w-full" isPending={pending}>
               Update password
             </Button>

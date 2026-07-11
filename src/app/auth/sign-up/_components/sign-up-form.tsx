@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button, Card, Input, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   nextPath: string;
@@ -87,22 +88,8 @@ export function SignUpForm({ nextPath }: Props) {
               className="w-full"
             />
           </div>
-          {errorMessage ? (
-            <p
-              role="alert"
-              className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger"
-            >
-              {errorMessage}
-            </p>
-          ) : null}
-          {successMessage ? (
-            <p
-              role="status"
-              className="rounded-lg border border-success/20 bg-success/10 px-3 py-2 text-sm text-success"
-            >
-              {successMessage}
-            </p>
-          ) : null}
+          {errorMessage ? <StatusAlert status="danger">{errorMessage}</StatusAlert> : null}
+          {successMessage ? <StatusAlert status="success">{successMessage}</StatusAlert> : null}
           <Button type="submit" variant="primary" className="mt-1 w-full" isPending={isSubmitting}>
             {isSubmitting ? 'Creating account...' : 'Create account'}
           </Button>

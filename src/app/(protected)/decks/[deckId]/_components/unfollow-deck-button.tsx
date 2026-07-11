@@ -4,6 +4,8 @@ import { unfollowDeckAction } from '@/server/deck-follow.actions';
 import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import ConfirmationDialog from '@/components/shared/confirmation-dialog';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = { deckId: number; deckTitle: string };
 
@@ -11,16 +13,10 @@ export default function UnfollowDeckButton({ deckId, deckTitle }: Props) {
   const router = useRouter();
   const [isUnfollowing, setIsUnfollowing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   async function handleUnfollow() {
     if (isUnfollowing) return;
-    if (
-      !window.confirm(
-        `Unfollow “${deckTitle}”? Author updates will stop, but your progress is retained if you follow it again.`,
-      )
-    )
-      return;
-
     try {
       setIsUnfollowing(true);
       setError(null);
@@ -36,14 +32,22 @@ export default function UnfollowDeckButton({ deckId, deckTitle }: Props) {
 
   return (
     <div className="flex flex-col gap-2">
-      <Button variant="danger-soft" isPending={isUnfollowing} onPress={handleUnfollow}>
+      <Button variant="danger-soft" isPending={isUnfollowing} onPress={() => setIsConfirming(true)}>
         Unfollow
       </Button>
-      {error ? (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+      {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
+      <ConfirmationDialog
+        isOpen={isConfirming}
+        onOpenChange={setIsConfirming}
+        title={`Unfollow “${deckTitle}”?`}
+        description="Author updates will stop, but your progress is retained if you follow the deck again."
+        confirmLabel="Unfollow deck"
+        isPending={isUnfollowing}
+        onConfirm={async () => {
+          await handleUnfollow();
+          setIsConfirming(false);
+        }}
+      />
     </div>
   );
 }

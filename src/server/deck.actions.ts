@@ -24,8 +24,7 @@ import {
   requiredText,
 } from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
-import { getVocabByDeckId } from '@/db/queries/vocab.queries';
+import { getEditLessonSummaries } from '@/db/queries/lesson.queries';
 import { getActiveReleaseId } from '@/db/queries/deck-access';
 import {
   getNewVocabCountsForDecks,
@@ -135,10 +134,9 @@ export async function getEditDeckPageDataAction(id: number) {
   const userId = await getCurrentUserId();
   const deck = await getOwnedDeckById(deckId, userId);
   if (!deck) return null;
-  const [lessons, vocabs, releases, hasUnpublishedChanges, provenance, removedDraftItems] =
+  const [lessons, releases, hasUnpublishedChanges, provenance, removedDraftItems] =
     await Promise.all([
-      getLessonsByDeckId(deckId),
-      getVocabByDeckId(deckId),
+      getEditLessonSummaries(deckId),
       listReleaseHistory(deckId),
       hasUnpublishedDraftChanges(deckId),
       getDeckProvenance(deckId),
@@ -147,7 +145,6 @@ export async function getEditDeckPageDataAction(id: number) {
   return {
     deck,
     lessons,
-    vocabs,
     releases,
     hasUnpublishedChanges,
     provenance,

@@ -1,7 +1,7 @@
 import { db } from '@/db';
-import { decks, lessonRevisions, lessons } from '@/db/schema';
-import { CreateLesson, Lesson } from '@/types/lesson.types';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { decks, lessonRevisions, lessons, vocabs } from '@/db/schema';
+import { CreateLesson, EditLessonSummary, Lesson } from '@/types/lesson.types';
+import { and, count, eq, isNull, sql } from 'drizzle-orm';
 import { OrderDirection } from '@/types/order.types';
 import { DeckDomainError } from '@/lib/deck-domain';
 import { DECK_LIMITS } from '@/config/deck-limits';
@@ -71,6 +71,38 @@ export const getLessonsByDeckId = async (deckId: number): Promise<Lesson[]> => {
     .innerJoin(lessonRevisions, eq(lessonRevisions.id, lessons.currentRevisionId))
     .where(and(eq(lessons.deckId, deckId), isNull(lessons.removedAt)))
     .orderBy(lessons.orderIndex, lessons.id);
+};
+
+export const getEditLessonSummaries = async (deckId: number): Promise<EditLessonSummary[]> => {
+  const rows = await db
+    .select({
+      id: lessons.id,
+      deckId: lessons.deckId,
+      title: lessonRevisions.title,
+      currentRevisionId: lessons.currentRevisionId,
+      removedAt: lessons.removedAt,
+      orderIndex: lessons.orderIndex,
+      createdAt: lessons.createdAt,
+      updatedAt: lessons.updatedAt,
+      vocabCount: count(vocabs.id),
+    })
+    .from(lessons)
+    .innerJoin(lessonRevisions, eq(lessonRevisions.id, lessons.currentRevisionId))
+    .leftJoin(vocabs, and(eq(vocabs.lessonId, lessons.id), isNull(vocabs.removedAt)))
+    .where(and(eq(lessons.deckId, deckId), isNull(lessons.removedAt)))
+    .groupBy(
+      lessons.id,
+      lessons.deckId,
+      lessonRevisions.title,
+      lessons.currentRevisionId,
+      lessons.removedAt,
+      lessons.orderIndex,
+      lessons.createdAt,
+      lessons.updatedAt,
+    )
+    .orderBy(lessons.orderIndex, lessons.id);
+
+  return rows.map(row => ({ ...row, vocabCount: Number(row.vocabCount) }));
 };
 
 export const updateLesson = async (lessonId: number, title: string, userId: string) => {

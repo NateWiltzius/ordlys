@@ -4,6 +4,7 @@ import { followDeckAction } from '@/server/deck-follow.actions';
 import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   deckId: number;
@@ -40,11 +41,7 @@ export default function FollowDeckButton({ deckId }: Props) {
       >
         Follow deck to start learning
       </Button>
-      {error ? (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+      {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
     </div>
   );
 }

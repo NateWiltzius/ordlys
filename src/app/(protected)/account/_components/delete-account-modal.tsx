@@ -3,6 +3,7 @@
 import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import { FormEvent, useState } from 'react';
 import { deleteAccountAction } from '@/server/auth.actions';
+import StatusAlert from '@/components/shared/status-alert';
 
 export default function DeleteAccountModal() {
   const modalState = useOverlayState();
@@ -65,11 +66,7 @@ export default function DeleteAccountModal() {
                     autoFocus
                   />
                 </div>
-                {error ? (
-                  <p role="alert" className="text-sm text-danger">
-                    {error}
-                  </p>
-                ) : null}
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button

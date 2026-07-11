@@ -1,5 +1,4 @@
 import EditPage from '@/app/(protected)/decks/[deckId]/edit/_components/edit-page';
-import { Vocab } from '@/types/vocab.types';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { getEditDeckPageDataAction } from '@/server/deck.actions';
@@ -23,14 +22,7 @@ export default async function Page({ params }: Props) {
 
   const data = await getEditDeckPageDataAction(parsedDeckId);
   if (!data) notFound();
-  const { deck, lessons, vocabs, releases, hasUnpublishedChanges, provenance, removedDraftItems } =
-    data;
-
-  const lessonVocabs = vocabs.reduce<Record<number, Vocab[]>>((accumulator, vocab) => {
-    accumulator[vocab.lessonId] ??= [];
-    accumulator[vocab.lessonId].push(vocab);
-    return accumulator;
-  }, {});
+  const { deck, lessons, releases, hasUnpublishedChanges, provenance, removedDraftItems } = data;
 
   return (
     <EditPage
@@ -40,7 +32,6 @@ export default async function Page({ params }: Props) {
       provenance={provenance}
       removedDraftItems={removedDraftItems}
       lessons={lessons}
-      lessonVocabs={lessonVocabs}
       parsedDeckId={parsedDeckId}
     />
   );

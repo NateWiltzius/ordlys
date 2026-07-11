@@ -17,11 +17,17 @@ import {
   QuizProgressStats,
 } from '@/types/quiz.types';
 import { LearnItem, ReviewItem, SrsTransition } from '@/types/review.types';
-import { Button, Card, ProgressBar, Toast } from '@heroui/react';
+import { Alert, Button, Card, ProgressBar } from '@heroui/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
 import { StudyTone } from '@/lib/study-colors';
 import { HomeIcon } from '@heroicons/react/24/outline';
+
+type SrsUpdate = {
+  status: 'success' | 'warning' | 'danger';
+  title: string;
+  description: string;
+};
 
 type Props = {
   quizItems: LearnItem[] | ReviewItem[];
@@ -49,7 +55,7 @@ export default function QuizMode({
   });
   const [feedback, setFeedback] = useState<QuizFeedback | null>(null);
   const [pendingSaveCount, setPendingSaveCount] = useState(0);
-  const [saveError, setSaveError] = useState(false);
+  const [srsUpdate, setSrsUpdate] = useState<SrsUpdate | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const continueHandledRef = useRef(false);
 
@@ -74,19 +80,11 @@ export default function QuizMode({
     });
     setFeedback(null);
     setPendingSaveCount(0);
-    setSaveError(false);
+    setSrsUpdate(null);
     continueHandledRef.current = false;
   }, [quizItems]);
 
   const currentQuizItem = quizQueue?.[0];
-  const toastProvider = (
-    <Toast.Provider
-      placement="top start"
-      maxVisibleToasts={1}
-      width={320}
-      className="quiz-toast-region"
-    />
-  );
   const exitQuizButton = (
     <Button
       variant="tertiary"
@@ -124,6 +122,23 @@ export default function QuizMode({
           : Math.round((attemptStats.correctAttempts / attemptStats.totalAttempts) * 100),
     };
   }, [quizItems.length, quizProgress, attemptStats]);
+
+  useEffect(() => {
+    if (quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0) {
+      window.location.replace(completionHref);
+    }
+  }, [completionHref, pendingSaveCount, quizQueue]);
+
+  useEffect(() => {
+    if (!srsUpdate) return;
+
+    const timeout = window.setTimeout(
+      () => setSrsUpdate(null),
+      srsUpdate.status === 'danger' ? 8000 : 3500,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [srsUpdate]);
 
   const handleAnswerSubmit = () => {
     if (!currentQuizItem) return;
@@ -177,11 +192,14 @@ export default function QuizMode({
         setPendingSaveCount(count => count + 1);
         void onVocabComplete(quizItem.cardId, !failedCardIds.has(quizItem.cardId))
           .then(transition => {
-            showSrsTransitionToast(vocabLabel, transition);
+            setSrsUpdate(buildSrsUpdate(vocabLabel, transition));
           })
           .catch(() => {
-            setSaveError(true);
-            Toast.toast.danger(`Could not save progress for ${vocabLabel}`);
+            setSrsUpdate({
+              status: 'danger',
+              title: 'Progress not saved',
+              description: `Could not save progress for ${vocabLabel}.`,
+            });
           })
           .finally(() => {
             setPendingSaveCount(count => Math.max(0, count - 1));
@@ -215,7 +233,6 @@ export default function QuizMode({
     return (
       <>
         {exitQuizButton}
-        {toastProvider}
         <div className="w-full">
           <Card>
             <Card.Header>
@@ -240,43 +257,24 @@ export default function QuizMode({
   }
 
   if (!currentQuizItem) {
+    if (pendingSaveCount === 0) return null;
+
     return (
       <>
         {exitQuizButton}
-        {toastProvider}
-        <div className="w-full space-y-4">
-          <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
-          <Card variant="tertiary">
+        <div className="w-full">
+          <Card>
             <Card.Header>
-              <Card.Title>Quiz complete</Card.Title>
-              <Card.Description>Nice work. Your session is complete.</Card.Description>
+              <Card.Title>Saving progress</Card.Title>
+              <Card.Description>Returning to your deck.</Card.Description>
             </Card.Header>
             <Card.Content>
-              {pendingSaveCount > 0 ? (
-                <p className="text-sm text-default-500">Saving progress…</p>
-              ) : saveError ? (
-                <p className="text-sm text-danger">
-                  Some progress could not be saved. Please try the quiz again.
-                </p>
-              ) : (
-                <p className="text-sm text-default-600">Your progress has been saved.</p>
-              )}
+              <ProgressBar isIndeterminate aria-label="Saving quiz progress">
+                <ProgressBar.Track>
+                  <ProgressBar.Fill />
+                </ProgressBar.Track>
+              </ProgressBar>
             </Card.Content>
-            <Card.Footer>
-              {pendingSaveCount > 0 ? (
-                <Button variant="primary" isPending isDisabled>
-                  Saving progress
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  className="w-full sm:w-auto"
-                  onPress={() => window.location.assign(completionHref)}
-                >
-                  Back to deck
-                </Button>
-              )}
-            </Card.Footer>
           </Card>
         </div>
       </>
@@ -286,7 +284,19 @@ export default function QuizMode({
   return (
     <>
       {exitQuizButton}
-      {toastProvider}
+      {srsUpdate ? (
+        <Alert
+          status={srsUpdate.status}
+          role="status"
+          className="pointer-events-none fixed left-1/2 top-16 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 shadow-xl"
+        >
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>{srsUpdate.title}</Alert.Title>
+            <Alert.Description>{srsUpdate.description}</Alert.Description>
+          </Alert.Content>
+        </Alert>
+      ) : null}
       <div className="w-full space-y-4">
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
 
@@ -325,20 +335,19 @@ function formatSrsTransition({ previousLevel, nextLevel }: SrsTransition) {
   return `${formatSrsLevel(previousLevel)} → ${nextLabel}`;
 }
 
-function showSrsTransitionToast(vocabLabel: string, transition: SrsTransition) {
-  const options = {
-    description: formatSrsTransition(transition),
-  };
+function buildSrsUpdate(vocabLabel: string, transition: SrsTransition): SrsUpdate {
+  const levelIncreased =
+    transition.nextLevel !== null &&
+    (transition.previousLevel === null || transition.nextLevel > transition.previousLevel);
+  const levelDecreased =
+    transition.previousLevel !== null &&
+    (transition.nextLevel === null || transition.nextLevel < transition.previousLevel);
 
-  if (transition.nextLevel === null) {
-    Toast.toast.info(vocabLabel, options);
-  } else if (transition.previousLevel === null || transition.nextLevel > transition.previousLevel) {
-    Toast.toast.success(vocabLabel, options);
-  } else if (transition.nextLevel < transition.previousLevel) {
-    Toast.toast.warning(vocabLabel, options);
-  } else {
-    Toast.toast.info(vocabLabel, options);
-  }
+  return {
+    status: levelDecreased ? 'warning' : 'success',
+    title: levelIncreased ? 'Level up' : levelDecreased ? 'Review needs work' : 'Review saved',
+    description: `${vocabLabel}: ${formatSrsTransition(transition)}`,
+  };
 }
 
 function formatSrsLevel(srsLevel: number) {

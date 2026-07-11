@@ -4,6 +4,7 @@ import { restoreDeckAction } from '@/server/deck-release.actions';
 import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   deckId: number;
@@ -33,7 +34,11 @@ export default function RestoreDeckButton({ deckId }: Props) {
       >
         {pending ? 'Restoring…' : 'Restore deck'}
       </Button>
-      {error ? <p className="mt-1 text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <StatusAlert status="danger" className="mt-2">
+          {error}
+        </StatusAlert>
+      ) : null}
     </div>
   );
 }
