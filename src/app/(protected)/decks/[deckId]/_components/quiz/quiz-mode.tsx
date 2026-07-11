@@ -308,6 +308,10 @@ export default function QuizMode({
 }
 
 function formatSrsTransition({ previousLevel, nextLevel }: SrsTransition) {
+  if (nextLevel === null) {
+    return 'Remains Not started';
+  }
+
   const nextLabel = formatSrsLevel(nextLevel);
 
   if (previousLevel === null) {
@@ -326,7 +330,9 @@ function showSrsTransitionToast(vocabLabel: string, transition: SrsTransition) {
     description: formatSrsTransition(transition),
   };
 
-  if (transition.previousLevel === null || transition.nextLevel > transition.previousLevel) {
+  if (transition.nextLevel === null) {
+    Toast.toast.info(vocabLabel, options);
+  } else if (transition.previousLevel === null || transition.nextLevel > transition.previousLevel) {
     Toast.toast.success(vocabLabel, options);
   } else if (transition.nextLevel < transition.previousLevel) {
     Toast.toast.warning(vocabLabel, options);
@@ -341,5 +347,5 @@ function formatSrsLevel(srsLevel: number) {
     Math.max(DEFAULT_SRS_CONFIG.initialLevel, srsLevel),
   );
 
-  return `Level ${normalizedLevel} · ${SRS_LEVEL_LABELS[normalizedLevel]}`;
+  return `Level ${normalizedLevel + 1} · ${SRS_LEVEL_LABELS[normalizedLevel]}`;
 }

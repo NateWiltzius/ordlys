@@ -38,7 +38,7 @@ export type LessonProgress = {
 
 export type SrsTransition = {
   previousLevel: number | null;
-  nextLevel: number;
+  nextLevel: number | null;
 };
 
 export type LearnItem = Awaited<ReturnType<typeof getNewVocabsForDeck>>[number];

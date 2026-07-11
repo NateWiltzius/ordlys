@@ -25,7 +25,7 @@ export default function SrsLevelChip({ srsLevel }: Props) {
       variant="soft"
       color={normalizedLevel >= 6 ? 'success' : normalizedLevel >= 3 ? 'warning' : 'default'}
     >
-      Level {normalizedLevel} · {SRS_LEVEL_LABELS[normalizedLevel]}
+      Level {normalizedLevel + 1} · {SRS_LEVEL_LABELS[normalizedLevel]}
     </Chip>
   );
 }

@@ -533,10 +533,7 @@ export async function placeVocab(
   wasCorrect: boolean,
 ): Promise<SrsTransition> {
   const now = new Date();
-  const targetState = getSrsStateForLevel(
-    wasCorrect ? PLACEMENT_TEST_CONFIG.passedSrsLevel : 0,
-    now,
-  );
+  const targetState = getSrsStateForLevel(PLACEMENT_TEST_CONFIG.passedSrsLevel, now);
 
   return db.transaction(async tx => {
     const [vocabAccess] = await tx
@@ -564,6 +561,13 @@ export async function placeVocab(
       .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)))
       .for('update')
       .limit(1);
+
+    if (!wasCorrect) {
+      return existingState
+        ? { previousLevel: existingState.srsLevel, nextLevel: existingState.srsLevel }
+        : { previousLevel: null, nextLevel: null };
+    }
+
     if (existingState && existingState.srsLevel >= targetState.srsLevel) {
       return { previousLevel: existingState.srsLevel, nextLevel: existingState.srsLevel };
     }

@@ -2,6 +2,7 @@ import EmptyState from '@/components/shared/empty-state';
 import VocabCard from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-card';
 import { Vocab } from '@/types/vocab.types';
 import { ReactNode } from 'react';
+import { getVocabGridColumns } from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-grid';
 
 type Props = {
   vocabs: Vocab[];
@@ -24,18 +25,17 @@ export default function VocabTable({
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
 
+  const desktopColumns = getVocabGridColumns(showSrsLevels, Boolean(renderActions));
+
   return (
     <div className="overflow-hidden rounded-xl border border-default-200">
       <div
-        className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-default-500 sm:grid sm:items-center ${
-          renderActions
-            ? 'grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)_12rem]'
-            : 'grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)]'
-        }`}
+        className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-default-500 sm:grid sm:items-center ${desktopColumns}`}
       >
         <span>#</span>
         <span>Front</span>
         <span>Back</span>
+        {showSrsLevels ? <span>Progress</span> : null}
         {renderActions ? <span className="sr-only">Actions</span> : null}
       </div>
       <div className="divide-y divide-default-200">

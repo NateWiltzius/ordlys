@@ -20,8 +20,8 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
           <Card.Title>Placement test: {placementItems[0].lessonTitle}</Card.Title>
           <Card.Description>
             Pass each word in both directions without a mistake to place it directly at Strong (SRS
-            level {PLACEMENT_TEST_CONFIG.passedSrsLevel}). Missed words will start in normal
-            learning, and existing progress will not be reduced.
+            level {PLACEMENT_TEST_CONFIG.passedSrsLevel + 1}). Missed words remain Not started and
+            will appear in the normal learning queue. Existing progress will not be reduced.
           </Card.Description>
         </Card.Header>
       </Card>
