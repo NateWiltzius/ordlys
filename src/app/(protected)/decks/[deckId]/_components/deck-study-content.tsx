@@ -4,7 +4,7 @@ import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 import { getDeckStudyCountsAction } from '@/server/deck.actions';
 import { Deck } from '@/types/deck.types';
 import { Button, Card, ProgressBar } from '@heroui/react';
-import SubscribeDeckButton from '@/app/(protected)/decks/[deckId]/_components/subscribe-deck-button';
+import FollowDeckButton from '@/app/(protected)/decks/[deckId]/_components/follow-deck-button';
 import { ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import StudyActionCard from '@/app/(protected)/decks/[deckId]/_components/study-action-card';
 import NextReviewText from '@/components/shared/next-review-text';
@@ -77,7 +77,7 @@ export default async function DeckStudyContent({ deck, canStudy, nextReview }: P
                 No words to learn
               </Button>
             ) : (
-              <SubscribeDeckButton deckId={deck.id} />
+              <FollowDeckButton deckId={deck.id} />
             )
           }
         />

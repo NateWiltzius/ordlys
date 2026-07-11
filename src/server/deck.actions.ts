@@ -2,20 +2,21 @@
 
 import {
   createDeck,
-  deleteDeck,
   getAccessibleDeckById,
   getDeckCardStudyCounts,
   getDecksByOwnerId,
   getDeckStudyCounts,
   getOwnedDeckById,
   getPublicDecks,
+  getRestorableDecksByOwnerId,
   getUserActiveDecks,
-  getUserSubscribedDecks,
+  getUserFollowedDecks,
   updateDeck,
 } from '@/db/queries/deck.queries';
+import { changeDeckStatus } from '@/db/queries/deck-release.queries';
 import { CreateDeck, CreateDeckInput } from '@/types/deck.types';
 import { revalidatePath } from 'next/cache';
-import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { currentUserCanModerate, getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import {
   CONTENT_LIMITS,
   optionalLanguageTag,
@@ -23,15 +24,23 @@ import {
   requiredText,
 } from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { hasDeckSubscription } from '@/db/queries/deck-subscription.queries';
 import { getLessonsByDeckId } from '@/db/queries/lesson.queries';
 import { getVocabByDeckId } from '@/db/queries/vocab.queries';
+import { getActiveReleaseId } from '@/db/queries/deck-access';
 import {
   getNewVocabCountsForDecks,
   getNextReviewBatch,
   getReviewForecastCounts,
 } from '@/db/queries/review.queries';
 import { buildReviewForecast } from '@/lib/review-forecast';
+import {
+  getDeckFollowState,
+  getDeckProvenance,
+  getRemovedDraftItems,
+  hasUnpublishedDraftChanges,
+  inspectReleaseChanges,
+  listReleaseHistory,
+} from '@/db/queries/deck-release.queries';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
@@ -74,33 +83,49 @@ export async function getDashboardDataAction() {
 
 export async function getDecksPageDataAction() {
   const userId = await getCurrentUserId();
-  const [ownedDecks, publicDecks, learningDecks] = await Promise.all([
+  const [ownedDecks, publicDecks, learningDecks, restorableDecks] = await Promise.all([
     getDecksByOwnerId(userId),
     getPublicDecks(userId),
-    getUserSubscribedDecks(userId),
+    getUserFollowedDecks(userId),
+    getRestorableDecksByOwnerId(userId),
   ]);
-  return { ownedDecks, publicDecks, learningDecks };
+  return { ownedDecks, publicDecks, learningDecks, restorableDecks };
 }
 
 export async function getDeckPageDataAction(id: number) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
-  const [deck, isSubscribed, forecastCounts, nextReview] = await Promise.all([
-    getAccessibleDeckById(deckId, userId),
-    hasDeckSubscription(deckId, userId),
-    getReviewForecastCounts(userId, [deckId]),
-    getNextReviewBatch(userId, [deckId]),
-  ]);
+  const [deck, forecastCounts, nextReview, followState, releases, canModerate, activeReleaseId] =
+    await Promise.all([
+      getAccessibleDeckById(deckId, userId),
+      getReviewForecastCounts(userId, [deckId]),
+      getNextReviewBatch(userId, [deckId]),
+      getDeckFollowState(deckId, userId),
+      listReleaseHistory(deckId),
+      currentUserCanModerate(),
+      getActiveReleaseId(deckId, userId),
+    ]);
   if (!deck) return null;
   const isOwned = deck.ownerId === userId;
+  const isFollowing = followState?.status === 'active' || followState?.status === 'frozen';
+  const releaseChanges =
+    followState?.currentRelease &&
+    followState.studiedRelease &&
+    followState.currentRelease.id !== followState.studiedRelease.id
+      ? await inspectReleaseChanges(followState.currentRelease.id, followState.studiedRelease.id)
+      : null;
   return {
     deck,
     isOwned,
-    isSubscribed,
-    canStudy: isOwned || isSubscribed,
+    isFollowing,
+    canStudy: Boolean(activeReleaseId),
     reviewForecast: buildReviewForecast(forecastCounts),
     nextReview,
+    followState,
+    releases,
+    releaseChanges,
+    canModerate,
   };
 }
 
@@ -110,61 +135,71 @@ export async function getEditDeckPageDataAction(id: number) {
   const userId = await getCurrentUserId();
   const deck = await getOwnedDeckById(deckId, userId);
   if (!deck) return null;
-  const [lessons, vocabs] = await Promise.all([
-    getLessonsByDeckId(deckId),
-    getVocabByDeckId(deckId),
-  ]);
-  return { deck, lessons, vocabs };
+  const [lessons, vocabs, releases, hasUnpublishedChanges, provenance, removedDraftItems] =
+    await Promise.all([
+      getLessonsByDeckId(deckId),
+      getVocabByDeckId(deckId),
+      listReleaseHistory(deckId),
+      hasUnpublishedDraftChanges(deckId),
+      getDeckProvenance(deckId),
+      getRemovedDraftItems(deckId),
+    ]);
+  return {
+    deck,
+    lessons,
+    vocabs,
+    releases,
+    hasUnpublishedChanges,
+    provenance,
+    removedDraftItems,
+  };
 }
 
 export async function getDeckStudyCountsAction(id: number) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
-  return await getDeckStudyCounts(deckId, await getCurrentUserId());
+  return getDeckStudyCounts(deckId, await getCurrentUserId());
 }
 
-export const createDeckAction = async (deck: CreateDeckInput): Promise<void> => {
+export async function createDeckAction(deck: CreateDeckInput): Promise<void> {
   const userId = await getCurrentUserId();
   if (!deck || typeof deck !== 'object') throw new Error('Invalid deck.');
-  if (deck.visibility !== 'public' && deck.visibility !== 'private') {
-    throw new Error('Visibility must be public or private.');
-  }
   const deckWithOwner: CreateDeck = {
     title: requiredText(deck.title, 'Deck title', CONTENT_LIMITS.deckTitle),
     description: optionalText(deck.description, 'Description', CONTENT_LIMITS.deckDescription),
     frontLanguage: optionalLanguageTag(deck.frontLanguage, 'Front language'),
     backLanguage: optionalLanguageTag(deck.backLanguage, 'Back language'),
-    visibility: deck.visibility,
+    // New authoring workspaces are always private. Publishing/sharing is a separate transition.
+    visibility: 'private',
     ownerId: userId,
   };
 
   await createDeck(deckWithOwner);
   revalidatePath('/decks');
-};
+}
 
-export async function updateDeckAction(id: number, input: CreateDeckInput): Promise<void> {
+export async function updateDeckAction(
+  id: number,
+  input: Omit<CreateDeckInput, 'visibility'>,
+): Promise<void> {
   const deckId = parsePositiveInteger(id);
   if (!deckId || !input || typeof input !== 'object') throw new Error('Invalid deck.');
-  if (input.visibility !== 'public' && input.visibility !== 'private') {
-    throw new Error('Visibility must be public or private.');
-  }
   const userId = await getCurrentUserId();
   await updateDeck(deckId, userId, {
     title: requiredText(input.title, 'Deck title', CONTENT_LIMITS.deckTitle),
     description: optionalText(input.description, 'Description', CONTENT_LIMITS.deckDescription),
     frontLanguage: optionalLanguageTag(input.frontLanguage, 'Front language'),
     backLanguage: optionalLanguageTag(input.backLanguage, 'Back language'),
-    visibility: input.visibility,
   });
   revalidatePath('/decks');
   revalidatePath(`/decks/${deckId}`);
   revalidatePath(`/decks/${deckId}/edit`);
 }
 
-export const deleteDeckAction = async (id: number): Promise<void> => {
+export async function deleteDeckAction(id: number): Promise<void> {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
-  await deleteDeck(deckId, await getCurrentUserId());
+  await changeDeckStatus(deckId, await getCurrentUserId(), 'deleted');
   revalidatePath('/decks');
   revalidatePath('/dashboard');
-};
+}

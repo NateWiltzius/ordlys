@@ -1,27 +1,31 @@
 'use client';
 
-import { subscribeUserToDeckAction } from '@/server/deck-subscription.actions';
+import { followDeckAction } from '@/server/deck-follow.actions';
 import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-export default function SubscribeDeckButton({ deckId }: { deckId: number }) {
+type Props = {
+  deckId: number;
+};
+
+export default function FollowDeckButton({ deckId }: Props) {
   const router = useRouter();
-  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubscribe = async () => {
-    if (isSubscribing) return;
+  const handleFollow = async () => {
+    if (isFollowing) return;
 
     try {
-      setIsSubscribing(true);
+      setIsFollowing(true);
       setError(null);
-      await subscribeUserToDeckAction(deckId);
+      await followDeckAction(deckId);
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not follow this deck.');
     } finally {
-      setIsSubscribing(false);
+      setIsFollowing(false);
     }
   };
 
@@ -31,8 +35,8 @@ export default function SubscribeDeckButton({ deckId }: { deckId: number }) {
         type="button"
         variant="primary"
         className="w-full"
-        isPending={isSubscribing}
-        onPress={handleSubscribe}
+        isPending={isFollowing}
+        onPress={handleFollow}
       >
         Follow deck to start learning
       </Button>

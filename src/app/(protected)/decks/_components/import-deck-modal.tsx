@@ -4,16 +4,7 @@ import DeckLanguageSelect, {
   languageFormValue,
 } from '@/app/(protected)/decks/_components/deck-language-select';
 import { importCsvDeckAction } from '@/server/deck-import.actions';
-import {
-  Button,
-  Input,
-  Label,
-  ListBox,
-  Modal,
-  Select,
-  TextArea,
-  useOverlayState,
-} from '@heroui/react';
+import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
@@ -83,25 +74,9 @@ export default function ImportDeckModal() {
                   <DeckLanguageSelect name="frontLanguage" label="Front language" />
                   <DeckLanguageSelect name="backLanguage" label="Back language" />
                 </div>
-                <Select name="visibility" defaultValue="private">
-                  <Label>Visibility</Label>
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      <ListBox.Item id="private" textValue="Private">
-                        Private
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                      <ListBox.Item id="public" textValue="Public">
-                        Public
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
+                <p className="text-sm text-default-500">
+                  Imported decks start private. Publish and choose sharing options after review.
+                </p>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="csv-file">CSV file</Label>
                   <input

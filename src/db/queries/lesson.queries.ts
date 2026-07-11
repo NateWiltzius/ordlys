@@ -1,20 +1,32 @@
 import { db } from '@/db';
-import { decks, lessons } from '@/db/schema';
+import { decks, lessonRevisions, lessons } from '@/db/schema';
 import { CreateLesson, Lesson } from '@/types/lesson.types';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { OrderDirection } from '@/types/order.types';
+import { DeckDomainError } from '@/lib/deck-domain';
+import { DECK_LIMITS } from '@/config/deck-limits';
 
 export const createLesson = async (lesson: CreateLesson, userId: string) => {
   await db.transaction(async tx => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
     const [deck] = await tx
       .select({ id: decks.id })
       .from(decks)
-      .where(and(eq(decks.id, lesson.deckId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .where(
+        and(eq(decks.id, lesson.deckId), eq(decks.ownerId, userId), eq(decks.status, 'active')),
+      )
       .for('update')
       .limit(1);
 
     if (!deck) {
       throw new Error('Deck not found or access denied');
+    }
+    const revisionRows = await tx.execute(sql`
+      select ((select count(*) from vocab_revisions where creator_id=${userId} and created_at >= now() - interval '1 day') +
+      (select count(*) from lesson_revisions where creator_id=${userId} and created_at >= now() - interval '1 day'))::int as value
+    `);
+    if (Number(revisionRows[0].value) >= DECK_LIMITS.revisionsPerDay) {
+      throw new DeckDomainError('REVISION_RATE_LIMIT', 'Daily revision limit reached.');
     }
 
     const [order] = await tx
@@ -24,20 +36,78 @@ export const createLesson = async (lesson: CreateLesson, userId: string) => {
       .from(lessons)
       .where(eq(lessons.deckId, lesson.deckId));
 
-    await tx.insert(lessons).values({
-      title: lesson.title,
-      deckId: lesson.deckId,
-      orderIndex: Number(order.nextIndex),
-    });
+    const [created] = await tx
+      .insert(lessons)
+      .values({
+        title: lesson.title,
+        deckId: lesson.deckId,
+        orderIndex: Number(order.nextIndex),
+      })
+      .returning({ id: lessons.id });
+    const [revision] = await tx
+      .insert(lessonRevisions)
+      .values({ lessonId: created.id, title: lesson.title, creatorId: userId })
+      .returning({ id: lessonRevisions.id });
+    await tx
+      .update(lessons)
+      .set({ currentRevisionId: revision.id })
+      .where(eq(lessons.id, created.id));
   });
 };
 
 export const getLessonsByDeckId = async (deckId: number): Promise<Lesson[]> => {
   return db
-    .select()
+    .select({
+      id: lessons.id,
+      deckId: lessons.deckId,
+      title: lessonRevisions.title,
+      currentRevisionId: lessons.currentRevisionId,
+      removedAt: lessons.removedAt,
+      orderIndex: lessons.orderIndex,
+      createdAt: lessons.createdAt,
+      updatedAt: lessons.updatedAt,
+    })
     .from(lessons)
-    .where(eq(lessons.deckId, deckId))
+    .innerJoin(lessonRevisions, eq(lessonRevisions.id, lessons.currentRevisionId))
+    .where(and(eq(lessons.deckId, deckId), isNull(lessons.removedAt)))
     .orderBy(lessons.orderIndex, lessons.id);
+};
+
+export const updateLesson = async (lessonId: number, title: string, userId: string) => {
+  return db.transaction(async tx => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
+    const [target] = await tx
+      .select({ deckId: lessons.deckId })
+      .from(lessons)
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .where(
+        and(
+          eq(lessons.id, lessonId),
+          eq(decks.ownerId, userId),
+          eq(decks.status, 'active'),
+          isNull(lessons.removedAt),
+        ),
+      )
+      .for('update', { of: lessons })
+      .limit(1);
+    if (!target) throw new Error('Lesson not found or access denied.');
+    const revisionRows = await tx.execute(sql`
+      select ((select count(*) from vocab_revisions where creator_id=${userId} and created_at >= now() - interval '1 day') +
+      (select count(*) from lesson_revisions where creator_id=${userId} and created_at >= now() - interval '1 day'))::int as value
+    `);
+    if (Number(revisionRows[0].value) >= DECK_LIMITS.revisionsPerDay) {
+      throw new DeckDomainError('REVISION_RATE_LIMIT', 'Daily revision limit reached.');
+    }
+    const [revision] = await tx
+      .insert(lessonRevisions)
+      .values({ lessonId, title, creatorId: userId })
+      .returning({ id: lessonRevisions.id });
+    await tx
+      .update(lessons)
+      .set({ title, currentRevisionId: revision.id, updatedAt: new Date() })
+      .where(eq(lessons.id, lessonId));
+    return target.deckId;
+  });
 };
 
 export const getLessonById = async (lessonId: number): Promise<Lesson | undefined> => {
@@ -50,7 +120,7 @@ export const deleteLesson = async (lessonId: number, userId: string): Promise<nu
       .select({ id: lessons.id, deckId: lessons.deckId })
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
       .for('update')
       .limit(1);
 
@@ -58,8 +128,36 @@ export const deleteLesson = async (lessonId: number, userId: string): Promise<nu
       throw new Error('Lesson not found or access denied');
     }
 
-    await tx.delete(lessons).where(eq(lessons.id, lessonId));
+    await tx
+      .update(lessons)
+      .set({ removedAt: new Date(), updatedAt: new Date() })
+      .where(eq(lessons.id, lessonId));
     return lesson.deckId;
+  });
+};
+
+export const restoreLesson = async (lessonId: number, userId: string): Promise<number> => {
+  return db.transaction(async tx => {
+    const [target] = await tx
+      .select({ deckId: lessons.deckId })
+      .from(lessons)
+      .innerJoin(decks, eq(decks.id, lessons.deckId))
+      .where(
+        and(
+          eq(lessons.id, lessonId),
+          eq(decks.ownerId, userId),
+          eq(decks.status, 'active'),
+          sql`${lessons.removedAt} is not null`,
+        ),
+      )
+      .for('update', { of: lessons })
+      .limit(1);
+    if (!target) throw new DeckDomainError('LESSON_NOT_FOUND', 'Removed lesson not found.');
+    await tx
+      .update(lessons)
+      .set({ removedAt: null, updatedAt: new Date() })
+      .where(eq(lessons.id, lessonId));
+    return target.deckId;
   });
 };
 
@@ -73,7 +171,7 @@ export const moveLesson = async (
       .select({ deckId: lessons.deckId })
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
       .for('update')
       .limit(1);
 

@@ -15,9 +15,7 @@ export default function NextReviewText({ nextReview, className = '' }: Props) {
     setHasMounted(true);
   }, []);
 
-  if (!nextReview) {
-    return <span className={className}>No reviews scheduled—learn new words.</span>;
-  }
+  if (!nextReview) return;
 
   if (!hasMounted) {
     return <span className={className}>Next review batch scheduled.</span>;

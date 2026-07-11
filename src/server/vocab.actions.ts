@@ -1,13 +1,16 @@
 'use server';
 
 import { getAccessibleDeckById } from '@/db/queries/deck.queries';
+import { getActiveReleaseId } from '@/db/queries/deck-access';
+import { getReleaseLessonVocabs } from '@/db/queries/deck-release.queries';
 import { getLessonById } from '@/db/queries/lesson.queries';
 import {
   createVocab,
   deleteVocab,
-  getVocabByLessonId,
   getUserVocabLevelsByLessonId,
   moveVocab,
+  replaceVocab,
+  restoreVocab,
   updateVocab,
 } from '@/db/queries/vocab.queries';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
@@ -35,8 +38,10 @@ export async function getLessonVocabularyAction(deckId: number, lessonId: number
     throw new Error('Lesson not found or access denied.');
   }
 
+  const releaseId = await getActiveReleaseId(parsedDeckId, userId, true);
+  if (!releaseId) throw new Error('Deck has no accessible release.');
   const [lessonVocabs, userVocabLevels] = await Promise.all([
-    getVocabByLessonId(parsedLessonId),
+    getReleaseLessonVocabs(releaseId, parsedLessonId),
     getUserVocabLevelsByLessonId(parsedLessonId, userId),
   ]);
 
@@ -132,6 +137,32 @@ export async function deleteVocabAction(vocabId: number) {
   if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
   const deckId = await deleteVocab(parsedVocabId, await getCurrentUserId());
   revalidatePath(`/decks/${deckId}`);
+  revalidatePath(`/decks/${deckId}/edit`);
+}
+
+export async function replaceVocabAction(vocabId: number, vocab: UpdateVocabInput) {
+  const parsedVocabId = parsePositiveInteger(vocabId);
+  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
+  const normalized: UpdateVocabInput = {
+    front: requiredText(vocab.front, 'Front text', CONTENT_LIMITS.vocabText),
+    back: requiredText(vocab.back, 'Back text', CONTENT_LIMITS.vocabText),
+    frontAlternatives: normalizeAlternatives(vocab.frontAlternatives, vocab.front),
+    backAlternatives: normalizeAlternatives(vocab.backAlternatives, vocab.back),
+    reading: optionalText(vocab.reading, 'Reading', CONTENT_LIMITS.vocabText),
+    tags: normalizeTags(vocab.tags),
+    metadata: normalizeMetadata(vocab.metadata),
+    notes: optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes),
+  };
+  const result = await replaceVocab(parsedVocabId, normalized, await getCurrentUserId());
+  revalidatePath(`/decks/${result.deckId}`);
+  revalidatePath(`/decks/${result.deckId}/edit`);
+  return result.vocabId;
+}
+
+export async function restoreVocabAction(vocabId: number) {
+  const parsedVocabId = parsePositiveInteger(vocabId);
+  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
+  const deckId = await restoreVocab(parsedVocabId, await getCurrentUserId());
   revalidatePath(`/decks/${deckId}/edit`);
 }
 

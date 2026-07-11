@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronUpIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { moveItem } from '@/lib/order/move-item';
 import EditVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/edit-vocab-modal';
+import EditLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/edit-lesson-modal';
 
 type Props = {
   lesson: Lesson;
@@ -100,6 +101,7 @@ export default function LessonCard({
         </div>
 
         <div className="flex items-center gap-1">
+          <EditLessonModal lesson={lesson} />
           <Chip size="sm" variant="soft">
             {orderedVocabs.length} {orderedVocabs.length === 1 ? 'word' : 'words'}
           </Chip>

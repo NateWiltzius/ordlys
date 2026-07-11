@@ -1,36 +1,61 @@
 import { db } from '@/db';
-import { decks, lessons, vocabs } from '@/db/schema';
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import {
+  deckReleases,
+  decks,
+  lessonRevisions,
+  releaseLessons,
+  releaseVocabs,
+  vocabRevisions,
+} from '@/db/schema';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 const PUBLIC_VOCABULARY_PREVIEW_LIMIT = 20;
 
 const publicDeckSummarySelection = {
   id: decks.id,
-  title: decks.title,
-  description: decks.description,
+  title: deckReleases.title,
+  description: deckReleases.description,
   frontLanguage: decks.frontLanguage,
   backLanguage: decks.backLanguage,
   updatedAt: decks.updatedAt,
-  lessonCount: sql<number>`count(distinct ${lessons.id})::int`,
-  wordCount: sql<number>`count(distinct ${vocabs.id})::int`,
+  rootDeckId: decks.rootDeckId,
+  sourceDeckId: decks.sourceDeckId,
+  sourceReleaseId: decks.sourceReleaseId,
+  lessonCount: sql<number>`count(distinct ${releaseLessons.lessonId})::int`,
+  wordCount: sql<number>`count(distinct ${releaseVocabs.vocabId})::int`,
 };
 
-const publicDeckPredicate = and(eq(decks.visibility, 'public'), isNull(decks.deletedAt));
+const publicDeckPredicate = and(
+  eq(decks.visibility, 'public'),
+  eq(decks.status, 'active'),
+  eq(decks.catalogStatus, 'eligible'),
+  isNull(decks.deletedAt),
+);
+const sharedDeckPredicate = and(
+  inArray(decks.visibility, ['public', 'unlisted']),
+  eq(decks.status, 'active'),
+  inArray(decks.catalogStatus, ['eligible', 'duplicate']),
+  isNull(decks.deletedAt),
+);
 
 export async function getPublicDeckSummaries(limit?: number) {
   const query = db
     .select(publicDeckSummarySelection)
     .from(decks)
-    .leftJoin(lessons, eq(lessons.deckId, decks.id))
-    .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
+    .leftJoin(releaseLessons, eq(releaseLessons.releaseId, deckReleases.id))
+    .leftJoin(releaseVocabs, eq(releaseVocabs.releaseId, deckReleases.id))
     .where(publicDeckPredicate)
     .groupBy(
       decks.id,
-      decks.title,
-      decks.description,
+      deckReleases.title,
+      deckReleases.description,
       decks.frontLanguage,
       decks.backLanguage,
       decks.updatedAt,
+      decks.rootDeckId,
+      decks.sourceDeckId,
+      decks.sourceReleaseId,
     )
     .orderBy(desc(decks.updatedAt), asc(decks.id));
 
@@ -44,16 +69,20 @@ export async function getPublicDeckSummaryById(deckId: number) {
   const [deck] = await db
     .select(publicDeckSummarySelection)
     .from(decks)
-    .leftJoin(lessons, eq(lessons.deckId, decks.id))
-    .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
-    .where(and(eq(decks.id, deckId), publicDeckPredicate))
+    .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
+    .leftJoin(releaseLessons, eq(releaseLessons.releaseId, deckReleases.id))
+    .leftJoin(releaseVocabs, eq(releaseVocabs.releaseId, deckReleases.id))
+    .where(and(eq(decks.id, deckId), sharedDeckPredicate))
     .groupBy(
       decks.id,
-      decks.title,
-      decks.description,
+      deckReleases.title,
+      deckReleases.description,
       decks.frontLanguage,
       decks.backLanguage,
       decks.updatedAt,
+      decks.rootDeckId,
+      decks.sourceDeckId,
+      decks.sourceReleaseId,
     )
     .limit(1);
 
@@ -61,44 +90,99 @@ export async function getPublicDeckSummaryById(deckId: number) {
 }
 
 export async function getPublicDeckPageData(deckId: number) {
-  const [deck, lessonRows, vocabularyPreview] = await Promise.all([
+  const [deck, lessonRows, vocabularyPreview, provenance] = await Promise.all([
     getPublicDeckSummaryById(deckId),
     db
       .select({
-        id: lessons.id,
-        title: lessons.title,
-        orderIndex: lessons.orderIndex,
-        wordCount: sql<number>`count(${vocabs.id})::int`,
+        id: releaseLessons.lessonId,
+        title: lessonRevisions.title,
+        orderIndex: releaseLessons.orderIndex,
+        wordCount: sql<number>`count(${releaseVocabs.vocabId})::int`,
       })
-      .from(lessons)
-      .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
-      .where(and(eq(decks.id, deckId), publicDeckPredicate))
-      .groupBy(lessons.id, lessons.title, lessons.orderIndex)
-      .orderBy(asc(lessons.orderIndex), asc(lessons.id)),
+      .from(decks)
+      .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
+      .innerJoin(releaseLessons, eq(releaseLessons.releaseId, deckReleases.id))
+      .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
+      .leftJoin(
+        releaseVocabs,
+        and(
+          eq(releaseVocabs.releaseId, deckReleases.id),
+          eq(releaseVocabs.lessonId, releaseLessons.lessonId),
+        ),
+      )
+      .where(and(eq(decks.id, deckId), sharedDeckPredicate))
+      .groupBy(releaseLessons.lessonId, lessonRevisions.title, releaseLessons.orderIndex)
+      .orderBy(asc(releaseLessons.orderIndex), asc(releaseLessons.lessonId)),
     db
       .select({
-        id: vocabs.id,
-        lessonId: lessons.id,
-        lessonTitle: lessons.title,
-        front: vocabs.front,
-        back: vocabs.back,
-        reading: vocabs.reading,
+        id: releaseVocabs.vocabId,
+        lessonId: releaseLessons.lessonId,
+        lessonTitle: lessonRevisions.title,
+        front: vocabRevisions.front,
+        back: vocabRevisions.back,
+        reading: vocabRevisions.reading,
       })
-      .from(vocabs)
-      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-      .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(decks.id, deckId), publicDeckPredicate))
-      .orderBy(asc(lessons.orderIndex), asc(vocabs.orderIndex), asc(vocabs.id))
+      .from(decks)
+      .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
+      .innerJoin(releaseLessons, eq(releaseLessons.releaseId, deckReleases.id))
+      .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
+      .innerJoin(
+        releaseVocabs,
+        and(
+          eq(releaseVocabs.releaseId, deckReleases.id),
+          eq(releaseVocabs.lessonId, releaseLessons.lessonId),
+        ),
+      )
+      .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
+      .where(and(eq(decks.id, deckId), sharedDeckPredicate))
+      .orderBy(
+        asc(releaseLessons.orderIndex),
+        asc(releaseVocabs.orderIndex),
+        asc(releaseVocabs.vocabId),
+      )
       .limit(PUBLIC_VOCABULARY_PREVIEW_LIMIT),
+    db
+      .select({
+        sourceDeckId: deckReleases.deckId,
+        sourceReleaseId: deckReleases.id,
+        sourceVersion: deckReleases.version,
+        sourceTitle: deckReleases.title,
+      })
+      .from(decks)
+      .innerJoin(deckReleases, eq(deckReleases.id, decks.sourceReleaseId))
+      .where(eq(decks.id, deckId))
+      .limit(1)
+      .then(rows => rows[0] ?? null),
   ]);
 
   if (!deck) return null;
+  const rootDeckId = deck.rootDeckId ?? deck.id;
+  const communityVariants = await db
+    .select({
+      id: decks.id,
+      title: deckReleases.title,
+      description: deckReleases.description,
+      catalogStatus: decks.catalogStatus,
+    })
+    .from(decks)
+    .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
+    .where(
+      and(
+        eq(decks.rootDeckId, rootDeckId),
+        sql`${decks.id} <> ${deck.id}`,
+        eq(decks.visibility, 'public'),
+        eq(decks.status, 'active'),
+        inArray(decks.catalogStatus, ['eligible', 'duplicate']),
+      ),
+    )
+    .orderBy(desc(deckReleases.createdAt));
 
   return {
     ...deck,
     lessons: lessonRows,
     vocabularyPreview,
+    provenance,
+    communityVariants,
   };
 }
 

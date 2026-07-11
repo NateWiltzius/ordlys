@@ -1,6 +1,12 @@
 'use server';
 
-import { createLesson, deleteLesson, moveLesson } from '@/db/queries/lesson.queries';
+import {
+  createLesson,
+  deleteLesson,
+  moveLesson,
+  restoreLesson,
+  updateLesson,
+} from '@/db/queries/lesson.queries';
 import { CreateLesson } from '@/types/lesson.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
@@ -32,6 +38,26 @@ export async function deleteLessonAction(lessonId: number) {
 
   const deckId = await deleteLesson(lessonId, await getCurrentUserId());
   revalidatePath(`/decks/${deckId}/edit`);
+}
+
+export async function updateLessonAction(lessonId: number, title: string) {
+  if (!parsePositiveLessonId(lessonId)) throw new Error('Invalid lesson ID.');
+  const deckId = await updateLesson(
+    lessonId,
+    requiredText(title, 'Lesson title', CONTENT_LIMITS.lessonTitle),
+    await getCurrentUserId(),
+  );
+  revalidatePath(`/decks/${deckId}/edit`);
+}
+
+export async function restoreLessonAction(lessonId: number) {
+  if (!parsePositiveLessonId(lessonId)) throw new Error('Invalid lesson ID.');
+  const deckId = await restoreLesson(lessonId, await getCurrentUserId());
+  revalidatePath(`/decks/${deckId}/edit`);
+}
+
+function parsePositiveLessonId(value: number) {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
 }
 
 export async function moveLessonAction(lessonId: number, direction: OrderDirection) {

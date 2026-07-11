@@ -154,9 +154,7 @@ function parseDelimitedValues(
 
   const tooLong = values.find(item => item.length > maxLength);
   if (tooLong) {
-    throw new Error(
-      `Row ${row}: each â€œ${column}â€ value must be ${maxLength} characters or fewer.`,
-    );
+    throw new Error(`Row ${row}: each “${column}” value must be ${maxLength} characters or fewer.`);
   }
 
   return [...new Map(values.map(item => [item.normalize('NFKC').toLowerCase(), item])).values()];
@@ -169,16 +167,16 @@ function parseMetadata(value: string | undefined, row: number): VocabMetadata {
   try {
     metadata = JSON.parse(value);
   } catch {
-    throw new Error(`Row ${row}: â€œmetadataâ€ must be valid JSON.`);
+    throw new Error(`Row ${row}: “metadata” must be valid JSON.`);
   }
 
   if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) {
-    throw new Error(`Row ${row}: â€œmetadataâ€ must be a JSON object.`);
+    throw new Error(`Row ${row}: “metadata” must be a JSON object.`);
   }
 
   for (const metadataValue of Object.values(metadata)) {
     if (!isJsonValue(metadataValue)) {
-      throw new Error(`Row ${row}: â€œmetadataâ€ must contain only JSON values.`);
+      throw new Error(`Row ${row}: “metadata” must contain only JSON values.`);
     }
   }
 

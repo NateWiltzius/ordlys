@@ -17,3 +17,18 @@ export async function getCurrentUserId(): Promise<string> {
 
   return userId;
 }
+
+export async function isCurrentAccountVerified(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return false;
+  return Boolean(data.user.email_confirmed_at || data.user.phone_confirmed_at);
+}
+
+export async function currentUserCanModerate(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return false;
+  const role = data.user.app_metadata?.role;
+  return role === 'moderator' || role === 'admin';
+}

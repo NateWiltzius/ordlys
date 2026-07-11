@@ -22,6 +22,10 @@ type Props = {
   }>;
 };
 
+type DeckContentProps = {
+  deckId: number;
+};
+
 export default async function DeckPage({ params }: Props) {
   const { deckId } = await params;
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -34,14 +38,33 @@ export default async function DeckPage({ params }: Props) {
   );
 }
 
-async function DeckContent({ deckId }: { deckId: number }) {
+async function DeckContent({ deckId }: DeckContentProps) {
   const data = await getDeckPageDataAction(deckId);
   if (!data) notFound();
-  const { deck, isOwned, isSubscribed, canStudy, reviewForecast, nextReview } = data;
+  const {
+    deck,
+    isOwned,
+    isFollowing,
+    canStudy,
+    reviewForecast,
+    nextReview,
+    followState,
+    releases,
+    releaseChanges,
+    canModerate,
+  } = data;
 
   return (
     <div className="space-y-6">
-      <DeckHeader deck={deck} isOwned={isOwned} isSubscribed={isSubscribed} />
+      <DeckHeader
+        deck={deck}
+        isOwned={isOwned}
+        isFollowing={isFollowing}
+        followState={followState}
+        releases={releases}
+        releaseChanges={releaseChanges}
+        canModerate={canModerate}
+      />
 
       <Suspense fallback={<StudyContentSkeleton />}>
         <DeckStudyContent deck={deck} canStudy={canStudy} nextReview={nextReview} />

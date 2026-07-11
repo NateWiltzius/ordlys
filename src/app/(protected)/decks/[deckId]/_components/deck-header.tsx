@@ -1,68 +1,110 @@
-import UnsubscribeDeckButton from '@/app/(protected)/decks/[deckId]/_components/unsubscribe-deck-button';
+import UnfollowDeckButton from '@/app/(protected)/decks/[deckId]/_components/unfollow-deck-button';
 import ButtonLink from '@/components/shared/button-link';
 import PageHeader from '@/components/shared/layout/page-header';
-import { Deck } from '@/types/deck.types';
-import { Chip } from '@heroui/react';
+import type { getDeckFollowState, inspectReleaseChanges } from '@/db/queries/deck-release.queries';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
-import MakeEditableCopyButton from '@/app/(protected)/decks/[deckId]/_components/make-editable-copy-button';
+import type { DeckRelease } from '@/types/deck-release.types';
+import type { Deck } from '@/types/deck.types';
+import { Chip } from '@heroui/react';
+import DeckSafetyControls from './deck-safety-controls';
+import FollowReleaseControls from './follow-release-controls';
+import RestoreDeckButton from './restore-deck-button';
 
 type Props = {
   deck: Deck;
   isOwned: boolean;
-  isSubscribed: boolean;
+  isFollowing: boolean;
+  followState: Awaited<ReturnType<typeof getDeckFollowState>>;
+  releases: DeckRelease[];
+  releaseChanges: Awaited<ReturnType<typeof inspectReleaseChanges>> | null;
+  canModerate: boolean;
 };
 
-export default function DeckHeader({ deck, isOwned, isSubscribed }: Props) {
+export default function DeckHeader({
+  deck,
+  isOwned,
+  isFollowing,
+  followState,
+  releases,
+  releaseChanges,
+  canModerate,
+}: Props) {
   return (
     <PageHeader
       title={deck.title}
       description={deck.description || 'No description provided.'}
+      contentClassName="flex-col items-stretch gap-4"
       actions={
-        isOwned || isSubscribed ? (
-          <div className="flex flex-wrap gap-2">
-            {isOwned ? (
-              <ButtonLink href={`/decks/${deck.id}/edit`} variant="secondary">
-                Edit deck
-              </ButtonLink>
-            ) : null}
-            {isSubscribed && !isOwned ? (
-              <>
-                <MakeEditableCopyButton deckId={deck.id} deckTitle={deck.title} />
-                <UnsubscribeDeckButton
-                  deckId={deck.id}
-                  deckTitle={deck.title}
-                  isArchived={Boolean(deck.deletedAt)}
-                />
-              </>
-            ) : null}
-          </div>
-        ) : null
+        <>
+          {isOwned && deck.status === 'active' ? (
+            <ButtonLink href={`/decks/${deck.id}/edit`} variant="secondary">
+              Edit deck
+            </ButtonLink>
+          ) : null}
+
+          {isOwned && (deck.status === 'archived' || deck.status === 'deleted') ? (
+            <RestoreDeckButton deckId={deck.id} />
+          ) : null}
+
+          {isFollowing && !isOwned ? (
+            <UnfollowDeckButton deckId={deck.id} deckTitle={deck.title} />
+          ) : null}
+
+          <DeckSafetyControls
+            deckId={deck.id}
+            status={deck.status}
+            isOwned={isOwned}
+            isFollowing={isFollowing}
+            canModerate={canModerate}
+          />
+        </>
       }
     >
-      {isOwned ? (
-        <>
+      <div className="flex flex-wrap gap-2">
+        {isOwned ? (
+          <>
+            <Chip color="warning" size="sm">
+              {deck.sourceReleaseId ? 'Your independent fork' : 'You own this deck'}
+            </Chip>
+
+            <Chip
+              size="sm"
+              variant="soft"
+              color={deck.visibility === 'public' ? 'success' : 'default'}
+            >
+              {deck.visibility === 'public'
+                ? 'Public'
+                : deck.visibility === 'unlisted'
+                  ? 'Unlisted'
+                  : 'Private'}
+            </Chip>
+
+            <Chip size="sm" variant="soft">
+              {deck.status}
+            </Chip>
+          </>
+        ) : deck.status === 'archived' || deck.status === 'deleted' ? (
           <Chip color="warning" size="sm">
-            {deck.isEditableCopy ? 'Your editable copy' : 'You own this deck'}
+            Source {deck.status} · studying the last available release
           </Chip>
-          <Chip
-            size="sm"
-            variant="soft"
-            color={deck.visibility === 'public' ? 'success' : 'default'}
-          >
-            {deck.visibility === 'public' ? 'Public' : 'Private'}
+        ) : isFollowing ? (
+          <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
+            Following · updates from the author
           </Chip>
-        </>
-      ) : deck.deletedAt ? (
-        <Chip color="warning" size="sm">
-          Following an archived deck
-        </Chip>
-      ) : isSubscribed ? (
-        <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
-          Following · updates from the author
-        </Chip>
-      ) : (
-        <Chip size="sm">Public deck</Chip>
-      )}
+        ) : (
+          <Chip size="sm">Public deck</Chip>
+        )}
+      </div>
+
+      {isFollowing && !isOwned && followState ? (
+        <FollowReleaseControls
+          deckId={deck.id}
+          deckTitle={deck.title}
+          followState={followState}
+          releases={releases}
+          releaseChanges={releaseChanges}
+        />
+      ) : null}
     </PageHeader>
   );
 }

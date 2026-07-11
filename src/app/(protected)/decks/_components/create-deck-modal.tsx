@@ -1,9 +1,9 @@
 'use client';
 
-import { Button, Input, Label, ListBox, Modal, Select, useOverlayState } from '@heroui/react';
+import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import { FormEvent, useState } from 'react';
 import { TextArea } from '@heroui/react';
-import { CreateDeckInput, DeckVisibility } from '@/types/deck.types';
+import { CreateDeckInput } from '@/types/deck.types';
 import { createDeckAction } from '@/server/deck.actions';
 import { useRouter } from 'next/navigation';
 import DeckLanguageSelect, {
@@ -29,14 +29,13 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
     const rawDescription = formData.get('description');
     const rawFrontLanguage = formData.get('frontLanguage');
     const rawBackLanguage = formData.get('backLanguage');
-    const rawVisibility = formData.get('visibility');
 
     const deck: CreateDeckInput = {
       title: rawTitle as string,
       description: rawDescription as string,
       frontLanguage: languageFormValue(rawFrontLanguage),
       backLanguage: languageFormValue(rawBackLanguage),
-      visibility: rawVisibility as DeckVisibility,
+      visibility: 'private',
     };
 
     setIsSubmitting(true);
@@ -99,30 +98,9 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
                     Choose “Not specified” for decks that are not tied to a language.
                   </p>
                 </div>
-                <div>
-                  <Select name="visibility" defaultValue="public">
-                    <Label className="text-sm text-default-600" htmlFor="visibility">
-                      Visibility
-                    </Label>
-                    <Select.Trigger>
-                      <span className="sr-only">Visibility</span>
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox>
-                        <ListBox.Item id="public" textValue="Public">
-                          Public
-                          <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                        <ListBox.Item id="private" textValue="Private">
-                          Private
-                          <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                </div>
+                <p className="text-xs text-default-500">
+                  New decks start private. Publish when the first draft is ready.
+                </p>
               </Modal.Body>
               <Modal.Footer>
                 {error ? (

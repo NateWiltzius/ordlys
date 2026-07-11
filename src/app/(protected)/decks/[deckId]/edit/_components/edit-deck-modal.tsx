@@ -1,24 +1,19 @@
 'use client';
 
 import { updateDeckAction } from '@/server/deck.actions';
-import { Deck, DeckVisibility } from '@/types/deck.types';
-import {
-  Button,
-  Input,
-  Label,
-  ListBox,
-  Modal,
-  Select,
-  TextArea,
-  useOverlayState,
-} from '@heroui/react';
+import { Deck } from '@/types/deck.types';
+import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import DeckLanguageSelect, {
   languageFormValue,
 } from '@/app/(protected)/decks/_components/deck-language-select';
 
-export default function EditDeckModal({ deck }: { deck: Deck }) {
+type Props = {
+  deck: Deck;
+};
+
+export default function EditDeckModal({ deck }: Props) {
   const state = useOverlayState();
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -35,7 +30,6 @@ export default function EditDeckModal({ deck }: { deck: Deck }) {
         description: String(data.get('description') ?? ''),
         frontLanguage: languageFormValue(data.get('frontLanguage')),
         backLanguage: languageFormValue(data.get('backLanguage')),
-        visibility: String(data.get('visibility')) as DeckVisibility,
       });
       state.close();
       router.refresh();
@@ -88,25 +82,6 @@ export default function EditDeckModal({ deck }: { deck: Deck }) {
                 <p className="text-xs text-default-500">
                   Choose “Not specified” for decks that are not tied to a language.
                 </p>
-                <Select name="visibility" defaultValue={deck.visibility ?? 'private'}>
-                  <Label>Visibility</Label>
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      <ListBox.Item id="public">
-                        Public
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                      <ListBox.Item id="private">
-                        Private
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
                 {error ? (
                   <p role="alert" className="text-sm text-danger">
                     {error}

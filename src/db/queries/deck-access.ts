@@ -1,16 +1,112 @@
-import { deckSubscriptions, decks } from '@/db/schema';
-import { and, eq, isNull, or } from 'drizzle-orm';
+import { decks, lessons, vocabs } from '@/db/schema';
+import { and, eq, ne, or, sql } from 'drizzle-orm';
+
+export function activeReleaseIdExpression(userId: string, allowPublic: boolean) {
+  const publicFallback = allowPublic
+    ? sql`when ${decks.visibility} in ('public', 'unlisted') and ${decks.status} = 'active' then ${decks.currentReleaseId}`
+    : sql``;
+  return sql<number>`(
+    case
+      when ${decks.ownerId} = ${userId} and ${decks.status} <> 'moderation_removed'
+        then ${decks.currentReleaseId}
+      when ${decks.status} <> 'moderation_removed' and exists (
+        select 1 from deck_follows df
+        where df.deck_id = ${decks.id} and df.user_id = ${userId}
+          and df.status in ('active', 'frozen')
+      ) then (
+        select case
+          when df.update_mode = 'manual' then coalesce(df.pinned_release_id, df.last_seen_release_id)
+          when df.status = 'frozen' then df.last_seen_release_id
+          else ${decks.currentReleaseId}
+        end
+        from deck_follows df
+        where df.deck_id = ${decks.id} and df.user_id = ${userId}
+        limit 1
+      )
+      ${publicFallback}
+      else null
+    end
+  )`;
+}
+
+function releaseContentAccess(userId: string, allowPublic: boolean) {
+  const releaseId = activeReleaseIdExpression(userId, allowPublic);
+  return sql<boolean>`
+    ${releaseId} is not null
+    and exists (
+      select 1 from release_lessons rl
+      where rl.release_id = ${releaseId} and rl.lesson_id = ${lessons.id}
+    )
+    and (
+      ${vocabs.id} is null or exists (
+        select 1 from release_vocabs rv
+        where rv.release_id = ${releaseId} and rv.vocab_id = ${vocabs.id}
+      )
+    )
+  `;
+}
 
 export function studyDeckAccess(userId: string) {
-  return or(
-    and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
-    eq(deckSubscriptions.userId, userId),
-  );
+  return releaseContentAccess(userId, false);
 }
 
 export function viewDeckAccess(userId: string) {
+  return releaseContentAccess(userId, true);
+}
+
+export function deckMetadataAccess(userId: string) {
   return or(
-    and(isNull(decks.deletedAt), or(eq(decks.visibility, 'public'), eq(decks.ownerId, userId))),
-    eq(deckSubscriptions.userId, userId),
+    and(eq(decks.ownerId, userId), ne(decks.status, 'moderation_removed')),
+    and(ne(decks.visibility, 'private'), eq(decks.status, 'active')),
+    and(
+      ne(decks.status, 'moderation_removed'),
+      sql<boolean>`exists (
+        select 1 from deck_follows df where df.deck_id = ${decks.id}
+        and df.user_id = ${userId} and df.status in ('active', 'frozen')
+      )`,
+    ),
   );
+}
+
+export async function getActiveReleaseId(
+  deckId: number,
+  userId: string,
+  allowPublic = false,
+): Promise<number | null> {
+  const { db } = await import('@/db');
+  const [deck] = await db
+    .select({
+      ownerId: decks.ownerId,
+      status: decks.status,
+      visibility: decks.visibility,
+      currentReleaseId: decks.currentReleaseId,
+    })
+    .from(decks)
+    .where(eq(decks.id, deckId))
+    .limit(1);
+  if (!deck || deck.status === 'moderation_removed') return null;
+  if (deck.ownerId === userId) return deck.currentReleaseId;
+
+  const { deckFollows } = await import('@/db/schema');
+  const [follow] = await db
+    .select()
+    .from(deckFollows)
+    .where(
+      and(
+        eq(deckFollows.deckId, deckId),
+        eq(deckFollows.userId, userId),
+        or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+      ),
+    )
+    .limit(1);
+  if (follow) {
+    if (follow.updateMode === 'manual') {
+      return follow.pinnedReleaseId ?? follow.lastSeenReleaseId;
+    }
+    if (follow.status === 'frozen') return follow.lastSeenReleaseId;
+    return deck.currentReleaseId;
+  }
+  return allowPublic && deck.status === 'active' && deck.visibility !== 'private'
+    ? deck.currentReleaseId
+    : null;
 }

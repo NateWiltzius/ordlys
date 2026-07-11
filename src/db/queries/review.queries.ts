@@ -1,10 +1,24 @@
 import { and, count, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { deckSubscriptions, decks, lessons, vocabs, userVocabState } from '@/db/schema';
+import {
+  deckFollows,
+  decks,
+  lessonRevisions,
+  lessons,
+  releaseLessons,
+  releaseVocabs,
+  vocabs,
+  userVocabState,
+  vocabRevisions,
+} from '@/db/schema';
 import { getInitialSrsState, getNextSrsState, getSrsStateForLevel } from '@/lib/srs/srs-scheduler';
 import { LESSON_PROGRESSION_CONFIG, PLACEMENT_TEST_CONFIG } from '@/lib/srs/srs-config';
 import type { LessonProgress, SrsTransition } from '@/types/review.types';
-import { studyDeckAccess, viewDeckAccess } from '@/db/queries/deck-access';
+import {
+  activeReleaseIdExpression,
+  studyDeckAccess,
+  viewDeckAccess,
+} from '@/db/queries/deck-access';
 import { getReviewForecastEnd } from '@/lib/review-forecast';
 
 export async function getLessonProgressForDeck(
@@ -14,7 +28,7 @@ export async function getLessonProgressForDeck(
   const rows = await db
     .select({
       lessonId: lessons.id,
-      lessonTitle: lessons.title,
+      lessonTitle: lessonRevisions.title,
       totalWords: count(vocabs.id),
       learnedWords: count(userVocabState.id),
       masteredWords: sql<number>`
@@ -25,18 +39,23 @@ export async function getLessonProgressForDeck(
     })
     .from(lessons)
     .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    .innerJoin(
+      releaseLessons,
+      and(
+        eq(releaseLessons.lessonId, lessons.id),
+        eq(releaseLessons.releaseId, activeReleaseIdExpression(userId, true)),
+      ),
     )
+    .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
+    .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
     )
     .where(and(eq(decks.id, deckId), viewDeckAccess(userId)))
-    .groupBy(lessons.id, lessons.title, lessons.orderIndex)
-    .orderBy(lessons.orderIndex, lessons.id);
+    .groupBy(lessons.id, lessonRevisions.title, releaseLessons.orderIndex)
+    .orderBy(releaseLessons.orderIndex, lessons.id);
 
   let previousNonEmptyLessonPassed = true;
 
@@ -75,21 +94,26 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
   return db
     .select({
       id: vocabs.id,
-      front: vocabs.front,
-      back: vocabs.back,
-      frontAlternatives: vocabs.frontAlternatives,
-      backAlternatives: vocabs.backAlternatives,
-      reading: vocabs.reading,
+      front: vocabRevisions.front,
+      back: vocabRevisions.back,
+      frontAlternatives: vocabRevisions.frontAlternatives,
+      backAlternatives: vocabRevisions.backAlternatives,
+      reading: vocabRevisions.reading,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
     })
     .from(vocabs)
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
     .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
     )
+    .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
+    .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
@@ -113,6 +137,15 @@ export async function getNewVocabCountForDeck(deckId: number, userId: string): P
   const [result] = await db
     .select({ count: count(vocabs.id) })
     .from(vocabs)
+    .innerJoin(lessons, eq(lessons.id, vocabs.lessonId))
+    .innerJoin(decks, eq(decks.id, lessons.deckId))
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
@@ -141,7 +174,22 @@ export async function getNewVocabCountsForDecks(
       `,
     })
     .from(lessons)
-    .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(decks.id, lessons.deckId))
+    .innerJoin(
+      releaseLessons,
+      and(
+        eq(releaseLessons.lessonId, lessons.id),
+        eq(releaseLessons.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
+    .leftJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.releaseId, releaseLessons.releaseId),
+        eq(releaseVocabs.lessonId, lessons.id),
+      ),
+    )
+    .leftJoin(vocabs, eq(vocabs.id, releaseVocabs.vocabId))
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
@@ -195,8 +243,11 @@ export async function getReviewForecastCounts(
   const deckScope = deckIds
     ? inArray(decks.id, deckIds)
     : or(
-        and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
-        eq(deckSubscriptions.userId, userId),
+        and(eq(decks.ownerId, userId), eq(decks.status, 'active')),
+        and(
+          eq(deckFollows.userId, userId),
+          or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+        ),
       );
 
   const rows = await db
@@ -208,10 +259,14 @@ export async function getReviewForecastCounts(
     .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
     .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
     )
+    .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .where(
       and(
         eq(userVocabState.userId, userId),
@@ -240,8 +295,11 @@ export async function getNextReviewBatch(
   const deckScope = deckIds
     ? inArray(decks.id, deckIds)
     : or(
-        and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
-        eq(deckSubscriptions.userId, userId),
+        and(eq(decks.ownerId, userId), eq(decks.status, 'active')),
+        and(
+          eq(deckFollows.userId, userId),
+          or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+        ),
       );
 
   const [nextBatch] = await db
@@ -253,10 +311,14 @@ export async function getNextReviewBatch(
     .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
     .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
     )
+    .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .where(
       and(
         eq(userVocabState.userId, userId),
@@ -283,6 +345,14 @@ async function getNextUnlockedLessonWithNewVocab(deckId: number, userId: string)
     .select({ lessonId: lessons.id })
     .from(lessons)
     .innerJoin(vocabs, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(decks.id, lessons.deckId))
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
@@ -298,11 +368,11 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
   return db
     .select({
       id: vocabs.id,
-      front: vocabs.front,
-      back: vocabs.back,
-      frontAlternatives: vocabs.frontAlternatives,
-      backAlternatives: vocabs.backAlternatives,
-      reading: vocabs.reading,
+      front: vocabRevisions.front,
+      back: vocabRevisions.back,
+      frontAlternatives: vocabRevisions.frontAlternatives,
+      backAlternatives: vocabRevisions.backAlternatives,
+      reading: vocabRevisions.reading,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
       stateId: userVocabState.id,
@@ -312,10 +382,15 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
     .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
     .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
     )
+    .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
+    .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .where(
       and(
         eq(userVocabState.userId, userId),
@@ -335,21 +410,26 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
   return db
     .select({
       id: vocabs.id,
-      front: vocabs.front,
-      back: vocabs.back,
-      frontAlternatives: vocabs.frontAlternatives,
-      backAlternatives: vocabs.backAlternatives,
-      reading: vocabs.reading,
+      front: vocabRevisions.front,
+      back: vocabRevisions.back,
+      frontAlternatives: vocabRevisions.frontAlternatives,
+      backAlternatives: vocabRevisions.backAlternatives,
+      reading: vocabRevisions.reading,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
     })
     .from(vocabs)
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
     .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
     )
+    .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
+    .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
@@ -375,10 +455,7 @@ export async function startVocab(vocabId: number, userId: string): Promise<SrsTr
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .leftJoin(
-        deckSubscriptions,
-        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-      )
+      .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
       .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
       .for('update', { of: vocabs })
       .limit(1);
@@ -423,10 +500,7 @@ export async function reviewVocab(
       .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .leftJoin(
-        deckSubscriptions,
-        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-      )
+      .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
       .where(
         and(
           eq(userVocabState.vocabId, vocabId),
@@ -470,10 +544,7 @@ export async function placeVocab(
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .leftJoin(
-        deckSubscriptions,
-        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-      )
+      .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
       .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
       .for('update', { of: vocabs })
       .limit(1);

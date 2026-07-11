@@ -1,42 +1,65 @@
 import { db } from '@/db';
-import { decks, deckSubscriptions, lessons, userVocabState, vocabs } from '@/db/schema';
+import {
+  deckAuditEvents,
+  deckFollows,
+  deckReleases,
+  decks,
+  lessons,
+  releaseVocabs,
+  userVocabState,
+  vocabs,
+} from '@/db/schema';
 import { CreateDeck, Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
-import {
-  eq,
-  and,
-  getTableColumns,
-  count,
-  sql,
-  or,
-  isNull,
-  notExists,
-  ne,
-  inArray,
-} from 'drizzle-orm';
+import { eq, and, getTableColumns, count, sql, or, ne, inArray } from 'drizzle-orm';
 import { getNewVocabCountForDeck } from '@/db/queries/review.queries';
-import { viewDeckAccess } from '@/db/queries/deck-access';
+import {
+  activeReleaseIdExpression,
+  deckMetadataAccess,
+  viewDeckAccess,
+} from '@/db/queries/deck-access';
+import { DeckDomainError } from '@/lib/deck-domain';
+import { DECK_LIMITS } from '@/config/deck-limits';
 
 export const createDeck = async (deck: CreateDeck) => {
-  await db.insert(decks).values({
-    title: deck.title,
-    ownerId: deck.ownerId,
-    description: deck.description,
-    frontLanguage: deck.frontLanguage,
-    backLanguage: deck.backLanguage,
-    visibility: deck.visibility,
+  await db.transaction(async tx => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${deck.ownerId}))`);
+    const [owned] = await tx
+      .select({ value: count(decks.id) })
+      .from(decks)
+      .where(and(eq(decks.ownerId, deck.ownerId), eq(decks.status, 'active')));
+    if (Number(owned.value) >= DECK_LIMITS.activeOwnedDecks) {
+      throw new DeckDomainError('DECK_QUOTA', 'Active deck limit reached.');
+    }
+    const [created] = await tx
+      .insert(decks)
+      .values({
+        title: deck.title,
+        ownerId: deck.ownerId,
+        description: deck.description,
+        frontLanguage: deck.frontLanguage,
+        backLanguage: deck.backLanguage,
+        visibility: 'private',
+      })
+      .returning({ id: decks.id });
+    await tx.update(decks).set({ rootDeckId: created.id }).where(eq(decks.id, created.id));
+    await tx.insert(deckAuditEvents).values({
+      deckId: created.id,
+      actorId: deck.ownerId,
+      eventType: 'deck.created',
+    });
   });
 };
 
 export const updateDeck = async (
   deckId: number,
   userId: string,
-  deck: Pick<CreateDeck, 'title' | 'description' | 'frontLanguage' | 'backLanguage' | 'visibility'>,
+  deck: Pick<CreateDeck, 'title' | 'description' | 'frontLanguage' | 'backLanguage'>,
 ) => {
   const updated = await db
     .update(decks)
     .set({ ...deck, updatedAt: new Date() })
-    .where(and(eq(decks.id, deckId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+    .where(and(eq(decks.id, deckId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
     .returning({ id: decks.id });
   if (!updated.length) throw new Error('Deck not found or access denied.');
 };
@@ -45,38 +68,91 @@ export const getDecksByOwnerId = async (ownerId: string) => {
   return db
     .select()
     .from(decks)
-    .where(and(eq(decks.ownerId, ownerId), isNull(decks.deletedAt)));
+    .where(and(eq(decks.ownerId, ownerId), eq(decks.status, 'active')));
 };
 
-export const getUserSubscribedDecks = async (userId: string) => {
+export const getRestorableDecksByOwnerId = async (ownerId: string) => {
   return db
-    .selectDistinct({ ...getTableColumns(decks) })
+    .select()
     .from(decks)
-    .innerJoin(deckSubscriptions, eq(deckSubscriptions.deckId, decks.id))
-    .where(and(eq(deckSubscriptions.userId, userId), ne(decks.ownerId, userId)));
+    .where(
+      and(
+        eq(decks.ownerId, ownerId),
+        or(eq(decks.status, 'archived'), eq(decks.status, 'deleted')),
+      ),
+    );
+};
+
+export const getUserFollowedDecks = async (userId: string) => {
+  return db
+    .selectDistinct({
+      ...getTableColumns(decks),
+      title: sql<string>`coalesce((select title from deck_releases where id=${activeReleaseIdExpression(userId, false)}), ${decks.title})`,
+      description: sql<
+        string | null
+      >`(select description from deck_releases where id=${activeReleaseIdExpression(userId, false)})`,
+      copyPolicy: sql<
+        Deck['copyPolicy']
+      >`(select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, false)})`,
+    })
+    .from(decks)
+    .innerJoin(deckFollows, eq(deckFollows.deckId, decks.id))
+    .where(
+      and(
+        eq(deckFollows.userId, userId),
+        or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+        ne(decks.ownerId, userId),
+      ),
+    );
 };
 
 export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
   return db
-    .selectDistinct({ ...getTableColumns(decks) })
+    .selectDistinct({
+      ...getTableColumns(decks),
+      title: sql<string>`case when ${decks.ownerId}=${userId} then ${decks.title} else coalesce((select title from deck_releases where id=${activeReleaseIdExpression(userId, false)}), ${decks.title}) end`,
+      description: sql<
+        string | null
+      >`case when ${decks.ownerId}=${userId} then ${decks.description} else (select description from deck_releases where id=${activeReleaseIdExpression(userId, false)}) end`,
+      copyPolicy: sql<
+        Deck['copyPolicy']
+      >`case when ${decks.ownerId}=${userId} then ${decks.copyPolicy} else (select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, false)}) end`,
+    })
     .from(decks)
     .leftJoin(
-      deckSubscriptions,
-      and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+      deckFollows,
+      and(
+        eq(deckFollows.deckId, decks.id),
+        eq(deckFollows.userId, userId),
+        or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+      ),
     )
     .where(
       or(
-        and(eq(decks.ownerId, userId), isNull(decks.deletedAt)),
-        eq(deckSubscriptions.userId, userId),
+        and(eq(decks.ownerId, userId), eq(decks.status, 'active')),
+        eq(deckFollows.userId, userId),
       ),
     );
 };
 
 export const getPublicDecks = async (userId: string): Promise<Deck[]> => {
   return db
-    .select()
+    .select({
+      ...getTableColumns(decks),
+      title: deckReleases.title,
+      description: deckReleases.description,
+      copyPolicy: deckReleases.copyPolicy,
+    })
     .from(decks)
-    .where(and(eq(decks.visibility, 'public'), isNull(decks.deletedAt), ne(decks.ownerId, userId)));
+    .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
+    .where(
+      and(
+        eq(decks.visibility, 'public'),
+        eq(decks.status, 'active'),
+        eq(decks.catalogStatus, 'eligible'),
+        ne(decks.ownerId, userId),
+      ),
+    );
 };
 
 export const getDeckById = async (deckId: number): Promise<Deck | undefined> => {
@@ -89,22 +165,26 @@ export const getAccessibleDeckById = async (
 ): Promise<Deck | undefined> => {
   return (
     await db
-      .selectDistinct({ ...getTableColumns(decks) })
+      .selectDistinct({
+        ...getTableColumns(decks),
+        title: sql<string>`case when ${decks.ownerId}=${userId} then ${decks.title} else coalesce((select title from deck_releases where id=${activeReleaseIdExpression(userId, true)}), ${decks.title}) end`,
+        description: sql<
+          string | null
+        >`case when ${decks.ownerId}=${userId} then ${decks.description} else (select description from deck_releases where id=${activeReleaseIdExpression(userId, true)}) end`,
+        copyPolicy: sql<
+          Deck['copyPolicy']
+        >`case when ${decks.ownerId}=${userId} then ${decks.copyPolicy} else (select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, true)}) end`,
+      })
       .from(decks)
       .leftJoin(
-        deckSubscriptions,
-        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
-      )
-      .where(
+        deckFollows,
         and(
-          eq(decks.id, deckId),
-          or(
-            and(isNull(decks.deletedAt), eq(decks.visibility, 'public')),
-            and(isNull(decks.deletedAt), eq(decks.ownerId, userId)),
-            eq(deckSubscriptions.userId, userId),
-          ),
+          eq(deckFollows.deckId, decks.id),
+          eq(deckFollows.userId, userId),
+          or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
         ),
       )
+      .where(and(eq(decks.id, deckId), deckMetadataAccess(userId)))
       .limit(1)
   )[0];
 };
@@ -117,43 +197,9 @@ export const getOwnedDeckById = async (
     await db
       .select()
       .from(decks)
-      .where(and(eq(decks.id, deckId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
+      .where(and(eq(decks.id, deckId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
       .limit(1)
   )[0];
-};
-
-export const deleteDeck = async (deckId: number, userId: string) => {
-  await db.transaction(async tx => {
-    const deletedAt = new Date();
-
-    const archivedDecks = await tx
-      .update(decks)
-      .set({ deletedAt, updatedAt: deletedAt })
-      .where(and(eq(decks.id, deckId), eq(decks.ownerId, userId), isNull(decks.deletedAt)))
-      .returning({ id: decks.id });
-
-    if (archivedDecks.length === 0) {
-      throw new Error('Deck not found or access denied');
-    }
-
-    await tx
-      .delete(deckSubscriptions)
-      .where(and(eq(deckSubscriptions.deckId, deckId), eq(deckSubscriptions.userId, userId)));
-
-    await tx
-      .delete(decks)
-      .where(
-        and(
-          eq(decks.id, deckId),
-          notExists(
-            tx
-              .select({ id: deckSubscriptions.id })
-              .from(deckSubscriptions)
-              .where(eq(deckSubscriptions.deckId, deckId)),
-          ),
-        ),
-      );
-  });
 };
 
 export async function getDeckStudyCounts(deckId: number, userId: string): Promise<ReviewCounts> {
@@ -172,9 +218,12 @@ export async function getDeckStudyCounts(deckId: number, userId: string): Promis
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .leftJoin(
-        deckSubscriptions,
-        and(eq(deckSubscriptions.deckId, decks.id), eq(deckSubscriptions.userId, userId)),
+      .innerJoin(
+        releaseVocabs,
+        and(
+          eq(releaseVocabs.vocabId, vocabs.id),
+          eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, true)),
+        ),
       )
       .leftJoin(
         userVocabState,
@@ -213,6 +262,13 @@ export async function getAllDecksStudyCounts(
     .from(vocabs)
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
     .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
@@ -249,6 +305,13 @@ export async function getDeckCardStudyCounts(
     .from(decks)
     .innerJoin(lessons, eq(lessons.deckId, decks.id))
     .innerJoin(vocabs, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),

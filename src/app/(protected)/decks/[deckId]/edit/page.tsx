@@ -23,7 +23,8 @@ export default async function Page({ params }: Props) {
 
   const data = await getEditDeckPageDataAction(parsedDeckId);
   if (!data) notFound();
-  const { deck, lessons, vocabs } = data;
+  const { deck, lessons, vocabs, releases, hasUnpublishedChanges, provenance, removedDraftItems } =
+    data;
 
   const lessonVocabs = vocabs.reduce<Record<number, Vocab[]>>((accumulator, vocab) => {
     accumulator[vocab.lessonId] ??= [];
@@ -34,6 +35,10 @@ export default async function Page({ params }: Props) {
   return (
     <EditPage
       deck={deck}
+      releases={releases}
+      hasUnpublishedChanges={hasUnpublishedChanges}
+      provenance={provenance}
+      removedDraftItems={removedDraftItems}
       lessons={lessons}
       lessonVocabs={lessonVocabs}
       parsedDeckId={parsedDeckId}

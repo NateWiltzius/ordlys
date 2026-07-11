@@ -85,6 +85,12 @@ export default async function PublicDeckPage({ params }: Props) {
             </div>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{deck.title}</h1>
             <p className="text-base text-default-600 sm:text-lg">{deckDescription(deck)}</p>
+            {deck.provenance ? (
+              <p className="text-sm text-default-500">
+                Community copy derived from “{deck.provenance.sourceTitle}” release v
+                {deck.provenance.sourceVersion}.
+              </p>
+            ) : null}
           </div>
 
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:min-w-56">
@@ -202,6 +208,31 @@ export default async function PublicDeckPage({ params }: Props) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+      ) : null}
+
+      {deck.communityVariants.length ? (
+        <section className="space-y-3" aria-labelledby="community-variants-heading">
+          <h2 id="community-variants-heading" className="text-2xl font-semibold">
+            Community variants
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {deck.communityVariants.map(variant => (
+              <Card key={variant.id} className="border border-default-200">
+                <Card.Header>
+                  <div>
+                    <Card.Title>{variant.title}</Card.Title>
+                    <Card.Description>{variant.description || 'No description.'}</Card.Description>
+                  </div>
+                </Card.Header>
+                <Card.Footer>
+                  <ButtonLink href={`/public/decks/${variant.id}`} variant="secondary">
+                    View variant
+                  </ButtonLink>
+                </Card.Footer>
+              </Card>
+            ))}
           </div>
         </section>
       ) : null}

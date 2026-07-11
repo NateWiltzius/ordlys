@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { deleteDeckAction } from '@/server/deck.actions';
-import {
-  makeEditableDeckCopyAction,
-  subscribeUserToDeckAction,
-  unsubscribeUserFromDeckAction,
-} from '@/server/deck-subscription.actions';
+import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actions';
+import { forkReleaseAction, restoreDeckAction } from '@/server/deck-release.actions';
 import { Deck } from '@/types/deck.types';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import { Button, Card, Chip, ListBox, Popover } from '@heroui/react';
@@ -14,103 +11,83 @@ import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { errorMessage } from '@/lib/validation/content';
 
-type Props = {
-  deck: Deck;
-  relationship: 'owned' | 'copy' | 'following' | 'discover';
-  isSubscribed?: boolean;
-};
+type Relationship = 'owned' | 'copy' | 'following' | 'discover' | 'restorable';
+type Props = { deck: Deck; relationship: Relationship; isFollowing?: boolean };
+type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'unfollow';
 
-type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'unsubscribe';
-
-export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
+export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
   const router = useRouter();
-
-  const [subscribed, setSubscribed] = useState(isSubscribed);
-  const [isSubscribing, setIsSubscribing] = useState(false);
-  const [isUnsubscribing, setIsUnsubscribing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isCopying, setIsCopying] = useState(false);
+  const [following, setFollowing] = useState(isFollowing);
+  const [pending, setPending] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setSubscribed(isSubscribed);
-  }, [isSubscribed]);
+  useEffect(() => setFollowing(isFollowing), [isFollowing]);
 
-  const handleSubscribe = async () => {
-    if (subscribed || isSubscribing) return;
-
+  async function run(key: string, operation: () => Promise<void>, fallback: string) {
+    if (pending) return;
     try {
+      setPending(key);
       setMutationError(null);
-      setIsSubscribing(true);
-      await subscribeUserToDeckAction(deck.id);
-      setSubscribed(true);
+      await operation();
       router.refresh();
     } catch (error) {
-      setMutationError(errorMessage(error, 'Could not follow the deck. Please try again.'));
+      setMutationError(errorMessage(error, fallback));
     } finally {
-      setIsSubscribing(false);
+      setPending(null);
     }
+  }
+
+  const handleFollow = () =>
+    run(
+      'follow',
+      async () => {
+        await followDeckAction(deck.id);
+        setFollowing(true);
+      },
+      'Could not follow the deck.',
+    );
+
+  const handleUnfollow = async () => {
+    if (!window.confirm(`Unfollow “${deck.title}”? Your learning progress will be retained.`))
+      return;
+    await run(
+      'unfollow',
+      async () => {
+        await unfollowDeckAction(deck.id);
+        setFollowing(false);
+      },
+      'Could not unfollow the deck.',
+    );
   };
 
   const handleDelete = async () => {
-    if (isDeleting) return;
-    if (!window.confirm(`Delete “${deck.title}”? This cannot be undone.`)) return;
-
-    try {
-      setMutationError(null);
-      setIsDeleting(true);
-      await deleteDeckAction(deck.id);
-      router.refresh();
-    } catch (error) {
-      setMutationError(errorMessage(error, 'Could not delete the deck. Please try again.'));
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleUnsubscribe = async () => {
-    if (!subscribed || isUnsubscribing) return;
-    const warning = deck.deletedAt
-      ? `Unfollow “${deck.title}”? If you are the final follower, this archived deck and its learning history will be permanently removed.`
-      : `Unfollow “${deck.title}”? You will stop receiving author updates. Your progress can be resumed if the deck remains available and you follow it again.`;
-    if (!window.confirm(warning)) return;
-
-    try {
-      setMutationError(null);
-      setIsUnsubscribing(true);
-      await unsubscribeUserFromDeckAction(deck.id);
-      setSubscribed(false);
-      router.refresh();
-    } catch (error) {
-      setMutationError(errorMessage(error, 'Could not unfollow the deck. Please try again.'));
-    } finally {
-      setIsUnsubscribing(false);
-    }
+    if (!window.confirm(`Soft-delete “${deck.title}”? It can be restored during retention.`))
+      return;
+    await run('delete', () => deleteDeckAction(deck.id), 'Could not delete the deck.');
   };
 
   const handleCopy = async () => {
-    if (isCopying) return;
-
-    const explanation = subscribed
-      ? 'Your lessons, words, and current progress will be copied into a new private deck that you own. You will stop following the original, and future author updates will not affect your copy.'
-      : 'The lessons and words will be copied into a new private deck that you own. The copy will be independent and will not receive future updates from the original author.';
-    if (!window.confirm(`Make an editable copy of “${deck.title}”?\n\n${explanation}`)) return;
-
+    if (
+      !window.confirm(
+        `Copy “${deck.title}”? The published release becomes an independent private deck; source learning progress is not copied.`,
+      )
+    )
+      return;
+    if (pending) return;
     try {
-      setMutationError(null);
-      setIsCopying(true);
-      const copiedDeckId = await makeEditableDeckCopyAction(deck.id);
+      setPending('copy');
+      if (!deck.currentReleaseId) throw new Error('This deck has no published release.');
+      const copiedDeckId = await forkReleaseAction(deck.currentReleaseId, crypto.randomUUID());
       window.location.assign(`/decks/${copiedDeckId}/edit`);
     } catch (error) {
-      setMutationError(errorMessage(error, 'Could not create an editable copy. Please try again.'));
-      setIsCopying(false);
+      setMutationError(errorMessage(error, 'Could not create the copy.'));
+      setPending(null);
     }
   };
 
   const handleMenuAction = async (key: React.Key) => {
     setIsMenuOpen(false);
-
     switch (key as DeckAction) {
       case 'review':
         router.push(`/decks/${deck.id}/review`);
@@ -124,8 +101,8 @@ export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
       case 'delete':
         await handleDelete();
         break;
-      case 'unsubscribe':
-        await handleUnsubscribe();
+      case 'unfollow':
+        await handleUnfollow();
         break;
     }
   };
@@ -138,7 +115,7 @@ export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
     ),
     copy: (
       <Chip size="sm" variant="secondary">
-        Editable copy
+        Fork
       </Chip>
     ),
     following: (
@@ -151,25 +128,31 @@ export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
         Public
       </Chip>
     ),
+    restorable: (
+      <Chip size="sm" variant="soft" color="warning">
+        {deck.status}
+      </Chip>
+    ),
   }[relationship];
 
   return (
-    <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm transition">
+    <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm">
       <Card.Header className="flex items-start justify-between gap-3 pb-2">
         <div className="min-w-0 flex-1 space-y-1">
           <h3 className="break-words text-lg font-semibold">{deck.title}</h3>
-          {deck.description ? (
-            <p className="line-clamp-2 text-sm text-default-500">{deck.description}</p>
-          ) : (
-            <p className="text-sm italic text-default-400">No description</p>
-          )}
+          <p
+            className={
+              deck.description
+                ? 'line-clamp-2 text-sm text-default-500'
+                : 'text-sm italic text-default-400'
+            }
+          >
+            {deck.description || 'No description'}
+          </p>
         </div>
-
         <div className="shrink-0">{badge}</div>
       </Card.Header>
-
       <div className="flex-1" />
-
       <Card.Footer>
         <div className="flex w-full flex-col gap-2">
           {mutationError ? (
@@ -178,35 +161,47 @@ export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
             </p>
           ) : null}
           <div className="flex items-start gap-2">
-            {relationship !== 'discover' || subscribed ? (
+            {relationship === 'restorable' ? (
               <Button
-                variant="primary"
                 size="sm"
-                className={`flex-1 ${
-                  relationship === 'following' ? STUDY_TONE_STYLES.learning.button : ''
-                }`}
+                className="flex-1"
+                isPending={pending === 'restore'}
+                onPress={() =>
+                  run('restore', () => restoreDeckAction(deck.id), 'Could not restore the deck.')
+                }
+              >
+                Restore deck
+              </Button>
+            ) : relationship !== 'discover' || following ? (
+              <Button
+                size="sm"
+                className={`flex-1 ${relationship === 'following' ? STUDY_TONE_STYLES.learning.button : ''}`}
                 onPress={() => router.push(`/decks/${deck.id}`)}
               >
                 Open deck
               </Button>
             ) : (
               <Button
-                variant="primary"
                 size="sm"
                 className={`flex-1 ${STUDY_TONE_STYLES.learning.button}`}
-                isPending={isSubscribing}
-                onPress={handleSubscribe}
+                isPending={pending === 'follow'}
+                onPress={handleFollow}
               >
                 Follow deck
               </Button>
             )}
 
-            {relationship === 'discover' || relationship === 'following' ? (
-              <Button variant="secondary" size="sm" isPending={isCopying} onPress={handleCopy}>
+            {(relationship === 'discover' || relationship === 'following') &&
+            deck.copyPolicy !== 'follow_only' ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                isPending={pending === 'copy'}
+                onPress={handleCopy}
+              >
                 Copy &amp; edit
               </Button>
             ) : null}
-
             {relationship === 'owned' || relationship === 'copy' ? (
               <Button
                 variant="secondary"
@@ -217,55 +212,39 @@ export function DeckCard({ deck, relationship, isSubscribed = false }: Props) {
               </Button>
             ) : null}
 
-            <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
-              <Button variant="tertiary" size="sm" aria-label={`More actions for ${deck.title}`}>
-                <EllipsisVerticalIcon className="h-5 w-5" />
-              </Button>
-
-              <Popover.Content placement="bottom end">
-                <Popover.Dialog className="w-44 p-1">
-                  <ListBox
-                    aria-label={`Actions for ${deck.title}`}
-                    selectionMode="none"
-                    onAction={handleMenuAction}
-                  >
-                    {relationship !== 'discover' ? (
-                      <ListBox.Item id="review" textValue="Review">
-                        Review
-                      </ListBox.Item>
-                    ) : null}
-
-                    {relationship === 'following' && subscribed ? (
-                      <ListBox.Item
-                        id="unsubscribe"
-                        textValue="Unfollow"
-                        variant="danger"
-                        isDisabled={isUnsubscribing}
-                      >
-                        {isUnsubscribing ? 'Unfollowing...' : 'Unfollow'}
-                      </ListBox.Item>
-                    ) : null}
-
-                    {relationship === 'discover' && !subscribed ? (
-                      <ListBox.Item id="view" textValue="View deck">
-                        Preview deck
-                      </ListBox.Item>
-                    ) : null}
-
-                    {relationship === 'owned' || relationship === 'copy' ? (
-                      <ListBox.Item
-                        id="delete"
-                        textValue="Delete"
-                        variant="danger"
-                        isDisabled={isDeleting}
-                      >
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                      </ListBox.Item>
-                    ) : null}
-                  </ListBox>
-                </Popover.Dialog>
-              </Popover.Content>
-            </Popover>
+            {relationship !== 'restorable' ? (
+              <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                <Button variant="tertiary" size="sm" aria-label={`More actions for ${deck.title}`}>
+                  <EllipsisVerticalIcon className="h-5 w-5" />
+                </Button>
+                <Popover.Content placement="bottom end">
+                  <Popover.Dialog className="w-44 p-1">
+                    <ListBox
+                      aria-label={`Actions for ${deck.title}`}
+                      selectionMode="none"
+                      onAction={handleMenuAction}
+                    >
+                      {relationship !== 'discover' ? (
+                        <ListBox.Item id="review">Review</ListBox.Item>
+                      ) : null}
+                      {relationship === 'following' && following ? (
+                        <ListBox.Item id="unfollow" variant="danger">
+                          Unfollow
+                        </ListBox.Item>
+                      ) : null}
+                      {relationship === 'discover' && !following ? (
+                        <ListBox.Item id="view">Preview deck</ListBox.Item>
+                      ) : null}
+                      {relationship === 'owned' || relationship === 'copy' ? (
+                        <ListBox.Item id="delete" variant="danger">
+                          Delete
+                        </ListBox.Item>
+                      ) : null}
+                    </ListBox>
+                  </Popover.Dialog>
+                </Popover.Content>
+              </Popover>
+            ) : null}
           </div>
         </div>
       </Card.Footer>

@@ -15,15 +15,33 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import EditDeckModal from './edit-deck-modal';
 import { Deck } from '@/types/deck.types';
+import type { DeckRelease } from '@/types/deck-release.types';
+import PublicationPanel from './publication-panel';
+import type { DeckProvenance } from '@/db/queries/deck-release.queries';
+import type { RemovedDraftItem } from '@/db/queries/deck-release.queries';
+import RemovedDraftItems from './removed-draft-items';
 
 type Props = {
   lessons: Lesson[];
   lessonVocabs: Record<number, Vocab[]>;
   parsedDeckId: number;
   deck: Deck;
+  releases: DeckRelease[];
+  hasUnpublishedChanges: boolean;
+  provenance: DeckProvenance | null;
+  removedDraftItems: RemovedDraftItem[];
 };
 
-export default function EditPage({ lessons, lessonVocabs, parsedDeckId, deck }: Props) {
+export default function EditPage({
+  lessons,
+  lessonVocabs,
+  parsedDeckId,
+  deck,
+  releases,
+  hasUnpublishedChanges,
+  provenance,
+  removedDraftItems,
+}: Props) {
   const router = useRouter();
   const [orderedLessons, setOrderedLessons] = useState(lessons);
   const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
@@ -58,7 +76,7 @@ export default function EditPage({ lessons, lessonVocabs, parsedDeckId, deck }: 
       <PageHeader
         title="Edit deck"
         description={
-          deck.isEditableCopy
+          deck.sourceReleaseId
             ? 'This is your independent editable copy. Your changes stay here, and updates from the original author will not be applied.'
             : 'Organize lessons and vocabulary for this deck.'
         }
@@ -72,6 +90,15 @@ export default function EditPage({ lessons, lessonVocabs, parsedDeckId, deck }: 
           </div>
         }
       />
+
+      <PublicationPanel
+        deck={deck}
+        releases={releases}
+        hasUnpublishedChanges={hasUnpublishedChanges}
+        provenance={provenance}
+      />
+
+      <RemovedDraftItems items={removedDraftItems} />
 
       <Card>
         <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">

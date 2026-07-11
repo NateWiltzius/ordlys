@@ -19,11 +19,6 @@ export async function importCsvDeckAction(formData: FormData): Promise<number> {
     throw new Error('The CSV file must be 2 MB or smaller.');
   if (!file.name.toLowerCase().endsWith('.csv')) throw new Error('The import file must be a .csv.');
 
-  const visibility = formData.get('visibility');
-  if (visibility !== 'public' && visibility !== 'private') {
-    throw new Error('Visibility must be public or private.');
-  }
-
   const rows = parseDeckCsv(await file.text());
   const deckId = await importDeck(
     {
@@ -36,7 +31,7 @@ export async function importCsvDeckAction(formData: FormData): Promise<number> {
       ),
       frontLanguage: optionalLanguageTag(formData.get('frontLanguage'), 'Front language'),
       backLanguage: optionalLanguageTag(formData.get('backLanguage'), 'Back language'),
-      visibility,
+      visibility: 'private',
     },
     rows,
   );

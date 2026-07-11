@@ -23,7 +23,8 @@ export default function DeckPage() {
 }
 
 async function DecksContent() {
-  const { ownedDecks, publicDecks, learningDecks } = await getDecksPageDataAction();
+  const { ownedDecks, publicDecks, learningDecks, restorableDecks } =
+    await getDecksPageDataAction();
   const libraryDeckIds = [...new Set([...ownedDecks, ...learningDecks].map(deck => deck.id))];
 
   return (
@@ -52,7 +53,11 @@ async function DecksContent() {
           </Tabs.List>
         </Tabs.ListContainer>
         <Tabs.Panel className="pt-4" id="library">
-          <DeckLibrary ownedDecks={ownedDecks} followedDecks={learningDecks} />
+          <DeckLibrary
+            ownedDecks={ownedDecks}
+            followedDecks={learningDecks}
+            restorableDecks={restorableDecks}
+          />
         </Tabs.Panel>
         <Tabs.Panel className="pt-4" id="public">
           <PublicDecks decks={publicDecks} libraryDeckIds={libraryDeckIds} />

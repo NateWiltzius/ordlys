@@ -6,14 +6,15 @@ import { Deck } from '@/types/deck.types';
 type Props = {
   ownedDecks: Deck[];
   followedDecks: Deck[];
+  restorableDecks: Deck[];
 };
 
-export default function DeckLibrary({ ownedDecks, followedDecks }: Props) {
+export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks }: Props) {
   const followedDeckIds = new Set(followedDecks.map(deck => deck.id));
   const ownedDeckIds = new Set(ownedDecks.map(deck => deck.id));
   const followedOnlyDecks = followedDecks.filter(deck => !ownedDeckIds.has(deck.id));
 
-  if (ownedDecks.length === 0 && followedOnlyDecks.length === 0) {
+  if (ownedDecks.length === 0 && followedOnlyDecks.length === 0 && restorableDecks.length === 0) {
     return (
       <EmptyState
         title="Your library is empty"
@@ -29,12 +30,15 @@ export default function DeckLibrary({ ownedDecks, followedDecks }: Props) {
         <DeckCard
           key={deck.id}
           deck={deck}
-          relationship={deck.isEditableCopy ? 'copy' : 'owned'}
-          isSubscribed={followedDeckIds.has(deck.id)}
+          relationship={deck.sourceReleaseId ? 'copy' : 'owned'}
+          isFollowing={followedDeckIds.has(deck.id)}
         />
       ))}
       {followedOnlyDecks.map(deck => (
-        <DeckCard key={deck.id} deck={deck} relationship="following" isSubscribed />
+        <DeckCard key={deck.id} deck={deck} relationship="following" isFollowing />
+      ))}
+      {restorableDecks.map(deck => (
+        <DeckCard key={deck.id} deck={deck} relationship="restorable" />
       ))}
     </div>
   );
