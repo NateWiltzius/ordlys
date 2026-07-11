@@ -25,6 +25,7 @@ import {
 } from '@/lib/auth/get-current-user-id';
 import { CONTENT_LIMITS, requiredText } from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
+import { DeckDomainError } from '@/lib/deck-domain';
 import { revalidatePath } from 'next/cache';
 
 function deckId(value: number) {
@@ -129,14 +130,28 @@ export async function changeDeckVisibilityAction(
   visibility: 'private' | 'unlisted' | 'public',
 ) {
   if (!['private', 'unlisted', 'public'].includes(visibility)) {
-    throw new Error('Invalid visibility.');
+    return { ok: false as const, code: 'INVALID_VISIBILITY', message: 'Invalid visibility.' };
   }
   if (visibility !== 'private' && !(await isCurrentAccountVerified())) {
-    throw new Error('Verify your account before publishing a shared deck.');
+    return {
+      ok: false as const,
+      code: 'ACCOUNT_UNVERIFIED',
+      message: 'Verify your account before publishing a shared deck.',
+    };
   }
-  const parsed = deckId(id);
-  await changeDeckVisibility(parsed, await getCurrentUserId(), visibility);
-  refresh(parsed);
+
+  try {
+    const parsed = deckId(id);
+    await changeDeckVisibility(parsed, await getCurrentUserId(), visibility);
+    refresh(parsed);
+    return { ok: true as const };
+  } catch (error) {
+    if (error instanceof DeckDomainError) {
+      return { ok: false as const, code: error.code, message: error.message };
+    }
+
+    throw error;
+  }
 }
 
 export async function changeDeckCopyPolicyAction(

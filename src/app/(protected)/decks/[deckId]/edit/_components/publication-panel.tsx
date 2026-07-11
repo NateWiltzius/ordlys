@@ -44,6 +44,23 @@ type Feedback = {
   text: string;
 };
 
+type ActionFailure = {
+  ok: false;
+  code: string;
+  message: string;
+};
+
+function isActionFailure(result: unknown): result is ActionFailure {
+  return (
+    typeof result === 'object' &&
+    result !== null &&
+    'ok' in result &&
+    result.ok === false &&
+    'message' in result &&
+    typeof result.message === 'string'
+  );
+}
+
 type Props = {
   deck: Deck;
   releases: DeckRelease[];
@@ -76,7 +93,15 @@ export default function PublicationPanel({
 
     startTransition(async () => {
       try {
-        await operation();
+        const result = await operation();
+
+        if (isActionFailure(result)) {
+          setFeedback({
+            status: 'danger',
+            text: result.message,
+          });
+          return;
+        }
 
         setFeedback({
           status: 'success',
@@ -163,10 +188,23 @@ export default function PublicationPanel({
 
         <Separator />
 
+        {!current ? (
+          <Alert status="default">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Publish before sharing</Alert.Title>
+              <Alert.Description>
+                Publish your first release to make this deck unlisted or public. Until then, it
+                remains private.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert>
+        ) : null}
+
         <div className="grid gap-4 md:grid-cols-2">
           <Select
             value={deck.visibility}
-            isDisabled={pending}
+            isDisabled={pending || !current}
             variant="secondary"
             fullWidth
             onChange={value => {
@@ -190,7 +228,11 @@ export default function PublicationPanel({
               <Select.Indicator />
             </Select.Trigger>
 
-            <Description>Controls who can discover and access this deck.</Description>
+            <Description>
+              {current
+                ? 'Controls who can discover and access this deck.'
+                : 'Available after you publish the first release.'}
+            </Description>
 
             <Select.Popover>
               <ListBox>
