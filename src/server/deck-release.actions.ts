@@ -25,7 +25,7 @@ import {
 } from '@/lib/auth/get-current-user-id';
 import { CONTENT_LIMITS, requiredText } from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { DeckDomainError } from '@/lib/deck-domain';
+import { actionFailure, withExpectedError } from '@/lib/action-result';
 import { revalidatePath } from 'next/cache';
 
 function deckId(value: number) {
@@ -42,16 +42,18 @@ function refresh(id: number) {
 }
 
 export async function publishDeckAction(id: number, summary: string, idempotencyKey: string) {
-  const parsed = deckId(id);
-  const key = requiredText(idempotencyKey, 'Request key', 128);
-  const releaseId = await publishDeck(
-    parsed,
-    await getCurrentUserId(),
-    requiredText(summary, 'Change summary', CONTENT_LIMITS.vocabNotes),
-    key,
-  );
-  refresh(parsed);
-  return releaseId;
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    const key = requiredText(idempotencyKey, 'Request key', 128);
+    const releaseId = await publishDeck(
+      parsed,
+      await getCurrentUserId(),
+      requiredText(summary, 'Change summary', CONTENT_LIMITS.vocabNotes),
+      key,
+    );
+    refresh(parsed);
+    return releaseId;
+  });
 }
 
 export async function getReleaseHistoryAction(id: number) {
@@ -64,23 +66,29 @@ export async function getReleaseHistoryAction(id: number) {
 }
 
 export async function pinDeckReleaseAction(id: number, releaseId: number) {
-  const parsed = deckId(id);
-  const release = parsePositiveInteger(releaseId);
-  if (!release) throw new Error('Invalid release ID.');
-  await setFollowRelease(parsed, await getCurrentUserId(), release, 'manual');
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    const release = parsePositiveInteger(releaseId);
+    if (!release) throw new Error('Invalid release ID.');
+    await setFollowRelease(parsed, await getCurrentUserId(), release, 'manual');
+    refresh(parsed);
+  });
 }
 
 export async function setAutomaticUpdatesAction(id: number) {
-  const parsed = deckId(id);
-  await updateFollowToLatest(parsed, await getCurrentUserId());
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await updateFollowToLatest(parsed, await getCurrentUserId());
+    refresh(parsed);
+  });
 }
 
 export async function permanentlyDeleteFollowProgressAction(id: number) {
-  const parsed = deckId(id);
-  await permanentlyDeleteFollowProgress(parsed, await getCurrentUserId());
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await permanentlyDeleteFollowProgress(parsed, await getCurrentUserId());
+    refresh(parsed);
+  });
 }
 
 export async function inspectReleaseChangesAction(releaseId: number, previousReleaseId?: number) {
@@ -98,31 +106,39 @@ export async function inspectReleaseChangesAction(releaseId: number, previousRel
 }
 
 export async function archiveDeckAction(id: number) {
-  const parsed = deckId(id);
-  await changeDeckStatus(parsed, await getCurrentUserId(), 'archived');
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await changeDeckStatus(parsed, await getCurrentUserId(), 'archived');
+    refresh(parsed);
+  });
 }
 
 export async function restoreDeckAction(id: number) {
-  const parsed = deckId(id);
-  await changeDeckStatus(parsed, await getCurrentUserId(), 'active');
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await changeDeckStatus(parsed, await getCurrentUserId(), 'active');
+    refresh(parsed);
+  });
 }
 
 export async function softDeleteDeckAction(id: number) {
-  const parsed = deckId(id);
-  await changeDeckStatus(parsed, await getCurrentUserId(), 'deleted');
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await changeDeckStatus(parsed, await getCurrentUserId(), 'deleted');
+    refresh(parsed);
+  });
 }
 
 export async function forkReleaseAction(releaseId: number, idempotencyKey: string) {
-  const release = parsePositiveInteger(releaseId);
-  if (!release) throw new Error('Invalid release ID.');
-  const key = requiredText(idempotencyKey, 'Request key', 128);
-  const forkDeckId = await forkRelease(release, await getCurrentUserId(), key);
-  revalidatePath('/decks');
-  revalidatePath('/dashboard');
-  return forkDeckId;
+  return withExpectedError(async () => {
+    const release = parsePositiveInteger(releaseId);
+    if (!release) throw new Error('Invalid release ID.');
+    const key = requiredText(idempotencyKey, 'Request key', 128);
+    const forkDeckId = await forkRelease(release, await getCurrentUserId(), key);
+    revalidatePath('/decks');
+    revalidatePath('/dashboard');
+    return forkDeckId;
+  });
 }
 
 export async function changeDeckVisibilityAction(
@@ -130,28 +146,20 @@ export async function changeDeckVisibilityAction(
   visibility: 'private' | 'unlisted' | 'public',
 ) {
   if (!['private', 'unlisted', 'public'].includes(visibility)) {
-    return { ok: false as const, code: 'INVALID_VISIBILITY', message: 'Invalid visibility.' };
+    return actionFailure('INVALID_VISIBILITY', 'Invalid visibility.');
   }
   if (visibility !== 'private' && !(await isCurrentAccountVerified())) {
-    return {
-      ok: false as const,
-      code: 'ACCOUNT_UNVERIFIED',
-      message: 'Verify your account before publishing a shared deck.',
-    };
+    return actionFailure(
+      'ACCOUNT_UNVERIFIED',
+      'Verify your account before publishing a shared deck.',
+    );
   }
 
-  try {
+  return withExpectedError(async () => {
     const parsed = deckId(id);
     await changeDeckVisibility(parsed, await getCurrentUserId(), visibility);
     refresh(parsed);
-    return { ok: true as const };
-  } catch (error) {
-    if (error instanceof DeckDomainError) {
-      return { ok: false as const, code: error.code, message: error.message };
-    }
-
-    throw error;
-  }
+  });
 }
 
 export async function changeDeckCopyPolicyAction(
@@ -159,39 +167,49 @@ export async function changeDeckCopyPolicyAction(
   copyPolicy: 'follow_only' | 'private_forks' | 'public_forks',
 ) {
   if (!['follow_only', 'private_forks', 'public_forks'].includes(copyPolicy)) {
-    throw new Error('Invalid copy policy.');
+    return actionFailure('INVALID_COPY_POLICY', 'Invalid copy policy.');
   }
-  const parsed = deckId(id);
-  await changeDeckCopyPolicy(parsed, await getCurrentUserId(), copyPolicy);
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await changeDeckCopyPolicy(parsed, await getCurrentUserId(), copyPolicy);
+    refresh(parsed);
+  });
 }
 
 export async function reportDeckAction(id: number, reason: string, details?: string) {
-  const parsed = deckId(id);
-  await reportDeck(
-    parsed,
-    await getCurrentUserId(),
-    requiredText(reason, 'Reason', 64),
-    details?.trim().slice(0, 2000),
-  );
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await reportDeck(
+      parsed,
+      await getCurrentUserId(),
+      requiredText(reason, 'Reason', 64),
+      details?.trim().slice(0, 2000),
+    );
+    refresh(parsed);
+  });
 }
 
 export async function moderationRemoveDeckAction(id: number) {
-  const parsed = deckId(id);
-  await moderateRemoveDeck(parsed, await getCurrentUserId(), await currentUserCanModerate());
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await moderateRemoveDeck(parsed, await getCurrentUserId(), await currentUserCanModerate());
+    refresh(parsed);
+  });
 }
 
 export async function moderationReviewDeckAction(id: number) {
-  const parsed = deckId(id);
-  await setDeckUnderReview(parsed, await getCurrentUserId(), await currentUserCanModerate());
-  refresh(parsed);
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    await setDeckUnderReview(parsed, await getCurrentUserId(), await currentUserCanModerate());
+    refresh(parsed);
+  });
 }
 
 export async function restrictedHardDeleteDeckAction(id: number) {
-  const parsed = deckId(id);
-  const removed = await restrictedHardDeleteDeck(parsed, await getCurrentUserId());
-  refresh(parsed);
-  return removed;
+  return withExpectedError(async () => {
+    const parsed = deckId(id);
+    const removed = await restrictedHardDeleteDeck(parsed, await getCurrentUserId());
+    refresh(parsed);
+    return removed ? ('deleted' as const) : ('anonymized' as const);
+  });
 }

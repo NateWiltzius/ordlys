@@ -6,6 +6,8 @@ import { replaceVocabAction, updateVocabAction } from '@/server/vocab.actions';
 import { Vocab } from '@/types/vocab.types';
 import { Button, Modal, useOverlayState } from '@heroui/react';
 import { FormEvent, useEffect, useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
   vocab: Vocab | null;
@@ -18,6 +20,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
   const modalState = useOverlayState({ isOpen, onOpenChange });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replaceIdentity, setReplaceIdentity] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) setReplaceIdentity(false);
@@ -35,6 +38,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
 
     try {
       setIsSubmitting(true);
+      setError(null);
       const input = {
         front,
         back,
@@ -42,10 +46,17 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
         frontAlternatives: parseAlternatives(formData.get('frontAlternatives')),
         backAlternatives: parseAlternatives(formData.get('backAlternatives')),
       };
-      if (replaceIdentity) await replaceVocabAction(vocab.id, input);
-      else await updateVocabAction(vocab.id, input);
+      const result = replaceIdentity
+        ? await replaceVocabAction(vocab.id, input)
+        : await updateVocabAction(vocab.id, input);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       await onSaved();
       modalState.close();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not save the vocabulary.');
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +86,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
                     will not carry to the replacement.
                   </span>
                 </label>
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer>
                 <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>

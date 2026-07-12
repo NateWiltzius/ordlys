@@ -5,6 +5,7 @@ import { CreateFeedbackInput, FeedbackCategory } from '@/types/feedback.types';
 import { Button, Input, Label, ListBox, Select, TextArea } from '@heroui/react';
 import { FormEvent, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 const categoryLabels: Record<FeedbackCategory, string> = {
   bug: 'Something is broken',
@@ -36,7 +37,11 @@ export default function FeedbackForm() {
       setIsSubmitting(true);
       setError(null);
       setSuccess(false);
-      await createFeedbackAction(input);
+      const result = await createFeedbackAction(input);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       form.reset();
       setSuccess(true);
     } catch (cause) {

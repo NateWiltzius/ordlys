@@ -6,6 +6,7 @@ import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
   lesson: Lesson;
@@ -22,7 +23,11 @@ export default function EditLessonModal({ lesson }: Props) {
     try {
       setPending(true);
       setError(null);
-      await updateLessonAction(lesson.id, title);
+      const result = await updateLessonAction(lesson.id, title);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       state.close();
       router.refresh();
     } catch (cause) {

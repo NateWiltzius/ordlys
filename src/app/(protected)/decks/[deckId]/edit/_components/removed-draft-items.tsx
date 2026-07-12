@@ -7,6 +7,7 @@ import { Button, Card } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
   items: RemovedDraftItem[];
@@ -21,8 +22,14 @@ export default function RemovedDraftItems({ items }: Props) {
     try {
       setPendingId(item.id);
       setError(null);
-      if (item.kind === 'lesson') await restoreLessonAction(item.id);
-      else await restoreVocabAction(item.id);
+      const result =
+        item.kind === 'lesson'
+          ? await restoreLessonAction(item.id)
+          : await restoreVocabAction(item.id);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not restore the draft item.');

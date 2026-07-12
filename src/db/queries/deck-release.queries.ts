@@ -1087,6 +1087,7 @@ export type DeckProvenance = {
   sourceReleaseId: number;
   sourceVersion: number;
   sourceTitle: string;
+  sourceCopyPolicy: CopyPolicy;
   rootDeckId: number;
   rootTitle: string;
 };
@@ -1116,6 +1117,7 @@ export async function getDeckProvenance(deckId: number): Promise<DeckProvenance 
   const rows = await db.execute<DeckProvenance>(sql`
     select source_release.deck_id as "sourceDeckId", source_release.id as "sourceReleaseId",
       source_release.version as "sourceVersion", source_release.title as "sourceTitle",
+      source_release.copy_policy as "sourceCopyPolicy",
       root.id as "rootDeckId", coalesce(root_release.title, root.title) as "rootTitle"
     from decks fork
     join deck_releases source_release on source_release.id=fork.source_release_id

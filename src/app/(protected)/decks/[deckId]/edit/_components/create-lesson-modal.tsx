@@ -5,6 +5,8 @@ import { CreateLesson } from '@/types/lesson.types';
 import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type CreateLessonModalProps = {
   triggerLabel?: string;
@@ -17,6 +19,7 @@ export default function CreateLessonModal({
 }: CreateLessonModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleCreateLesson = async (e: FormEvent<HTMLFormElement>) => {
@@ -43,10 +46,17 @@ export default function CreateLessonModal({
     setIsSubmitting(true);
 
     try {
-      await createLessonAction(lesson);
+      setError(null);
+      const result = await createLessonAction(lesson);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       form.reset();
       modalState.close();
       router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not create the lesson.');
     } finally {
       setIsSubmitting(false);
     }
@@ -78,6 +88,7 @@ export default function CreateLessonModal({
                   maxLength={255}
                   className="w-full"
                 />
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer>
                 <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>

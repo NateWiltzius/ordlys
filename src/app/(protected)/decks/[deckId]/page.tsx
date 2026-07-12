@@ -67,7 +67,12 @@ async function DeckContent({ deckId }: DeckContentProps) {
       />
 
       <Suspense fallback={<StudyContentSkeleton />}>
-        <DeckStudyContent deck={deck} canStudy={canStudy} nextReview={nextReview} />
+        <DeckStudyContent
+          deck={deck}
+          canStudy={canStudy}
+          isOwned={isOwned}
+          nextReview={nextReview}
+        />
       </Suspense>
 
       <ReviewForecastCard

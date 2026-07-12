@@ -12,6 +12,7 @@ import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { errorMessage } from '@/lib/validation/content';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Relationship = 'owned' | 'copy' | 'following' | 'discover' | 'restorable';
 type Props = { deck: Deck; relationship: Relationship; isFollowing?: boolean };
@@ -27,12 +28,16 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
 
   useEffect(() => setFollowing(isFollowing), [isFollowing]);
 
-  async function run(key: string, operation: () => Promise<void>, fallback: string) {
+  async function run(key: string, operation: () => Promise<unknown>, fallback: string) {
     if (pending) return;
     try {
       setPending(key);
       setMutationError(null);
-      await operation();
+      const result = await operation();
+      if (isActionFailure(result)) {
+        setMutationError(result.message);
+        return;
+      }
       router.refresh();
     } catch (error) {
       setMutationError(errorMessage(error, fallback));
@@ -45,8 +50,10 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
     run(
       'follow',
       async () => {
-        await followDeckAction(deck.id);
+        const result = await followDeckAction(deck.id);
+        if (isActionFailure(result)) return result;
         setFollowing(true);
+        return result;
       },
       'Could not follow the deck.',
     );
@@ -55,8 +62,10 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
     await run(
       'unfollow',
       async () => {
-        await unfollowDeckAction(deck.id);
+        const result = await unfollowDeckAction(deck.id);
+        if (isActionFailure(result)) return result;
         setFollowing(false);
+        return result;
       },
       'Could not unfollow the deck.',
     );
@@ -72,6 +81,10 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
       setPending('copy');
       if (!deck.currentReleaseId) throw new Error('This deck has no published release.');
       const copiedDeckId = await forkReleaseAction(deck.currentReleaseId, crypto.randomUUID());
+      if (isActionFailure(copiedDeckId)) {
+        setMutationError(copiedDeckId.message);
+        return;
+      }
       window.location.assign(`/decks/${copiedDeckId}/edit`);
     } catch (error) {
       setMutationError(errorMessage(error, 'Could not create the copy.'));
@@ -123,7 +136,7 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
     ),
     restorable: (
       <Chip size="sm" variant="soft" color="warning">
-        {deck.status}
+        {deck.status === 'deleted' ? 'Deletion pending' : 'Archived'}
       </Chip>
     ),
   }[relationship];
@@ -149,18 +162,32 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
       <Card.Footer>
         <div className="flex w-full flex-col gap-2">
           {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
+          {relationship === 'restorable' && deck.status === 'deleted' ? (
+            <p className="text-xs text-default-500">
+              Recoverable until {deck.retentionUntil?.toLocaleDateString() ?? 'an unknown date'}.
+            </p>
+          ) : null}
           <div className="flex items-start gap-2">
             {relationship === 'restorable' ? (
-              <Button
-                size="sm"
-                className="flex-1"
-                isPending={pending === 'restore'}
-                onPress={() =>
-                  run('restore', () => restoreDeckAction(deck.id), 'Could not restore the deck.')
-                }
-              >
-                Restore deck
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  isPending={pending === 'restore'}
+                  onPress={() =>
+                    run('restore', () => restoreDeckAction(deck.id), 'Could not restore the deck.')
+                  }
+                >
+                  Restore deck
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => router.push(`/decks/${deck.id}`)}
+                >
+                  Details
+                </Button>
+              </>
             ) : relationship !== 'discover' || following ? (
               <Button
                 size="sm"

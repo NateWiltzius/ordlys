@@ -40,6 +40,7 @@ import {
   inspectReleaseChanges,
   listReleaseHistory,
 } from '@/db/queries/deck-release.queries';
+import { withExpectedError } from '@/lib/action-result';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
@@ -158,45 +159,48 @@ export async function getDeckStudyCountsAction(id: number) {
   return getDeckStudyCounts(deckId, await getCurrentUserId());
 }
 
-export async function createDeckAction(deck: CreateDeckInput): Promise<void> {
-  const userId = await getCurrentUserId();
-  if (!deck || typeof deck !== 'object') throw new Error('Invalid deck.');
-  const deckWithOwner: CreateDeck = {
-    title: requiredText(deck.title, 'Deck title', CONTENT_LIMITS.deckTitle),
-    description: optionalText(deck.description, 'Description', CONTENT_LIMITS.deckDescription),
-    frontLanguage: optionalLanguageTag(deck.frontLanguage, 'Front language'),
-    backLanguage: optionalLanguageTag(deck.backLanguage, 'Back language'),
-    // New authoring workspaces are always private. Publishing/sharing is a separate transition.
-    visibility: 'private',
-    ownerId: userId,
-  };
+export async function createDeckAction(deck: CreateDeckInput) {
+  return withExpectedError(async () => {
+    const userId = await getCurrentUserId();
+    if (!deck || typeof deck !== 'object') throw new Error('Invalid deck.');
+    const deckWithOwner: CreateDeck = {
+      title: requiredText(deck.title, 'Deck title', CONTENT_LIMITS.deckTitle),
+      description: optionalText(deck.description, 'Description', CONTENT_LIMITS.deckDescription),
+      frontLanguage: optionalLanguageTag(deck.frontLanguage, 'Front language'),
+      backLanguage: optionalLanguageTag(deck.backLanguage, 'Back language'),
+      // New authoring workspaces are always private. Publishing/sharing is a separate transition.
+      visibility: 'private',
+      ownerId: userId,
+    };
 
-  await createDeck(deckWithOwner);
-  revalidatePath('/decks');
-}
-
-export async function updateDeckAction(
-  id: number,
-  input: Omit<CreateDeckInput, 'visibility'>,
-): Promise<void> {
-  const deckId = parsePositiveInteger(id);
-  if (!deckId || !input || typeof input !== 'object') throw new Error('Invalid deck.');
-  const userId = await getCurrentUserId();
-  await updateDeck(deckId, userId, {
-    title: requiredText(input.title, 'Deck title', CONTENT_LIMITS.deckTitle),
-    description: optionalText(input.description, 'Description', CONTENT_LIMITS.deckDescription),
-    frontLanguage: optionalLanguageTag(input.frontLanguage, 'Front language'),
-    backLanguage: optionalLanguageTag(input.backLanguage, 'Back language'),
+    await createDeck(deckWithOwner);
+    revalidatePath('/decks');
   });
-  revalidatePath('/decks');
-  revalidatePath(`/decks/${deckId}`);
-  revalidatePath(`/decks/${deckId}/edit`);
 }
 
-export async function deleteDeckAction(id: number): Promise<void> {
-  const deckId = parsePositiveInteger(id);
-  if (!deckId) throw new Error('Invalid deck ID.');
-  await changeDeckStatus(deckId, await getCurrentUserId(), 'deleted');
-  revalidatePath('/decks');
-  revalidatePath('/dashboard');
+export async function updateDeckAction(id: number, input: Omit<CreateDeckInput, 'visibility'>) {
+  return withExpectedError(async () => {
+    const deckId = parsePositiveInteger(id);
+    if (!deckId || !input || typeof input !== 'object') throw new Error('Invalid deck.');
+    const userId = await getCurrentUserId();
+    await updateDeck(deckId, userId, {
+      title: requiredText(input.title, 'Deck title', CONTENT_LIMITS.deckTitle),
+      description: optionalText(input.description, 'Description', CONTENT_LIMITS.deckDescription),
+      frontLanguage: optionalLanguageTag(input.frontLanguage, 'Front language'),
+      backLanguage: optionalLanguageTag(input.backLanguage, 'Back language'),
+    });
+    revalidatePath('/decks');
+    revalidatePath(`/decks/${deckId}`);
+    revalidatePath(`/decks/${deckId}/edit`);
+  });
+}
+
+export async function deleteDeckAction(id: number) {
+  return withExpectedError(async () => {
+    const deckId = parsePositiveInteger(id);
+    if (!deckId) throw new Error('Invalid deck ID.');
+    await changeDeckStatus(deckId, await getCurrentUserId(), 'deleted');
+    revalidatePath('/decks');
+    revalidatePath('/dashboard');
+  });
 }

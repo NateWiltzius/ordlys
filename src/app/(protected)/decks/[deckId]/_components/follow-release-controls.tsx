@@ -10,6 +10,7 @@ import type { DeckRelease } from '@/types/deck-release.types';
 import { Alert, Button, Chip, Label, ListBox, Select } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { isActionFailure } from '@/lib/action-result';
 
 type FollowState = NonNullable<Awaited<ReturnType<typeof getDeckFollowState>>>;
 
@@ -52,7 +53,11 @@ export default function FollowReleaseControls({
 
     startTransition(async () => {
       try {
-        await operation();
+        const result = await operation();
+        if (isActionFailure(result)) {
+          setFeedback({ status: 'danger', text: result.message });
+          return;
+        }
 
         setFeedback({
           status: 'success',
@@ -80,6 +85,10 @@ export default function FollowReleaseControls({
     startTransition(async () => {
       try {
         const forkId = await forkReleaseAction(studied.id, crypto.randomUUID());
+        if (isActionFailure(forkId)) {
+          setFeedback({ status: 'danger', text: forkId.message });
+          return;
+        }
         router.push(`/decks/${forkId}/edit`);
       } catch (error) {
         setFeedback({

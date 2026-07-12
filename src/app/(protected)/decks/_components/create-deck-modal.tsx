@@ -10,6 +10,7 @@ import DeckLanguageSelect, {
   languageFormValue,
 } from '@/app/(protected)/decks/_components/deck-language-select';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type CreateDeckModalProps = {
   triggerLabel?: string;
@@ -42,7 +43,11 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
     setIsSubmitting(true);
     try {
       setError(null);
-      await createDeckAction(deck);
+      const result = await createDeckAction(deck);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       form.reset();
       modalState.close();
       router.refresh();

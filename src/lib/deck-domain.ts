@@ -1,15 +1,16 @@
 import { createHash } from 'node:crypto';
+import { UserFacingError } from '@/lib/action-result';
 
 export type DeckStatus = 'active' | 'archived' | 'deleted' | 'moderation_removed';
 export type CopyPolicy = 'follow_only' | 'private_forks' | 'public_forks';
 export type DeckVisibility = 'private' | 'unlisted' | 'public';
 
-export class DeckDomainError extends Error {
+export class DeckDomainError extends UserFacingError {
   constructor(
     public readonly code: string,
     message: string,
   ) {
-    super(message);
+    super(code, message);
     this.name = 'DeckDomainError';
   }
 }

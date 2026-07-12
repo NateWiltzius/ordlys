@@ -53,6 +53,7 @@ export default function DeckHeader({
           <DeckSafetyControls
             deckId={deck.id}
             status={deck.status}
+            retentionUntil={deck.retentionUntil}
             isOwned={isOwned}
             isFollowing={isFollowing}
             canModerate={canModerate}
@@ -80,7 +81,11 @@ export default function DeckHeader({
             </Chip>
 
             <Chip size="sm" variant="soft">
-              {deck.status}
+              {deck.status === 'deleted'
+                ? `Deletion pending · recoverable until ${deck.retentionUntil?.toLocaleDateString() ?? 'unknown'}`
+                : deck.status === 'archived'
+                  ? 'Archived'
+                  : deck.status}
             </Chip>
           </>
         ) : deck.status === 'archived' || deck.status === 'deleted' ? (

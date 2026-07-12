@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = { deckId: number; deckTitle: string };
 
@@ -20,7 +21,11 @@ export default function UnfollowDeckButton({ deckId, deckTitle }: Props) {
     try {
       setIsUnfollowing(true);
       setError(null);
-      await unfollowDeckAction(deckId);
+      const result = await unfollowDeckAction(deckId);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       router.push('/decks');
       router.refresh();
     } catch (cause) {

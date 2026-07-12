@@ -19,6 +19,8 @@ import PublicationPanel from './publication-panel';
 import type { DeckProvenance } from '@/db/queries/deck-release.queries';
 import type { RemovedDraftItem } from '@/db/queries/deck-release.queries';
 import RemovedDraftItems from './removed-draft-items';
+import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
   lessons: EditLessonSummary[];
@@ -42,6 +44,7 @@ export default function EditPage({
   const router = useRouter();
   const [orderedLessons, setOrderedLessons] = useState(lessons);
   const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   useEffect(() => {
     setOrderedLessons(lessons);
@@ -57,9 +60,15 @@ export default function EditPage({
 
     setOrderedLessons(nextLessons);
     setMovingLessonId(lessonId);
+    setMutationError(null);
 
     try {
-      await moveLessonAction(lessonId, direction);
+      const result = await moveLessonAction(lessonId, direction);
+      if (isActionFailure(result)) {
+        setOrderedLessons(previousLessons);
+        setMutationError(result.message);
+        return;
+      }
       router.refresh();
     } catch {
       setOrderedLessons(previousLessons);
@@ -96,6 +105,8 @@ export default function EditPage({
       />
 
       <RemovedDraftItems items={removedDraftItems} />
+
+      {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
 
       <Card>
         <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">

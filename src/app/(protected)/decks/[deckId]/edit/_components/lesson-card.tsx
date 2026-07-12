@@ -26,6 +26,7 @@ import {
 import { Button, Card, Chip } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
   deckId: number;
@@ -90,7 +91,11 @@ export default function LessonCard({
     try {
       setIsDeleting(true);
       setMutationError(null);
-      await deleteLessonAction(lesson.id);
+      const result = await deleteLessonAction(lesson.id);
+      if (isActionFailure(result)) {
+        setMutationError(result.message);
+        return;
+      }
       router.refresh();
     } catch (error) {
       setMutationError(error instanceof Error ? error.message : 'Could not delete the lesson.');
@@ -112,7 +117,11 @@ export default function LessonCard({
     setMutationError(null);
 
     try {
-      await moveVocabAction(vocabId, direction);
+      const result = await moveVocabAction(vocabId, direction);
+      if (isActionFailure(result)) {
+        setOrderedVocabs(previousVocabs);
+        setMutationError(result.message);
+      }
     } catch (error) {
       setOrderedVocabs(previousVocabs);
       setMutationError(error instanceof Error ? error.message : 'Could not reorder vocabulary.');
@@ -125,7 +134,11 @@ export default function LessonCard({
     try {
       setDeletingVocabId(vocab.id);
       setMutationError(null);
-      await deleteVocabAction(vocab.id);
+      const result = await deleteVocabAction(vocab.id);
+      if (isActionFailure(result)) {
+        setMutationError(result.message);
+        return;
+      }
       setOrderedVocabs(current => current?.filter(item => item.id !== vocab.id) ?? null);
     } catch (error) {
       setMutationError(error instanceof Error ? error.message : 'Could not delete vocabulary.');

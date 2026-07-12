@@ -13,19 +13,27 @@ export const CONTENT_LIMITS = {
 } as const;
 
 export function requiredText(value: unknown, label: string, maxLength: number): string {
-  if (typeof value !== 'string' || !value.trim()) throw new Error(`${label} is required.`);
+  if (typeof value !== 'string' || !value.trim())
+    throw new UserFacingError('VALIDATION_ERROR', `${label} is required.`);
   const text = value.trim();
   if (text.length > maxLength)
-    throw new Error(`${label} must be ${maxLength} characters or fewer.`);
+    throw new UserFacingError(
+      'VALIDATION_ERROR',
+      `${label} must be ${maxLength} characters or fewer.`,
+    );
   return text;
 }
 
 export function optionalText(value: unknown, label: string, maxLength: number): string | null {
   if (value === undefined || value === null || value === '') return null;
-  if (typeof value !== 'string') throw new Error(`${label} must be text.`);
+  if (typeof value !== 'string')
+    throw new UserFacingError('VALIDATION_ERROR', `${label} must be text.`);
   const text = value.trim();
   if (text.length > maxLength)
-    throw new Error(`${label} must be ${maxLength} characters or fewer.`);
+    throw new UserFacingError(
+      'VALIDATION_ERROR',
+      `${label} must be ${maxLength} characters or fewer.`,
+    );
   return text || null;
 }
 
@@ -36,10 +44,14 @@ export function optionalLanguageTag(value: unknown, label: string): string | nul
   try {
     return Intl.getCanonicalLocales(tag)[0];
   } catch {
-    throw new Error(`${label} must be a valid language tag, such as en, nb, or pt-BR.`);
+    throw new UserFacingError(
+      'VALIDATION_ERROR',
+      `${label} must be a valid language tag, such as en, nb, or pt-BR.`,
+    );
   }
 }
 
 export function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
+import { UserFacingError } from '@/lib/action-result';

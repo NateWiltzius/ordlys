@@ -13,18 +13,21 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useState, useTransition } from 'react';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type ConfirmationAction = 'delete-progress' | 'hard-delete' | 'moderate-removal';
 
 export default function DeckSafetyControls({
   deckId,
   status,
+  retentionUntil,
   isOwned,
   isFollowing,
   canModerate,
 }: {
   deckId: number;
   status: Deck['status'];
+  retentionUntil: Deck['retentionUntil'];
   isOwned: boolean;
   isFollowing: boolean;
   canModerate: boolean;
@@ -39,12 +42,18 @@ export default function DeckSafetyControls({
   const reportModalState = useOverlayState();
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
+  const hardDeleteEligible =
+    status === 'deleted' && retentionUntil !== null && retentionUntil.getTime() <= Date.now();
 
   function run(operation: () => Promise<unknown>, success: string, leave = false) {
     startTransition(async () => {
       try {
         setFeedback(null);
-        await operation();
+        const result = await operation();
+        if (isActionFailure(result)) {
+          setFeedback({ status: 'danger', message: result.message });
+          return;
+        }
         setFeedback({ status: 'success', message: success });
         if (leave) router.push('/decks');
         else router.refresh();
@@ -115,14 +124,21 @@ export default function DeckSafetyControls({
         </>
       ) : null}
       {isOwned && status === 'deleted' ? (
-        <Button
-          size="sm"
-          variant="danger-soft"
-          isDisabled={pending}
-          onPress={() => setConfirmation('hard-delete')}
-        >
-          Hard delete
-        </Button>
+        <div className="flex flex-col items-start gap-1">
+          <Button
+            size="sm"
+            variant="danger-soft"
+            isDisabled={pending || !hardDeleteEligible}
+            onPress={() => setConfirmation('hard-delete')}
+          >
+            Finalize deletion
+          </Button>
+          {!hardDeleteEligible && retentionUntil ? (
+            <span className="text-xs text-default-500">
+              Available after {retentionUntil.toLocaleDateString()}.
+            </span>
+          ) : null}
+        </div>
       ) : null}
       {feedback ? (
         <StatusAlert status={feedback.status} className="w-full">
@@ -139,21 +155,21 @@ export default function DeckSafetyControls({
             ? 'Delete all progress?'
             : confirmation === 'moderate-removal'
               ? 'Remove this deck for moderation?'
-              : 'Attempt hard deletion?'
+              : 'Finalize deletion?'
         }
         description={
           confirmation === 'delete-progress'
             ? 'All learning progress for this deck will be permanently deleted. This cannot be undone.'
             : confirmation === 'moderate-removal'
               ? 'Learner access will be revoked.'
-              : 'Dependencies will leave a tombstone where required.'
+              : 'This permanently removes the deck from your account. Releases or lineage required by other records will remain under an anonymized tombstone.'
         }
         confirmLabel={
           confirmation === 'delete-progress'
             ? 'Delete progress'
             : confirmation === 'moderate-removal'
               ? 'Remove deck'
-              : 'Hard delete'
+              : 'Finalize deletion'
         }
         isPending={pending}
         onConfirm={() => {
@@ -166,11 +182,7 @@ export default function DeckSafetyControls({
             run(() => moderationRemoveDeckAction(deckId), 'Deck removed by moderation.', true);
           }
           if (action === 'hard-delete') {
-            run(
-              () => restrictedHardDeleteDeckAction(deckId),
-              'Hard-deletion eligibility processed.',
-              true,
-            );
+            run(() => restrictedHardDeleteDeckAction(deckId), 'Deletion finalized.', true);
           }
         }}
       />

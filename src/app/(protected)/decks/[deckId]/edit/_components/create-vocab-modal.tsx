@@ -4,6 +4,8 @@ import { Button, Modal, useOverlayState } from '@heroui/react';
 import { FormEvent, useState } from 'react';
 import VocabFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/vocab-form-fields';
 import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
+import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type CreateVocabModalProps = {
   triggerLabel?: string;
@@ -18,6 +20,7 @@ export default function CreateVocabModal({
 }: CreateVocabModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCreateVocab = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,10 +50,17 @@ export default function CreateVocabModal({
     setIsSubmitting(true);
 
     try {
-      await createVocabAction(vocab);
+      setError(null);
+      const result = await createVocabAction(vocab);
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       await onCreated();
       form.reset();
       modalState.close();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not create the vocabulary.');
     } finally {
       setIsSubmitting(false);
     }
@@ -72,6 +82,7 @@ export default function CreateVocabModal({
             <form onSubmit={handleCreateVocab}>
               <Modal.Body>
                 <VocabFormFields />
+                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer>
                 <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>

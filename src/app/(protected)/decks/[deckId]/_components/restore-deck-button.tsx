@@ -5,6 +5,7 @@ import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
   deckId: number;
@@ -22,7 +23,11 @@ export default function RestoreDeckButton({ deckId }: Props) {
         onPress={() =>
           startTransition(async () => {
             try {
-              await restoreDeckAction(deckId);
+              const result = await restoreDeckAction(deckId);
+              if (isActionFailure(result)) {
+                setError(result.message);
+                return;
+              }
               router.refresh();
             } catch (reason) {
               setError(

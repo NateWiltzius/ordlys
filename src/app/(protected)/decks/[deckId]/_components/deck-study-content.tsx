@@ -9,14 +9,16 @@ import { ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import StudyActionCard from '@/app/(protected)/decks/[deckId]/_components/study-action-card';
 import NextReviewText from '@/components/shared/next-review-text';
 import type { NextReviewBatch } from '@/types/review.types';
+import ButtonLink from '@/components/shared/button-link';
 
 type Props = {
   deck: Deck;
   canStudy: boolean;
+  isOwned: boolean;
   nextReview: NextReviewBatch | null;
 };
 
-export default async function DeckStudyContent({ deck, canStudy, nextReview }: Props) {
+export default async function DeckStudyContent({ deck, canStudy, isOwned, nextReview }: Props) {
   const [counts, lessonProgress] = await Promise.all([
     getDeckStudyCountsAction(deck.id),
     getCachedLessonProgress(deck.id),
@@ -75,6 +77,19 @@ export default async function DeckStudyContent({ deck, canStudy, nextReview }: P
             canStudy ? (
               <Button variant="secondary" size="lg" className="w-full" isDisabled>
                 No words to learn
+              </Button>
+            ) : isOwned && deck.status === 'active' ? (
+              <ButtonLink
+                href={`/decks/${deck.id}/edit`}
+                variant="secondary"
+                size="lg"
+                className="w-full"
+              >
+                Publish deck to start learning
+              </ButtonLink>
+            ) : isOwned ? (
+              <Button variant="secondary" size="lg" className="w-full" isDisabled>
+                Restore deck to start learning
               </Button>
             ) : (
               <FollowDeckButton deckId={deck.id} />

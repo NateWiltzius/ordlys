@@ -8,6 +8,7 @@ import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 const CSV_TEMPLATE = `front,back,lesson,reading,front_alternatives,back_alternatives
 hei,hello,Greetings,,hallo|heisann,
@@ -29,6 +30,10 @@ export default function ImportDeckModal() {
       setPending(true);
       setError(null);
       const deckId = await importCsvDeckAction(formData);
+      if (isActionFailure(deckId)) {
+        setError(deckId.message);
+        return;
+      }
       modalState.close();
       router.push(`/decks/${deckId}/edit`);
     } catch (cause) {

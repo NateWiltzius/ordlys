@@ -10,6 +10,7 @@ import {
 } from '@/server/deck-release.actions';
 import type { DeckRelease } from '@/types/deck-release.types';
 import type { Deck } from '@/types/deck.types';
+import { isActionFailure } from '@/lib/action-result';
 import {
   Alert,
   Button,
@@ -44,23 +45,6 @@ type Feedback = {
   text: string;
 };
 
-type ActionFailure = {
-  ok: false;
-  code: string;
-  message: string;
-};
-
-function isActionFailure(result: unknown): result is ActionFailure {
-  return (
-    typeof result === 'object' &&
-    result !== null &&
-    'ok' in result &&
-    result.ok === false &&
-    'message' in result &&
-    typeof result.message === 'string'
-  );
-}
-
 type Props = {
   deck: Deck;
   releases: DeckRelease[];
@@ -81,6 +65,10 @@ export default function PublicationPanel({
   const [pending, startTransition] = useTransition();
 
   const current = releases.find(release => release.id === deck.currentReleaseId);
+  const sourceAllowsPublicForks = provenance?.sourceCopyPolicy === 'public_forks';
+  const sourcePolicyRank = provenance
+    ? copyPolicyOptions.findIndex(option => option.id === provenance.sourceCopyPolicy)
+    : copyPolicyOptions.length - 1;
 
   function run(
     operationName: Operation,
@@ -230,14 +218,23 @@ export default function PublicationPanel({
 
             <Description>
               {current
-                ? 'Controls who can discover and access this deck.'
+                ? provenance && !sourceAllowsPublicForks
+                  ? 'The source release requires this fork to remain private.'
+                  : 'Controls who can discover and access this deck.'
                 : 'Available after you publish the first release.'}
             </Description>
 
             <Select.Popover>
               <ListBox>
                 {visibilityOptions.map(option => (
-                  <ListBox.Item key={option.id} id={option.id} textValue={option.label}>
+                  <ListBox.Item
+                    key={option.id}
+                    id={option.id}
+                    textValue={option.label}
+                    isDisabled={Boolean(
+                      provenance && option.id !== 'private' && !sourceAllowsPublicForks,
+                    )}
+                  >
                     {option.label}
                     <ListBox.ItemIndicator />
                   </ListBox.Item>
@@ -273,14 +270,24 @@ export default function PublicationPanel({
             </Select.Trigger>
 
             <Description>
-              Controls whether other users can fork this deck. Changes take effect only after you
-              publish the next release.
+              {provenance
+                ? 'Cannot be broader than the source policy. Changes take effect after the next release.'
+                : 'Controls whether other users can fork this deck. Changes take effect after the next release.'}
             </Description>
 
             <Select.Popover>
               <ListBox>
                 {copyPolicyOptions.map(option => (
-                  <ListBox.Item key={option.id} id={option.id} textValue={option.label}>
+                  <ListBox.Item
+                    key={option.id}
+                    id={option.id}
+                    textValue={option.label}
+                    isDisabled={
+                      Boolean(provenance) &&
+                      copyPolicyOptions.findIndex(candidate => candidate.id === option.id) >
+                        sourcePolicyRank
+                    }
+                  >
                     {option.label}
                     <ListBox.ItemIndicator />
                   </ListBox.Item>

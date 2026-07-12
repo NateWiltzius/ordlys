@@ -9,6 +9,7 @@ import DeckLanguageSelect, {
   languageFormValue,
 } from '@/app/(protected)/decks/_components/deck-language-select';
 import StatusAlert from '@/components/shared/status-alert';
+import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
   deck: Deck;
@@ -26,12 +27,16 @@ export default function EditDeckModal({ deck }: Props) {
     try {
       setPending(true);
       setError(null);
-      await updateDeckAction(deck.id, {
+      const result = await updateDeckAction(deck.id, {
         title: String(data.get('title') ?? ''),
         description: String(data.get('description') ?? ''),
         frontLanguage: languageFormValue(data.get('frontLanguage')),
         backLanguage: languageFormValue(data.get('backLanguage')),
       });
+      if (isActionFailure(result)) {
+        setError(result.message);
+        return;
+      }
       state.close();
       router.refresh();
     } catch (cause) {
