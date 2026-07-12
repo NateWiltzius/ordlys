@@ -32,7 +32,7 @@ export default function PublicDeckCard({ deck }: Props) {
 
       <Card.Content className="flex-1 space-y-3">
         {languagePair ? <p className="text-sm font-medium">{languagePair}</p> : null}
-        <dl className="flex gap-5 text-sm text-default-500">
+        <dl className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-default-500">
           <div>
             <dt className="sr-only">Lessons</dt>
             <dd>
@@ -43,6 +43,12 @@ export default function PublicDeckCard({ deck }: Props) {
             <dt className="sr-only">Words</dt>
             <dd>
               {deck.wordCount} {deck.wordCount === 1 ? 'word' : 'words'}
+            </dd>
+          </div>
+          <div>
+            <dt className="sr-only">Followers</dt>
+            <dd>
+              {deck.subscriberCount} {deck.subscriberCount === 1 ? 'follower' : 'followers'}
             </dd>
           </div>
         </dl>

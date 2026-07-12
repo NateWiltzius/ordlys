@@ -135,13 +135,18 @@ export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
     );
 };
 
-export const getPublicDecks = async (userId: string): Promise<Deck[]> => {
+export const getPublicDecks = async (userId: string) => {
   return db
     .select({
       ...getTableColumns(decks),
       title: deckReleases.title,
       description: deckReleases.description,
       copyPolicy: deckReleases.copyPolicy,
+      subscriberCount: sql<number>`(
+        select count(*)::int
+        from ${deckFollows} follows
+        where follows.deck_id = ${decks.id} and follows.status = 'active'
+      )`,
     })
     .from(decks)
     .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
@@ -154,6 +159,8 @@ export const getPublicDecks = async (userId: string): Promise<Deck[]> => {
       ),
     );
 };
+
+export type DiscoverableDeck = Awaited<ReturnType<typeof getPublicDecks>>[number];
 
 export const getDeckById = async (deckId: number): Promise<Deck | undefined> => {
   return (await db.select().from(decks).where(eq(decks.id, deckId)).limit(1))[0];

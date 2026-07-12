@@ -15,10 +15,15 @@ import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 
 type Relationship = 'owned' | 'copy' | 'following' | 'discover' | 'restorable';
-type Props = { deck: Deck; relationship: Relationship; isFollowing?: boolean };
+type Props = {
+  deck: Deck;
+  relationship: Relationship;
+  isFollowing?: boolean;
+  subscriberCount?: number;
+};
 type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'unfollow';
 
-export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
+export function DeckCard({ deck, relationship, isFollowing = false, subscriberCount }: Props) {
   const router = useRouter();
   const [following, setFollowing] = useState(isFollowing);
   const [pending, setPending] = useState<string | null>(null);
@@ -161,6 +166,11 @@ export function DeckCard({ deck, relationship, isFollowing = false }: Props) {
       <div className="flex-1" />
       <Card.Footer>
         <div className="flex w-full flex-col gap-2">
+          {relationship === 'discover' && subscriberCount !== undefined ? (
+            <p className="text-sm text-default-500">
+              {subscriberCount} {subscriberCount === 1 ? 'follower' : 'followers'}
+            </p>
+          ) : null}
           {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
           {relationship === 'restorable' && deck.status === 'deleted' ? (
             <p className="text-xs text-default-500">

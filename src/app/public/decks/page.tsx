@@ -1,9 +1,9 @@
-import PublicDeckCard from '@/components/public-deck-card';
 import ButtonLink from '@/components/shared/button-link';
 import PageShell from '@/components/shared/layout/page-shell';
 import { getPublicDeckSummaries } from '@/db/queries/public-deck.queries';
 import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import type { Metadata } from 'next';
+import PublicDeckBrowser from '@/app/public/decks/_components/public-deck-browser';
 
 const title = 'Public language-learning flashcard decks';
 const description =
@@ -60,11 +60,7 @@ export default async function PublicDecksPage() {
               Create an account
             </ButtonLink>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {decks.map(deck => (
-              <PublicDeckCard key={deck.id} deck={deck} />
-            ))}
-          </div>
+          <PublicDeckBrowser decks={decks} />
         </section>
       ) : (
         <section className="rounded-xl border border-default-200 bg-default-50 px-6 py-10 text-center">

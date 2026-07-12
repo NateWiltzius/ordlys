@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import {
   deckReleases,
+  deckFollows,
   decks,
   lessonRevisions,
   releaseLessons,
@@ -23,6 +24,11 @@ const publicDeckSummarySelection = {
   sourceReleaseId: decks.sourceReleaseId,
   lessonCount: sql<number>`count(distinct ${releaseLessons.lessonId})::int`,
   wordCount: sql<number>`count(distinct ${releaseVocabs.vocabId})::int`,
+  subscriberCount: sql<number>`(
+    select count(*)::int
+    from ${deckFollows} follows
+    where follows.deck_id = ${decks.id} and follows.status = 'active'
+  )`,
 };
 
 const publicDeckPredicate = and(

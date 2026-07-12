@@ -1,45 +1,29 @@
 'use client';
 
-import { DeckCard } from '@/app/(protected)/decks/_components/deck-card';
-import EmptyState from '@/components/shared/empty-state';
+import PublicDeckCard from '@/components/public-deck-card';
 import DeckDiscoveryControls from '@/components/deck-discovery-controls';
-import type { DiscoverableDeck } from '@/db/queries/deck.queries';
+import EmptyState from '@/components/shared/empty-state';
+import type { PublicDeckSummary } from '@/db/queries/public-deck.queries';
 import { filterAndSortDecks, type DeckDiscoverySort } from '@/lib/deck-discovery';
 import { Button } from '@heroui/react';
 import { useMemo, useState } from 'react';
 
 type Props = {
-  decks: DiscoverableDeck[];
-  libraryDeckIds: number[];
+  decks: PublicDeckSummary[];
 };
 
-export default function PublicDecks({ decks, libraryDeckIds }: Props) {
+export default function PublicDeckBrowser({ decks }: Props) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<DeckDiscoverySort>('popular');
-  const discoverableDecks = useMemo(() => {
-    const libraryIds = new Set(libraryDeckIds);
-    return decks.filter(deck => !libraryIds.has(deck.id));
-  }, [decks, libraryDeckIds]);
-  const visibleDecks = useMemo(
-    () => filterAndSortDecks(discoverableDecks, query, sort),
-    [discoverableDecks, query, sort],
-  );
+  const visibleDecks = useMemo(() => filterAndSortDecks(decks, query, sort), [decks, query, sort]);
 
-  if (!discoverableDecks.length) {
-    return (
-      <EmptyState
-        title="Nothing to discover yet"
-        description="Public decks from other learners will appear here."
-      />
-    );
-  }
   return (
     <div className="space-y-4">
       <DeckDiscoveryControls
         query={query}
         sort={sort}
         visibleCount={visibleDecks.length}
-        totalCount={discoverableDecks.length}
+        totalCount={decks.length}
         onQueryChange={setQuery}
         onSortChange={setSort}
       />
@@ -47,12 +31,7 @@ export default function PublicDecks({ decks, libraryDeckIds }: Props) {
       {visibleDecks.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {visibleDecks.map(deck => (
-            <DeckCard
-              key={deck.id}
-              deck={deck}
-              relationship="discover"
-              subscriberCount={deck.subscriberCount}
-            />
+            <PublicDeckCard key={deck.id} deck={deck} />
           ))}
         </div>
       ) : (
