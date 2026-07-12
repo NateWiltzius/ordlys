@@ -78,7 +78,7 @@ export default async function DeckStudyContent({ deck, canStudy, isOwned, nextRe
               <Button variant="secondary" size="lg" className="w-full" isDisabled>
                 No words to learn
               </Button>
-            ) : isOwned && deck.status === 'active' ? (
+            ) : isOwned && !deck.currentReleaseId && deck.status === 'active' ? (
               <ButtonLink
                 href={`/decks/${deck.id}/edit`}
                 variant="secondary"
@@ -87,7 +87,7 @@ export default async function DeckStudyContent({ deck, canStudy, isOwned, nextRe
               >
                 Publish deck to start learning
               </ButtonLink>
-            ) : isOwned ? (
+            ) : isOwned && deck.status !== 'active' ? (
               <Button variant="secondary" size="lg" className="w-full" isDisabled>
                 Restore deck to start learning
               </Button>
@@ -110,7 +110,7 @@ export default async function DeckStudyContent({ deck, canStudy, isOwned, nextRe
           <Card.Content className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-default-600">
-                SRS level {LESSON_PROGRESSION_CONFIG.unlockSrsLevel}
+                SRS level {LESSON_PROGRESSION_CONFIG.unlockDisplayLevel}
               </span>
               <span className="font-medium">
                 {currentLesson.masteredWords} / {currentLesson.requiredWords}
@@ -136,7 +136,7 @@ export default async function DeckStudyContent({ deck, canStudy, isOwned, nextRe
                     currentLesson.requiredWords - currentLesson.masteredWords === 1
                       ? 'word'
                       : 'words'
-                  } at SRS level ${LESSON_PROGRESSION_CONFIG.unlockSrsLevel} to unlock the next lesson`}
+                  } at SRS level ${LESSON_PROGRESSION_CONFIG.unlockDisplayLevel} to unlock the next lesson`}
             </p>
           </Card.Content>
         </Card>

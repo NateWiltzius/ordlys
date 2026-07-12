@@ -21,7 +21,7 @@ type Props = {
   isFollowing?: boolean;
   subscriberCount?: number;
 };
-type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'unfollow';
+type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'follow' | 'unfollow';
 
 export function DeckCard({ deck, relationship, isFollowing = false, subscriberCount }: Props) {
   const router = useRouter();
@@ -112,13 +112,16 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
       case 'delete':
         setConfirmation('delete');
         break;
+      case 'follow':
+        await handleFollow();
+        break;
       case 'unfollow':
         setConfirmation('unfollow');
         break;
     }
   };
 
-  const badge = {
+  const relationshipBadge = {
     owned: (
       <Chip size="sm" variant="secondary">
         Owned
@@ -129,11 +132,7 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
         Fork
       </Chip>
     ),
-    following: (
-      <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
-        Following
-      </Chip>
-    ),
+    following: null,
     discover: (
       <Chip size="sm" variant="tertiary">
         Public
@@ -161,7 +160,14 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
             {deck.description || 'No description'}
           </p>
         </div>
-        <div className="shrink-0">{badge}</div>
+        <div className="flex shrink-0 flex-wrap justify-end gap-1">
+          {relationshipBadge}
+          {following ? (
+            <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
+              Following
+            </Chip>
+          ) : null}
+        </div>
       </Card.Header>
       <div className="flex-1" />
       <Card.Footer>
@@ -255,13 +261,16 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
                       selectionMode="none"
                       onAction={handleMenuAction}
                     >
-                      {relationship !== 'discover' ? (
-                        <ListBox.Item id="review">Review</ListBox.Item>
-                      ) : null}
-                      {relationship === 'following' && following ? (
+                      {following ? <ListBox.Item id="review">Review</ListBox.Item> : null}
+                      {following ? (
                         <ListBox.Item id="unfollow" variant="danger">
                           Unfollow
                         </ListBox.Item>
+                      ) : null}
+                      {(relationship === 'owned' || relationship === 'copy') &&
+                      !following &&
+                      deck.currentReleaseId ? (
+                        <ListBox.Item id="follow">Follow to learn</ListBox.Item>
                       ) : null}
                       {relationship === 'discover' && !following ? (
                         <ListBox.Item id="view">Preview deck</ListBox.Item>

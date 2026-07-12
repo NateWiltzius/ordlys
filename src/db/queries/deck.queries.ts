@@ -16,6 +16,7 @@ import { getNewVocabCountForDeck } from '@/db/queries/review.queries';
 import {
   activeReleaseIdExpression,
   deckMetadataAccess,
+  studyDeckAccess,
   viewDeckAccess,
 } from '@/db/queries/deck-access';
 import { DeckDomainError } from '@/lib/deck-domain';
@@ -101,7 +102,6 @@ export const getUserFollowedDecks = async (userId: string) => {
       and(
         eq(deckFollows.userId, userId),
         or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
-        ne(decks.ownerId, userId),
       ),
     );
 };
@@ -119,7 +119,7 @@ export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
       >`case when ${decks.ownerId}=${userId} then ${decks.copyPolicy} else (select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, false)}) end`,
     })
     .from(decks)
-    .leftJoin(
+    .innerJoin(
       deckFollows,
       and(
         eq(deckFollows.deckId, decks.id),
@@ -127,12 +127,7 @@ export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
         or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
       ),
     )
-    .where(
-      or(
-        and(eq(decks.ownerId, userId), eq(decks.status, 'active')),
-        eq(deckFollows.userId, userId),
-      ),
-    );
+    .where(eq(deckFollows.userId, userId));
 };
 
 export const getPublicDecks = async (userId: string) => {
@@ -218,9 +213,12 @@ export async function getDeckStudyCounts(deckId: number, userId: string): Promis
         reviewsDue: sql<number>`
           count(${userVocabState.id}) filter (
             where ${userVocabState.dueAt} <= date_trunc('hour', now())
+              and ${studyDeckAccess(userId)}
           )
         `,
-        wordsInReview: count(userVocabState.id),
+        wordsInReview: sql<number>`
+          count(${userVocabState.id}) filter (where ${studyDeckAccess(userId)})
+        `,
       })
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))

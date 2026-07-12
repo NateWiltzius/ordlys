@@ -31,7 +31,9 @@ export const DEFAULT_SRS_CONFIG = {
 } as const;
 
 export const LESSON_PROGRESSION_CONFIG = {
-  unlockSrsLevel: 3,
+  // SRS levels are stored zero-based but shown to learners one-based.
+  unlockSrsLevel: 2,
+  unlockDisplayLevel: 3,
   unlockRatio: 0.8,
 } as const;
 

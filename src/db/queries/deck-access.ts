@@ -2,13 +2,15 @@ import { decks, lessons, vocabs } from '@/db/schema';
 import { and, eq, ne, or, sql } from 'drizzle-orm';
 
 export function activeReleaseIdExpression(userId: string, allowPublic: boolean) {
+  const ownerFallback = allowPublic
+    ? sql`when ${decks.ownerId} = ${userId} and ${decks.status} <> 'moderation_removed' then ${decks.currentReleaseId}`
+    : sql``;
   const publicFallback = allowPublic
     ? sql`when ${decks.visibility} in ('public', 'unlisted') and ${decks.status} = 'active' then ${decks.currentReleaseId}`
     : sql``;
   return sql<number>`(
     case
-      when ${decks.ownerId} = ${userId} and ${decks.status} <> 'moderation_removed'
-        then ${decks.currentReleaseId}
+      ${ownerFallback}
       when ${decks.status} <> 'moderation_removed' and exists (
         select 1 from deck_follows df
         where df.deck_id = ${decks.id} and df.user_id = ${userId}
@@ -85,7 +87,7 @@ export async function getActiveReleaseId(
     .where(eq(decks.id, deckId))
     .limit(1);
   if (!deck || deck.status === 'moderation_removed') return null;
-  if (deck.ownerId === userId) return deck.currentReleaseId;
+  if (allowPublic && deck.ownerId === userId) return deck.currentReleaseId;
 
   const { deckFollows } = await import('@/db/schema');
   const [follow] = await db

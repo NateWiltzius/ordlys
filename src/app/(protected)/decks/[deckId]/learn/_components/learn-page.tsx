@@ -39,7 +39,7 @@ export default function LearnPage({ deckId, learnItems, lessonProgress }: Props)
             </Card.Title>
             <Card.Description>
               {nextLockedLesson && previousLesson
-                ? `${remainingRequired} more ${remainingRequired === 1 ? 'word needs' : 'words need'} to reach SRS level ${LESSON_PROGRESSION_CONFIG.unlockSrsLevel} in ${previousLesson.lessonTitle}.`
+                ? `${remainingRequired} more ${remainingRequired === 1 ? 'word needs' : 'words need'} to reach SRS level ${LESSON_PROGRESSION_CONFIG.unlockDisplayLevel} in ${previousLesson.lessonTitle}.`
                 : 'You have added every word in this deck to your review queue.'}
             </Card.Description>
           </Card.Header>

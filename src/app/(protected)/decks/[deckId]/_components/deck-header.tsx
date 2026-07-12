@@ -46,9 +46,7 @@ export default function DeckHeader({
             <RestoreDeckButton deckId={deck.id} />
           ) : null}
 
-          {isFollowing && !isOwned ? (
-            <UnfollowDeckButton deckId={deck.id} deckTitle={deck.title} />
-          ) : null}
+          {isFollowing ? <UnfollowDeckButton deckId={deck.id} deckTitle={deck.title} /> : null}
 
           <DeckSafetyControls
             deckId={deck.id}
@@ -67,6 +65,12 @@ export default function DeckHeader({
             <Chip color="warning" size="sm">
               {deck.sourceReleaseId ? 'Your independent fork' : 'You own this deck'}
             </Chip>
+
+            {isFollowing ? (
+              <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
+                Following to learn
+              </Chip>
+            ) : null}
 
             <Chip
               size="sm"

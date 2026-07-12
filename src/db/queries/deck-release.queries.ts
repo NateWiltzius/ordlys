@@ -369,13 +369,12 @@ export async function getReleaseLessonVocabs(releaseId: number, lessonId: number
 
 export async function followDeck(deckId: number, userId: string) {
   return db.transaction(async tx => {
-    const [deck] = await tx
-      .select()
-      .from(decks)
-      .where(and(eq(decks.id, deckId), ne(decks.ownerId, userId)))
-      .for('update')
-      .limit(1);
-    if (!deck || !deck.currentReleaseId || deck.visibility === 'private')
+    const [deck] = await tx.select().from(decks).where(eq(decks.id, deckId)).for('update').limit(1);
+    if (
+      !deck ||
+      !deck.currentReleaseId ||
+      (deck.visibility === 'private' && deck.ownerId !== userId)
+    )
       throw new DeckDomainError('NOT_FOLLOWABLE', 'Deck is not available to follow.');
     assertActive(deck.status, 'follow');
     await tx

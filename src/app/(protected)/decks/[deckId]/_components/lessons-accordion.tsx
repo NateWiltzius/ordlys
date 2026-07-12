@@ -38,7 +38,7 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
                   ) : lesson.isUnlocked ? (
                     <Chip size="sm" color="success" className="shrink-0">
                       {lesson.masteredWords} / {lesson.requiredWords} at level{' '}
-                      {LESSON_PROGRESSION_CONFIG.unlockSrsLevel}
+                      {LESSON_PROGRESSION_CONFIG.unlockDisplayLevel}
                     </Chip>
                   ) : (
                     <Chip size="sm" className="shrink-0">
@@ -63,7 +63,7 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
                   </div>
                 ) : canStudy && lesson.totalWords > lesson.learnedWords ? (
                   <p className="mb-4 text-right text-sm text-default-500">
-                    Reach level {LESSON_PROGRESSION_CONFIG.unlockSrsLevel} with at least{' '}
+                    Reach level {LESSON_PROGRESSION_CONFIG.unlockDisplayLevel} with at least{' '}
                     {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}% of the previous
                     lesson to unlock this placement test.
                   </p>
