@@ -38,5 +38,5 @@ export const LESSON_PROGRESSION_CONFIG = {
 } as const;
 
 export const PLACEMENT_TEST_CONFIG = {
-  passedSrsLevel: 3,
+  passedSrsLevel: LESSON_PROGRESSION_CONFIG.unlockSrsLevel,
 } as const;
