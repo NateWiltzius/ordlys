@@ -33,6 +33,8 @@ export default function CreateVocabModal({
     const frontAlternatives = parseAlternatives(formData.get('frontAlternatives'));
     const backAlternatives = parseAlternatives(formData.get('backAlternatives'));
     const reading = String(formData.get('reading') ?? '').trim();
+    const frontToBackQuizHint = String(formData.get('frontToBackQuizHint') ?? '').trim();
+    const backToFrontQuizHint = String(formData.get('backToFrontQuizHint') ?? '').trim();
 
     if (!front || !back) {
       return;
@@ -43,6 +45,8 @@ export default function CreateVocabModal({
       back,
       frontAlternatives,
       backAlternatives,
+      frontToBackQuizHint: frontToBackQuizHint || null,
+      backToFrontQuizHint: backToFrontQuizHint || null,
       reading: reading || undefined,
       lessonId,
     };
@@ -73,14 +77,14 @@ export default function CreateVocabModal({
       </Button>
 
       <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[360px]">
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className="sm:max-w-xl">
             <Modal.CloseTrigger />
             <Modal.Header>
               <Modal.Heading>Create Vocab</Modal.Heading>
             </Modal.Header>
             <form onSubmit={handleCreateVocab}>
-              <Modal.Body>
+              <Modal.Body className="space-y-6">
                 <VocabFormFields />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>

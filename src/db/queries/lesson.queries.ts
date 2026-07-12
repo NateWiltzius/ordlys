@@ -55,24 +55,6 @@ export const createLesson = async (lesson: CreateLesson, userId: string) => {
   });
 };
 
-export const getLessonsByDeckId = async (deckId: number): Promise<Lesson[]> => {
-  return db
-    .select({
-      id: lessons.id,
-      deckId: lessons.deckId,
-      title: lessonRevisions.title,
-      currentRevisionId: lessons.currentRevisionId,
-      removedAt: lessons.removedAt,
-      orderIndex: lessons.orderIndex,
-      createdAt: lessons.createdAt,
-      updatedAt: lessons.updatedAt,
-    })
-    .from(lessons)
-    .innerJoin(lessonRevisions, eq(lessonRevisions.id, lessons.currentRevisionId))
-    .where(and(eq(lessons.deckId, deckId), isNull(lessons.removedAt)))
-    .orderBy(lessons.orderIndex, lessons.id);
-};
-
 export const getEditLessonSummaries = async (deckId: number): Promise<EditLessonSummary[]> => {
   const rows = await db
     .select({

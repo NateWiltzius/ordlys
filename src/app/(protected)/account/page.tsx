@@ -46,6 +46,27 @@ async function AccountContent() {
       </Card>
 
       <Card>
+        <Card.Header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="card__title">Your data</h2>
+            <Card.Description>
+              Download your profile, authored decks, follows, learning history, feedback, and deck
+              reports as JSON. Individual owned decks can also be exported as CSV from their deck
+              page.
+            </Card.Description>
+          </div>
+          <ButtonLink
+            href="/account/export"
+            variant="secondary"
+            className="shrink-0"
+            download="ordlys-account-data.json"
+          >
+            Download my data
+          </ButtonLink>
+        </Card.Header>
+      </Card>
+
+      <Card>
         <Card.Header>
           <h2 className="card__title">Security</h2>
           <Card.Description>Manage your password or sign out of this device.</Card.Description>
@@ -67,7 +88,8 @@ async function AccountContent() {
           <div>
             <h2 className="card__title">Delete account</h2>
             <Card.Description>
-              Permanently remove your account and learning history.
+              Permanently remove your sign-in account and learning history. Deck releases that other
+              learners depend on may be retained without your account identifier.
             </Card.Description>
           </div>
           <div className="shrink-0">

@@ -49,8 +49,10 @@ export default function DeleteAccountModal() {
                 <div className="rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm">
                   <p className="font-medium text-danger">This action cannot be undone.</p>
                   <p className="mt-1 text-default-600">
-                    Your private data and learning history will be removed. Public decks with
-                    followers will remain available as archived decks.
+                    Your sign-in account, follows, reports, and learning history will be removed.
+                    Authored deck releases may remain without your account identifier so existing
+                    learners and release history are not broken. Download your data first if you
+                    want a copy.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">

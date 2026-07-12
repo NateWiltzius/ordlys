@@ -1,11 +1,9 @@
-import UnfollowDeckButton from '@/app/(protected)/decks/[deckId]/_components/unfollow-deck-button';
 import ButtonLink from '@/components/shared/button-link';
 import PageHeader from '@/components/shared/layout/page-header';
 import type { getDeckFollowState, inspectReleaseChanges } from '@/db/queries/deck-release.queries';
-import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { DeckRelease } from '@/types/deck-release.types';
 import type { Deck } from '@/types/deck.types';
-import { Chip } from '@heroui/react';
+import DeckBadge, { type DeckBadgeKind } from '@/components/shared/deck-badge';
 import DeckSafetyControls from './deck-safety-controls';
 import FollowReleaseControls from './follow-release-controls';
 import RestoreDeckButton from './restore-deck-button';
@@ -29,6 +27,19 @@ export default function DeckHeader({
   releaseChanges,
   canModerate,
 }: Props) {
+  const badges: DeckBadgeKind[] = [];
+
+  if (isOwned) badges.push(deck.sourceReleaseId ? 'copy' : 'owned');
+  if (isFollowing) badges.push('following');
+
+  if (deck.status === 'active') {
+    badges.push(deck.visibility);
+  } else if (isOwned) {
+    badges.push(deck.visibility, deck.status === 'deleted' ? 'deletion-pending' : 'archived');
+  } else {
+    badges.push(deck.status === 'deleted' ? 'source-deletion-pending' : 'source-archived');
+  }
+
   return (
     <PageHeader
       title={deck.title}
@@ -46,10 +57,9 @@ export default function DeckHeader({
             <RestoreDeckButton deckId={deck.id} />
           ) : null}
 
-          {isFollowing ? <UnfollowDeckButton deckId={deck.id} deckTitle={deck.title} /> : null}
-
           <DeckSafetyControls
             deckId={deck.id}
+            deckTitle={deck.title}
             status={deck.status}
             retentionUntil={deck.retentionUntil}
             isOwned={isOwned}
@@ -60,50 +70,16 @@ export default function DeckHeader({
       }
     >
       <div className="flex flex-wrap gap-2">
-        {isOwned ? (
-          <>
-            <Chip color="warning" size="sm">
-              {deck.sourceReleaseId ? 'Your independent fork' : 'You own this deck'}
-            </Chip>
-
-            {isFollowing ? (
-              <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
-                Following to learn
-              </Chip>
-            ) : null}
-
-            <Chip
-              size="sm"
-              variant="soft"
-              color={deck.visibility === 'public' ? 'success' : 'default'}
-            >
-              {deck.visibility === 'public'
-                ? 'Public'
-                : deck.visibility === 'unlisted'
-                  ? 'Unlisted'
-                  : 'Private'}
-            </Chip>
-
-            <Chip size="sm" variant="soft">
-              {deck.status === 'deleted'
-                ? `Deletion pending · recoverable until ${deck.retentionUntil?.toLocaleDateString() ?? 'unknown'}`
-                : deck.status === 'archived'
-                  ? 'Archived'
-                  : deck.status}
-            </Chip>
-          </>
-        ) : deck.status === 'archived' || deck.status === 'deleted' ? (
-          <Chip color="warning" size="sm">
-            Source {deck.status} · studying the last available release
-          </Chip>
-        ) : isFollowing ? (
-          <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
-            Following · updates from the author
-          </Chip>
-        ) : (
-          <Chip size="sm">Public deck</Chip>
-        )}
+        {badges.map(kind => (
+          <DeckBadge key={kind} kind={kind} />
+        ))}
       </div>
+
+      {isOwned && deck.status === 'deleted' && deck.retentionUntil ? (
+        <p className="text-sm text-default-500">
+          Recoverable until {deck.retentionUntil.toLocaleDateString()}.
+        </p>
+      ) : null}
 
       {isFollowing && !isOwned && followState ? (
         <FollowReleaseControls

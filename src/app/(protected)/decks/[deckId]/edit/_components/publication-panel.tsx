@@ -33,7 +33,7 @@ const visibilityOptions = [
 ] as const;
 
 const copyPolicyOptions = [
-  { id: 'follow_only', label: 'Following only' },
+  { id: 'follow_only', label: 'No copies' },
   { id: 'private_forks', label: 'Private copies' },
   { id: 'public_forks', label: 'Public copies' },
 ] as const;
@@ -136,9 +136,9 @@ export default function PublicationPanel({
           <Alert status="default">
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Fork provenance</Alert.Title>
+              <Alert.Title>Copy provenance</Alert.Title>
               <Alert.Description>
-                Forked from “{provenance.sourceTitle}” v{provenance.sourceVersion}. Root lineage: “
+                Copied from “{provenance.sourceTitle}” v{provenance.sourceVersion}. Root lineage: “
                 {provenance.rootTitle}”. Provenance is immutable.
               </Alert.Description>
             </Alert.Content>
@@ -219,7 +219,7 @@ export default function PublicationPanel({
             <Description>
               {current
                 ? provenance && !sourceAllowsPublicForks
-                  ? 'The source release requires this fork to remain private.'
+                  ? 'The source release requires this copy to remain private.'
                   : 'Controls who can discover and access this deck.'
                 : 'Available after you publish the first release.'}
             </Description>
@@ -272,7 +272,7 @@ export default function PublicationPanel({
             <Description>
               {provenance
                 ? 'Cannot be broader than the source policy. Changes take effect after the next release.'
-                : 'Controls whether other users can fork this deck. Changes take effect after the next release.'}
+                : 'Controls whether other users can copy this deck. Changes take effect after the next release.'}
             </Description>
 
             <Select.Popover>
@@ -341,7 +341,7 @@ export default function PublicationPanel({
             isPending={pending && activeOperation === 'delete'}
             isDisabled={pending && activeOperation !== 'delete'}
             onPress={() =>
-              run('delete', () => softDeleteDeckAction(deck.id), 'Deck deleted.', true)
+              run('delete', () => softDeleteDeckAction(deck.id), 'Deck deletion scheduled.', true)
             }
           >
             Delete deck

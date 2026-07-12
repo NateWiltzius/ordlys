@@ -2,13 +2,14 @@ import ButtonLink from '@/components/shared/button-link';
 import PageShell from '@/components/shared/layout/page-shell';
 import { getPublicDeckPageData, getPublicDeckSummaryById } from '@/db/queries/public-deck.queries';
 import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
-import { LANGUAGE_OPTIONS } from '@/lib/languages';
+import { formatLanguagePair } from '@/lib/languages';
 import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { Card, Chip } from '@heroui/react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import DeckBadge from '@/components/shared/deck-badge';
 
 type Props = {
   params: Promise<{ deckId: string }>;
@@ -74,9 +75,7 @@ export default async function PublicDeckPage({ params }: Props) {
         <Card.Header className="flex-col items-start gap-4 bg-default-50 px-6 py-7 sm:flex-row sm:justify-between">
           <div className="max-w-3xl space-y-3">
             <div className="flex flex-wrap gap-2">
-              <Chip size="sm" variant="soft" color="success">
-                Public deck
-              </Chip>
+              <DeckBadge kind="public" />
               {languagePair ? (
                 <Chip size="sm" variant="secondary">
                   {languagePair}
@@ -122,7 +121,7 @@ export default async function PublicDeckPage({ params }: Props) {
               <dd className="text-2xl font-semibold">{deck.lessonCount}</dd>
             </div>
             <div>
-              <dt className="text-sm text-default-500">Vocabulary words</dt>
+              <dt className="text-sm text-default-500">Vocabulary cards</dt>
               <dd className="text-2xl font-semibold">{deck.wordCount}</dd>
             </div>
           </dl>
@@ -148,7 +147,7 @@ export default async function PublicDeckPage({ params }: Props) {
                     </p>
                     <h3 className="font-semibold">{lesson.title}</h3>
                     <Card.Description>
-                      {lesson.wordCount} {lesson.wordCount === 1 ? 'word' : 'words'}
+                      {lesson.wordCount} {lesson.wordCount === 1 ? 'card' : 'cards'}
                     </Card.Description>
                   </Card.Header>
                 </Card>
@@ -169,7 +168,7 @@ export default async function PublicDeckPage({ params }: Props) {
               Vocabulary preview
             </h2>
             <p className="mt-1 text-default-500">
-              Showing {deck.vocabularyPreview.length} of {deck.wordCount} words. Create an account
+              Showing {deck.vocabularyPreview.length} of {deck.wordCount} cards. Create an account
               to study the deck with spaced repetition and save your progress.
             </p>
           </div>
@@ -265,18 +264,6 @@ function deckDescription(deck: {
 }) {
   return (
     deck.description ||
-    `Preview ${deck.wordCount} vocabulary words across ${deck.lessonCount} lessons in this public Ordlys deck.`
+    `Preview ${deck.wordCount} vocabulary cards across ${deck.lessonCount} lessons in this public Ordlys deck.`
   );
-}
-
-function formatLanguagePair(frontLanguage: string | null, backLanguage: string | null) {
-  const front = languageName(frontLanguage);
-  const back = languageName(backLanguage);
-  if (front && back) return `${front} → ${back}`;
-  return front ?? back;
-}
-
-function languageName(code: string | null) {
-  if (!code) return null;
-  return LANGUAGE_OPTIONS.find(language => language.code === code)?.name ?? code;
 }

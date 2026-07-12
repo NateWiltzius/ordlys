@@ -7,6 +7,7 @@ import { getLanguageName } from '@/lib/languages';
 
 type Props = {
   prompt: string;
+  hint: string | null;
   answer: string;
   direction: 'btf' | 'ftb';
   frontLanguage: string | null;
@@ -18,6 +19,7 @@ type Props = {
 
 export default function QuizAnswerForm({
   prompt,
+  hint,
   answer,
   direction,
   frontLanguage,
@@ -72,6 +74,11 @@ export default function QuizAnswerForm({
             <p className="quiz-answer-prompt break-words px-4 py-6 text-center text-2xl font-semibold">
               {prompt}
             </p>
+            {hint ? (
+              <p className="border-t border-default-200 px-4 py-3 text-center text-sm text-default-600">
+                <span className="font-semibold text-default-700">Hint:</span> {hint}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">

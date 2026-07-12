@@ -3,7 +3,7 @@
 import { LANGUAGE_OPTIONS } from '@/lib/languages';
 import { Label, ListBox, Select } from '@heroui/react';
 
-export const NO_LANGUAGE_VALUE = 'not-specified';
+const NO_LANGUAGE_VALUE = 'not-specified';
 
 type Props = {
   name: 'frontLanguage' | 'backLanguage';

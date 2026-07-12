@@ -6,6 +6,8 @@ export type QuizSourceItem = {
   back: string;
   frontAlternatives: string[];
   backAlternatives: string[];
+  frontToBackQuizHint: string | null;
+  backToFrontQuizHint: string | null;
   frontLanguage: string | null;
   backLanguage: string | null;
 };
@@ -14,6 +16,7 @@ export type QuizQueueItem = {
   cardId: number;
   direction: QuizDirection;
   prompt: string;
+  hint: string | null;
   answer: string;
   acceptedAnswers: string[];
 };

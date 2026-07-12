@@ -8,6 +8,7 @@ type Props = {
   variant?: 'danger' | 'danger-soft' | 'ghost' | 'outline' | 'primary' | 'secondary' | 'tertiary';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  download?: boolean | string;
 };
 
 export default function ButtonLink({
@@ -16,9 +17,10 @@ export default function ButtonLink({
   variant = 'primary',
   size = 'md',
   className,
+  download,
 }: Props) {
   return (
-    <Link href={href} className={buttonVariants({ variant, size, className })}>
+    <Link href={href} download={download} className={buttonVariants({ variant, size, className })}>
       {children}
     </Link>
   );

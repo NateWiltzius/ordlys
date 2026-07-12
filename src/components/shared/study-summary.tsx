@@ -17,7 +17,7 @@ export default function StudySummary({ counts, description }: Props) {
       </Card.Header>
       <Card.Content>
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatTile label="Total words" value={counts.totalWords} />
+          <StatTile label="Total cards" value={counts.totalWords} />
           <StatTile
             label="Ready to learn"
             value={counts.newWordsAvailable}

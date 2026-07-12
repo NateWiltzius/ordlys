@@ -1,29 +1,10 @@
-import { SkeletonBlock, SkeletonLine, StudySummarySkeleton } from '@/components/shared/skeleton';
+import {
+  SkeletonBlock,
+  SkeletonLine,
+  StudyActionCardSkeleton,
+  StudySummarySkeleton,
+} from '@/components/shared/skeleton';
 import { Card } from '@heroui/react';
-
-function StudyActionCardSkeleton() {
-  return (
-    <Card className="h-full overflow-hidden border bg-gradient-to-br shadow-md">
-      <Card.Header className="flex-row items-start gap-3">
-        <SkeletonBlock className="size-11 shrink-0 rounded-xl" />
-        <div className="min-w-0 flex-1 space-y-2">
-          <SkeletonLine className="h-6 w-36" />
-          <SkeletonLine className="h-4 w-full" />
-          <SkeletonLine className="h-4 w-3/4" />
-        </div>
-      </Card.Header>
-
-      <Card.Content className="flex items-baseline gap-2">
-        <SkeletonLine className="h-10 w-14" />
-        <SkeletonLine className="h-5 w-24" />
-      </Card.Content>
-
-      <Card.Footer>
-        <SkeletonBlock className="h-12 w-full rounded-lg" />
-      </Card.Footer>
-    </Card>
-  );
-}
 
 function CurrentLessonSkeleton() {
   return (

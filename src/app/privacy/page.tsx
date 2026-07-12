@@ -12,7 +12,9 @@ export default function PrivacyPage() {
       <h1 className="text-3xl font-semibold">Privacy notice</h1>
       <p className="mt-4">
         Ordlys stores your email address for authentication and your decks, followed decks,
-        vocabulary, and learning history to provide study and review features.
+        vocabulary, and learning history to provide study and review features. If you submit
+        feedback, Ordlys also stores the message, category, related page, and any contact email you
+        choose to provide.
       </p>
       <h2 className="mt-8 text-xl font-semibold">How data is used</h2>
       <p className="mt-2">
@@ -20,14 +22,28 @@ export default function PrivacyPage() {
         titles, descriptions, lesson outlines, and sample vocabulary can be viewed without an
         account and may be indexed by search engines. Private decks are restricted to you.
       </p>
+      <h2 className="mt-8 text-xl font-semibold">Service providers and analytics</h2>
+      <p className="mt-2">
+        Supabase provides authentication, and the application and database infrastructure process
+        the information needed to operate Ordlys. Vercel Analytics measures visits and product usage
+        so we can understand reliability and improve the service. We do not sell your personal
+        information.
+      </p>
       <h2 className="mt-8 text-xl font-semibold">Retention and control</h2>
       <p className="mt-2">
         Your data is retained while your account exists. You can delete individual vocabulary,
         lessons, and decks using their corresponding controls, or permanently delete your account
-        from the account page. Public decks with active followers may be retained in an archived,
-        read-only form so those learners keep access to their study material.
+        from the account page. Account deletion removes your authentication account, follows,
+        reports, and learning history. Authored deck releases and their content may be retained
+        without your account identifier when needed to preserve release history, attribution chains,
+        or study material used by other learners.
       </p>
-      <p className="mt-8 text-sm text-default-500">Effective July 5, 2026.</p>
+      <p className="mt-2">
+        You can download your account data from the account page and export any deck you own as a
+        reusable CSV file from its deck page. Contact us through the in-app feedback form if you
+        have a privacy or data request.
+      </p>
+      <p className="mt-8 text-sm text-default-500">Effective July 13, 2026.</p>
     </article>
   );
 }

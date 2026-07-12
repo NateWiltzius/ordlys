@@ -7,9 +7,10 @@ import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
 type Props = {
   feedback: QuizFeedback;
   onContinue: () => void;
+  onAcceptAnyway?: () => void;
 };
 
-export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
+export default function QuizFeedbackPanel({ feedback, onContinue, onAcceptAnyway }: Props) {
   const styles = feedback.isCorrect ? QUIZ_FEEDBACK_STYLES.correct : QUIZ_FEEDBACK_STYLES.incorrect;
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -50,6 +51,7 @@ export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
           label={feedback.quizItem.direction === 'btf' ? 'Back shown' : 'Front shown'}
           value={feedback.quizItem.prompt}
         />
+        {feedback.quizItem.hint ? <AnswerRow label="Hint" value={feedback.quizItem.hint} /> : null}
         <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
         <AnswerRow
           label={feedback.quizItem.direction === 'btf' ? 'Correct front' : 'Correct back'}
@@ -57,7 +59,12 @@ export default function QuizFeedbackPanel({ feedback, onContinue }: Props) {
         />
       </Card.Content>
 
-      <Card.Footer>
+      <Card.Footer className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        {!feedback.isCorrect && onAcceptAnyway ? (
+          <Button variant="secondary" onPress={onAcceptAnyway} className="w-full sm:w-auto">
+            Accept anyway
+          </Button>
+        ) : null}
         <Button
           variant="primary"
           onPress={onContinue}

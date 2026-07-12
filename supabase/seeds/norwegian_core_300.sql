@@ -54,6 +54,8 @@ BEGIN
       back,
       front_alternatives,
       back_alternatives,
+      front_to_back_quiz_hint,
+      back_to_front_quiz_hint,
       reading,
       order_index
     )
@@ -78,6 +80,16 @@ BEGIN
         WHEN vocab_data.back LIKE '% / %'
           THEN regexp_split_to_array(vocab_data.back, ' / ')::varchar[]
         ELSE ARRAY[]::varchar[]
+      END,
+      CASE vocab_data.front
+        WHEN 'den' THEN 'Used with common-gender nouns (en/ei).'
+        WHEN 'det' THEN 'Used with neuter nouns (et), and in impersonal expressions.'
+        ELSE NULL
+      END,
+      CASE vocab_data.front
+        WHEN 'den' THEN 'Use the common-gender form for an en/ei noun.'
+        WHEN 'det' THEN 'Use the neuter form for an et noun, or an impersonal subject.'
+        ELSE NULL
       END,
       NULL,
       vocab_data.word_order

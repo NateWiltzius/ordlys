@@ -10,9 +10,9 @@ import { FormEvent, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 
-const CSV_TEMPLATE = `front,back,lesson,reading,front_alternatives,back_alternatives
-hei,hello,Greetings,,hallo|heisann,
-"å spise","to eat",Verbs,,,`;
+const CSV_TEMPLATE = `front,back,lesson,reading,front_alternatives,back_alternatives,front_to_back_quiz_hint,back_to_front_quiz_hint
+hei,hello,Greetings,,hallo|heisann,,,
+"å spise","to eat",Verbs,,,,,`;
 
 export default function ImportDeckModal() {
   const modalState = useOverlayState();

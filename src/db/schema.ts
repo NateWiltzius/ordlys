@@ -115,6 +115,8 @@ export const vocabs = pgTable(
       .array()
       .default(sql`ARRAY[]::varchar[]`)
       .notNull(),
+    frontToBackQuizHint: varchar('front_to_back_quiz_hint', { length: 255 }),
+    backToFrontQuizHint: varchar('back_to_front_quiz_hint', { length: 255 }),
     reading: varchar('reading', { length: 255 }),
     tags: varchar('tags', { length: 64 })
       .array()
@@ -166,6 +168,8 @@ export const vocabRevisions = pgTable(
       .array()
       .default(sql`ARRAY[]::varchar[]`)
       .notNull(),
+    frontToBackQuizHint: varchar('front_to_back_quiz_hint', { length: 255 }),
+    backToFrontQuizHint: varchar('back_to_front_quiz_hint', { length: 255 }),
     reading: varchar('reading', { length: 255 }),
     tags: varchar('tags', { length: 64 })
       .array()

@@ -33,6 +33,8 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
     const front = String(formData.get('front') ?? '').trim();
     const back = String(formData.get('back') ?? '').trim();
     const reading = String(formData.get('reading') ?? '').trim();
+    const frontToBackQuizHint = String(formData.get('frontToBackQuizHint') ?? '').trim();
+    const backToFrontQuizHint = String(formData.get('backToFrontQuizHint') ?? '').trim();
 
     if (!vocab || !front || !back) return;
 
@@ -43,6 +45,8 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
         front,
         back,
         reading: reading || null,
+        frontToBackQuizHint: frontToBackQuizHint || null,
+        backToFrontQuizHint: backToFrontQuizHint || null,
         frontAlternatives: parseAlternatives(formData.get('frontAlternatives')),
         backAlternatives: parseAlternatives(formData.get('backAlternatives')),
       };
@@ -63,40 +67,38 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
   };
 
   return (
-    <Modal state={modalState}>
-      <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[360px]">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>Edit vocabulary</Modal.Heading>
-            </Modal.Header>
-            <form onSubmit={handleSubmit}>
-              <Modal.Body>
-                {vocab ? <VocabFormFields key={vocab.id} vocab={vocab} /> : null}
-                <label className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={replaceIdentity}
-                    onChange={event => setReplaceIdentity(event.target.checked)}
-                    className="mt-1"
-                  />
-                  <span>
-                    Replace logical identity because the meaning changed. Existing learner progress
-                    will not carry to the replacement.
-                  </span>
-                </label>
-                {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
-              </Modal.Body>
-              <Modal.Footer>
-                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
-                  {replaceIdentity ? 'Replace vocabulary' : 'Save changes'}
-                </Button>
-              </Modal.Footer>
-            </form>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <Modal.Backdrop isOpen={modalState.isOpen} onOpenChange={modalState.setOpen}>
+      <Modal.Container scroll="inside">
+        <Modal.Dialog className="sm:max-w-xl">
+          <Modal.CloseTrigger />
+          <Modal.Header>
+            <Modal.Heading>Edit vocabulary</Modal.Heading>
+          </Modal.Header>
+          <form onSubmit={handleSubmit}>
+            <Modal.Body className="space-y-6">
+              {vocab ? <VocabFormFields key={vocab.id} vocab={vocab} /> : null}
+              <label className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={replaceIdentity}
+                  onChange={event => setReplaceIdentity(event.target.checked)}
+                  className="mt-1"
+                />
+                <span>
+                  Replace logical identity because the meaning changed. Existing learner progress
+                  will not carry to the replacement.
+                </span>
+              </label>
+              {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
+                {replaceIdentity ? 'Replace vocabulary' : 'Save changes'}
+              </Button>
+            </Modal.Footer>
+          </form>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   );
 }

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { UserFacingError } from '@/lib/action-result';
 
-export type DeckStatus = 'active' | 'archived' | 'deleted' | 'moderation_removed';
+type DeckStatus = 'active' | 'archived' | 'deleted' | 'moderation_removed';
 export type CopyPolicy = 'follow_only' | 'private_forks' | 'public_forks';
 export type DeckVisibility = 'private' | 'unlisted' | 'public';
 

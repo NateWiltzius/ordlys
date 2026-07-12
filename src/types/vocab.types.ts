@@ -10,6 +10,8 @@ export type UpdateVocabInput = Pick<
   | 'back'
   | 'frontAlternatives'
   | 'backAlternatives'
+  | 'frontToBackQuizHint'
+  | 'backToFrontQuizHint'
   | 'reading'
   | 'tags'
   | 'metadata'

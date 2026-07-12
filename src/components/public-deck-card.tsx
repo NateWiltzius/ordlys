@@ -1,8 +1,9 @@
 import ButtonLink from '@/components/shared/button-link';
 import type { PublicDeckSummary } from '@/db/queries/public-deck.queries';
-import { LANGUAGE_OPTIONS } from '@/lib/languages';
-import { Card, Chip } from '@heroui/react';
+import { formatLanguagePair } from '@/lib/languages';
+import { Card } from '@heroui/react';
 import Link from 'next/link';
+import DeckBadge from '@/components/shared/deck-badge';
 
 type Props = {
   deck: PublicDeckSummary;
@@ -25,9 +26,7 @@ export default function PublicDeckCard({ deck }: Props) {
             {deck.description || 'A public vocabulary deck you can preview before signing up.'}
           </p>
         </div>
-        <Chip size="sm" variant="soft" color="success" className="shrink-0">
-          Public
-        </Chip>
+        <DeckBadge kind="public" className="shrink-0" />
       </Card.Header>
 
       <Card.Content className="flex-1 space-y-3">
@@ -42,7 +41,7 @@ export default function PublicDeckCard({ deck }: Props) {
           <div>
             <dt className="sr-only">Words</dt>
             <dd>
-              {deck.wordCount} {deck.wordCount === 1 ? 'word' : 'words'}
+              {deck.wordCount} {deck.wordCount === 1 ? 'card' : 'cards'}
             </dd>
           </div>
           <div>
@@ -61,17 +60,4 @@ export default function PublicDeckCard({ deck }: Props) {
       </Card.Footer>
     </Card>
   );
-}
-
-function formatLanguagePair(frontLanguage: string | null, backLanguage: string | null) {
-  const front = languageName(frontLanguage);
-  const back = languageName(backLanguage);
-
-  if (front && back) return `${front} → ${back}`;
-  return front ?? back;
-}
-
-function languageName(code: string | null) {
-  if (!code) return null;
-  return LANGUAGE_OPTIONS.find(language => language.code === code)?.name ?? code;
 }

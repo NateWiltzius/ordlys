@@ -6,13 +6,14 @@ import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actio
 import { forkReleaseAction, restoreDeckAction } from '@/server/deck-release.actions';
 import { Deck } from '@/types/deck.types';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
-import { Button, Card, Chip, ListBox, Popover } from '@heroui/react';
+import { Button, Card, ListBox, Popover } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { errorMessage } from '@/lib/validation/content';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import DeckBadge, { type DeckBadgeKind } from '@/components/shared/deck-badge';
 
 type Relationship = 'owned' | 'copy' | 'following' | 'discover' | 'restorable';
 type Props = {
@@ -121,29 +122,18 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
     }
   };
 
-  const relationshipBadge = {
-    owned: (
-      <Chip size="sm" variant="secondary">
-        Owned
-      </Chip>
-    ),
-    copy: (
-      <Chip size="sm" variant="secondary">
-        Fork
-      </Chip>
-    ),
-    following: null,
-    discover: (
-      <Chip size="sm" variant="tertiary">
-        Public
-      </Chip>
-    ),
-    restorable: (
-      <Chip size="sm" variant="soft" color="warning">
-        {deck.status === 'deleted' ? 'Deletion pending' : 'Archived'}
-      </Chip>
-    ),
-  }[relationship];
+  const relationshipBadges: DeckBadgeKind[] = {
+    owned: ['owned'],
+    copy: ['copy'],
+    following: [],
+    discover: [],
+    restorable: ['owned', deck.status === 'deleted' ? 'deletion-pending' : 'archived'],
+  }[relationship] as DeckBadgeKind[];
+
+  if (following) relationshipBadges.push('following');
+  if (relationship === 'following' || relationship === 'discover') {
+    relationshipBadges.push('public');
+  }
 
   return (
     <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm">
@@ -161,12 +151,9 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap justify-end gap-1">
-          {relationshipBadge}
-          {following ? (
-            <Chip size="sm" className={STUDY_TONE_STYLES.learning.accent}>
-              Following
-            </Chip>
-          ) : null}
+          {relationshipBadges.map(kind => (
+            <DeckBadge key={kind} kind={kind} />
+          ))}
         </div>
       </Card.Header>
       <div className="flex-1" />

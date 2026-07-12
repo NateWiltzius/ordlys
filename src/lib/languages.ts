@@ -52,3 +52,14 @@ export function getLanguageName(code: string | null | undefined) {
   if (!code) return null;
   return LANGUAGE_OPTIONS.find(language => language.code === code)?.name ?? code;
 }
+
+export function formatLanguagePair(
+  frontLanguage: string | null | undefined,
+  backLanguage: string | null | undefined,
+) {
+  const front = getLanguageName(frontLanguage);
+  const back = getLanguageName(backLanguage);
+
+  if (front && back) return `${front} → ${back}`;
+  return front ?? back;
+}

@@ -20,6 +20,7 @@ import {
   viewDeckAccess,
 } from '@/db/queries/deck-access';
 import { getReviewForecastEnd } from '@/lib/review-forecast';
+import { buildLessonProgress } from '@/lib/srs/lesson-progress';
 
 export async function getLessonProgressForDeck(
   deckId: number,
@@ -48,7 +49,14 @@ export async function getLessonProgressForDeck(
     )
     .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
     .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
-    .leftJoin(vocabs, eq(vocabs.lessonId, lessons.id))
+    .leftJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.releaseId, releaseLessons.releaseId),
+        eq(releaseVocabs.lessonId, lessons.id),
+      ),
+    )
+    .leftJoin(vocabs, eq(vocabs.id, releaseVocabs.vocabId))
     .leftJoin(
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
@@ -57,31 +65,7 @@ export async function getLessonProgressForDeck(
     .groupBy(lessons.id, lessonRevisions.title, releaseLessons.orderIndex)
     .orderBy(releaseLessons.orderIndex, lessons.id);
 
-  let previousNonEmptyLessonPassed = true;
-
-  return rows.map(row => {
-    const totalWords = Number(row.totalWords);
-    const learnedWords = Number(row.learnedWords);
-    const masteredWords = Number(row.masteredWords);
-    const requiredWords = Math.ceil(totalWords * LESSON_PROGRESSION_CONFIG.unlockRatio);
-    const isUnlocked = totalWords === 0 || previousNonEmptyLessonPassed;
-    const canTakePlacementTest = totalWords > learnedWords && isUnlocked;
-
-    if (totalWords > 0) {
-      previousNonEmptyLessonPassed = isUnlocked && masteredWords >= requiredWords;
-    }
-
-    return {
-      lessonId: row.lessonId,
-      lessonTitle: row.lessonTitle,
-      totalWords,
-      learnedWords,
-      masteredWords,
-      requiredWords,
-      isUnlocked,
-      canTakePlacementTest,
-    };
-  });
+  return buildLessonProgress(rows);
 }
 
 export async function getNewVocabsForDeck(deckId: number, userId: string, limit = 5) {
@@ -98,6 +82,8 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
       back: vocabRevisions.back,
       frontAlternatives: vocabRevisions.frontAlternatives,
       backAlternatives: vocabRevisions.backAlternatives,
+      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
+      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
       reading: vocabRevisions.reading,
       tags: vocabRevisions.tags,
       notes: vocabRevisions.notes,
@@ -376,6 +362,8 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
       back: vocabRevisions.back,
       frontAlternatives: vocabRevisions.frontAlternatives,
       backAlternatives: vocabRevisions.backAlternatives,
+      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
+      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
       reading: vocabRevisions.reading,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
@@ -420,6 +408,8 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
       back: vocabRevisions.back,
       frontAlternatives: vocabRevisions.frontAlternatives,
       backAlternatives: vocabRevisions.backAlternatives,
+      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
+      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
       reading: vocabRevisions.reading,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,

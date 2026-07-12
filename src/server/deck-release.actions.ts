@@ -5,10 +5,7 @@ import {
   changeDeckCopyPolicy,
   changeDeckVisibility,
   forkRelease,
-  getReleaseById,
-  inspectReleaseChanges,
   moderateRemoveDeck,
-  listReleaseHistory,
   publishDeck,
   permanentlyDeleteFollowProgress,
   reportDeck,
@@ -17,7 +14,6 @@ import {
   setDeckUnderReview,
   updateFollowToLatest,
 } from '@/db/queries/deck-release.queries';
-import { getAccessibleDeckById } from '@/db/queries/deck.queries';
 import {
   currentUserCanModerate,
   getCurrentUserId,
@@ -56,15 +52,6 @@ export async function publishDeckAction(id: number, summary: string, idempotency
   });
 }
 
-export async function getReleaseHistoryAction(id: number) {
-  const parsed = deckId(id);
-  const userId = await getCurrentUserId();
-  if (!(await getAccessibleDeckById(parsed, userId))) {
-    throw new Error('Deck not found or inaccessible.');
-  }
-  return listReleaseHistory(parsed);
-}
-
 export async function pinDeckReleaseAction(id: number, releaseId: number) {
   return withExpectedError(async () => {
     const parsed = deckId(id);
@@ -89,20 +76,6 @@ export async function permanentlyDeleteFollowProgressAction(id: number) {
     await permanentlyDeleteFollowProgress(parsed, await getCurrentUserId());
     refresh(parsed);
   });
-}
-
-export async function inspectReleaseChangesAction(releaseId: number, previousReleaseId?: number) {
-  const release = parsePositiveInteger(releaseId);
-  const previous =
-    previousReleaseId === undefined ? undefined : parsePositiveInteger(previousReleaseId);
-  if (!release || (previousReleaseId !== undefined && !previous)) {
-    throw new Error('Invalid release ID.');
-  }
-  const current = await getReleaseById(release);
-  if (!current || !(await getAccessibleDeckById(current.deckId, await getCurrentUserId()))) {
-    throw new Error('Release not found or inaccessible.');
-  }
-  return inspectReleaseChanges(release, previous ?? undefined);
 }
 
 export async function archiveDeckAction(id: number) {

@@ -35,7 +35,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          <Chip variant="primary" size="sm">
+          <Chip variant="soft" size="sm">
             {stats.totalWords} cards
           </Chip>
 

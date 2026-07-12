@@ -1,6 +1,4 @@
-import { decks, visibilityEnum } from '@/db/schema';
-
-export type DeckVisibility = (typeof visibilityEnum.enumValues)[number];
+import { decks } from '@/db/schema';
 
 export type Deck = typeof decks.$inferSelect;
 

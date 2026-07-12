@@ -32,16 +32,16 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
                 <span className="flex min-w-0 flex-1 flex-col items-start gap-2 pr-2 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <span className="min-w-0 break-words font-medium">{lesson.lessonTitle}</span>
                   {lesson.totalWords === 0 ? (
-                    <Chip size="sm" className="shrink-0">
+                    <Chip size="sm" variant="soft" className="shrink-0">
                       Empty
                     </Chip>
                   ) : lesson.isUnlocked ? (
-                    <Chip size="sm" color="success" className="shrink-0">
+                    <Chip size="sm" variant="soft" color="success" className="shrink-0">
                       {lesson.masteredWords} / {lesson.requiredWords} at level{' '}
                       {LESSON_PROGRESSION_CONFIG.unlockDisplayLevel}
                     </Chip>
                   ) : (
-                    <Chip size="sm" className="shrink-0">
+                    <Chip size="sm" variant="soft" className="shrink-0">
                       Locked
                     </Chip>
                   )}

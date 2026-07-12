@@ -6,26 +6,6 @@ import { OrderDirection } from '@/types/order.types';
 import { DeckDomainError } from '@/lib/deck-domain';
 import { DECK_LIMITS } from '@/config/deck-limits';
 
-export const getVocabByDeckId = async (deckId: number): Promise<Vocab[]> => {
-  return db
-    .select({
-      ...getTableColumns(vocabs),
-      front: vocabRevisions.front,
-      back: vocabRevisions.back,
-      frontAlternatives: vocabRevisions.frontAlternatives,
-      backAlternatives: vocabRevisions.backAlternatives,
-      reading: vocabRevisions.reading,
-      tags: vocabRevisions.tags,
-      metadata: vocabRevisions.metadata,
-      notes: vocabRevisions.notes,
-    })
-    .from(vocabs)
-    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-    .innerJoin(vocabRevisions, eq(vocabRevisions.id, vocabs.currentRevisionId))
-    .where(and(eq(lessons.deckId, deckId), isNull(vocabs.removedAt), isNull(lessons.removedAt)))
-    .orderBy(lessons.orderIndex, vocabs.orderIndex, vocabs.id);
-};
-
 export const getVocabByLessonId = async (lessonId: number): Promise<Vocab[]> => {
   return db
     .select({
@@ -34,6 +14,8 @@ export const getVocabByLessonId = async (lessonId: number): Promise<Vocab[]> => 
       back: vocabRevisions.back,
       frontAlternatives: vocabRevisions.frontAlternatives,
       backAlternatives: vocabRevisions.backAlternatives,
+      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
+      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
       reading: vocabRevisions.reading,
       tags: vocabRevisions.tags,
       metadata: vocabRevisions.metadata,
@@ -43,10 +25,6 @@ export const getVocabByLessonId = async (lessonId: number): Promise<Vocab[]> => 
     .innerJoin(vocabRevisions, eq(vocabRevisions.id, vocabs.currentRevisionId))
     .where(and(eq(vocabs.lessonId, lessonId), isNull(vocabs.removedAt)))
     .orderBy(vocabs.orderIndex, vocabs.id);
-};
-
-export const getVocabById = async (vocabId: number): Promise<Vocab | undefined> => {
-  return (await db.select().from(vocabs).where(eq(vocabs.id, vocabId)).limit(1))[0];
 };
 
 export const getUserVocabLevelsByLessonId = async (lessonId: number, userId: string) => {
@@ -107,6 +85,8 @@ export const createVocab = async (vocab: CreateVocab, userId: string): Promise<n
         back: vocab.back,
         frontAlternatives: vocab.frontAlternatives,
         backAlternatives: vocab.backAlternatives,
+        frontToBackQuizHint: vocab.frontToBackQuizHint,
+        backToFrontQuizHint: vocab.backToFrontQuizHint,
         reading: vocab.reading,
         tags: vocab.tags,
         metadata: vocab.metadata,
@@ -122,6 +102,8 @@ export const createVocab = async (vocab: CreateVocab, userId: string): Promise<n
         back: vocab.back,
         frontAlternatives: vocab.frontAlternatives ?? [],
         backAlternatives: vocab.backAlternatives ?? [],
+        frontToBackQuizHint: vocab.frontToBackQuizHint,
+        backToFrontQuizHint: vocab.backToFrontQuizHint,
         reading: vocab.reading,
         tags: vocab.tags ?? [],
         metadata: vocab.metadata ?? {},
@@ -218,6 +200,8 @@ export const updateVocab = async (
         back: vocab.back,
         frontAlternatives: vocab.frontAlternatives ?? [],
         backAlternatives: vocab.backAlternatives ?? [],
+        frontToBackQuizHint: vocab.frontToBackQuizHint,
+        backToFrontQuizHint: vocab.backToFrontQuizHint,
         reading: vocab.reading,
         tags: vocab.tags ?? current.tags,
         metadata: vocab.metadata ?? current.metadata,
@@ -232,6 +216,8 @@ export const updateVocab = async (
         back: vocab.back,
         frontAlternatives: vocab.frontAlternatives,
         backAlternatives: vocab.backAlternatives,
+        frontToBackQuizHint: vocab.frontToBackQuizHint,
+        backToFrontQuizHint: vocab.backToFrontQuizHint,
         reading: vocab.reading,
         ...(vocab.tags === undefined ? {} : { tags: vocab.tags }),
         ...(vocab.metadata === undefined ? {} : { metadata: vocab.metadata }),
@@ -336,6 +322,8 @@ export const replaceVocab = async (
         back: replacement.back,
         frontAlternatives: replacement.frontAlternatives ?? [],
         backAlternatives: replacement.backAlternatives ?? [],
+        frontToBackQuizHint: replacement.frontToBackQuizHint,
+        backToFrontQuizHint: replacement.backToFrontQuizHint,
         reading: replacement.reading,
         tags: replacement.tags ?? [],
         metadata: replacement.metadata ?? {},
@@ -351,6 +339,8 @@ export const replaceVocab = async (
         back: replacement.back,
         frontAlternatives: replacement.frontAlternatives ?? [],
         backAlternatives: replacement.backAlternatives ?? [],
+        frontToBackQuizHint: replacement.frontToBackQuizHint,
+        backToFrontQuizHint: replacement.backToFrontQuizHint,
         reading: replacement.reading,
         tags: replacement.tags ?? [],
         metadata: replacement.metadata ?? {},

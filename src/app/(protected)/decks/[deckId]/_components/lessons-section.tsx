@@ -29,7 +29,7 @@ export default function LessonsSection({ children, lessonCount }: Props) {
                   </span>
                 </span>
 
-                <Chip size="sm" className="shrink-0">
+                <Chip size="sm" variant="soft" className="shrink-0">
                   {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}
                 </Chip>
               </span>

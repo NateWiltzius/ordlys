@@ -157,7 +157,7 @@ export default function LessonCard({
           <Card.Title className="text-base">{lesson.title}</Card.Title>
           <Card.Description>
             {isExpanded
-              ? 'Manage the words in this lesson.'
+              ? 'Manage the cards in this lesson.'
               : 'Expand to load and edit vocabulary.'}
           </Card.Description>
         </div>
@@ -165,7 +165,7 @@ export default function LessonCard({
         <div className="flex flex-wrap items-center gap-1">
           <EditLessonModal lesson={lesson} />
           <Chip size="sm" variant="soft">
-            {vocabCount} {vocabCount === 1 ? 'word' : 'words'}
+            {vocabCount} {vocabCount === 1 ? 'card' : 'cards'}
           </Chip>
           <Button
             size="sm"
@@ -194,7 +194,7 @@ export default function LessonCard({
             aria-controls={contentId}
             onPress={handleToggle}
           >
-            {isExpanded ? 'Collapse' : 'Edit words'}
+            {isExpanded ? 'Collapse' : 'Edit cards'}
             <ChevronDownIcon
               className={`size-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
               aria-hidden="true"

@@ -35,6 +35,7 @@ type Props = {
   onVocabComplete: (vocabId: number, wasCorrect: boolean) => Promise<SrsTransition>;
   completionHref: string;
   tone?: StudyTone;
+  allowAnswerOverride?: boolean;
 };
 
 export default function QuizMode({
@@ -42,6 +43,7 @@ export default function QuizMode({
   onVocabComplete,
   completionHref,
   tone = 'neutral',
+  allowAnswerOverride = true,
 }: Props) {
   const [answer, setAnswer] = useState('');
   const [failedCardIds, setFailedCardIds] = useState<Set<number>>(() => new Set());
@@ -154,11 +156,12 @@ export default function QuizMode({
     });
   };
 
-  const handleContinue = () => {
+  const handleContinue = (acceptAnyway = false) => {
     if (!feedback || continueHandledRef.current) return;
     continueHandledRef.current = true;
 
-    const { quizItem, isCorrect } = feedback;
+    const { quizItem } = feedback;
+    const isCorrect = feedback.isCorrect || acceptAnyway;
 
     setAttemptStats(prev => ({
       totalAttempts: prev.totalAttempts + 1,
@@ -302,10 +305,17 @@ export default function QuizMode({
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
 
         {feedback ? (
-          <QuizFeedbackPanel feedback={feedback} onContinue={handleContinue} />
+          <QuizFeedbackPanel
+            feedback={feedback}
+            onContinue={() => handleContinue()}
+            onAcceptAnyway={
+              allowAnswerOverride && !feedback.isCorrect ? () => handleContinue(true) : undefined
+            }
+          />
         ) : (
           <QuizAnswerForm
             prompt={currentQuizItem.prompt}
+            hint={currentQuizItem.hint}
             answer={answer}
             direction={currentQuizItem.direction}
             frontLanguage={quizItems[0]?.frontLanguage ?? null}

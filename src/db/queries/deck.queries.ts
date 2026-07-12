@@ -157,10 +157,6 @@ export const getPublicDecks = async (userId: string) => {
 
 export type DiscoverableDeck = Awaited<ReturnType<typeof getPublicDecks>>[number];
 
-export const getDeckById = async (deckId: number): Promise<Deck | undefined> => {
-  return (await db.select().from(decks).where(eq(decks.id, deckId)).limit(1))[0];
-};
-
 export const getAccessibleDeckById = async (
   deckId: number,
   userId: string,
@@ -241,52 +237,6 @@ export async function getDeckStudyCounts(deckId: number, userId: string): Promis
   return {
     ...toReviewCounts(result),
     newWordsAvailable,
-  };
-}
-
-export async function getAllDecksStudyCounts(
-  userId: string,
-  activeDeckIds?: number[],
-): Promise<ReviewCounts> {
-  const deckIds = activeDeckIds ?? (await getUserActiveDecks(userId)).map(deck => deck.id);
-  if (deckIds.length === 0) {
-    return toReviewCounts();
-  }
-
-  const [result] = await db
-    .select({
-      totalWords: count(vocabs.id),
-      newWordsAvailable: sql<number>`0`,
-      reviewsDue: sql<number>`
-        count(${userVocabState.id}) filter (
-          where ${userVocabState.dueAt} <= date_trunc('hour', now())
-        )
-      `,
-      wordsInReview: count(userVocabState.id),
-    })
-    .from(vocabs)
-    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-    .innerJoin(decks, eq(lessons.deckId, decks.id))
-    .innerJoin(
-      releaseVocabs,
-      and(
-        eq(releaseVocabs.vocabId, vocabs.id),
-        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
-      ),
-    )
-    .leftJoin(
-      userVocabState,
-      and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
-    )
-    .where(inArray(decks.id, deckIds));
-
-  const availableCounts = await Promise.all(
-    deckIds.map(deckId => getNewVocabCountForDeck(deckId, userId)),
-  );
-
-  return {
-    ...toReviewCounts(result),
-    newWordsAvailable: availableCounts.reduce((total, available) => total + available, 0),
   };
 }
 

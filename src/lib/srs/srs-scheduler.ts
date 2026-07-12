@@ -4,7 +4,7 @@ function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60 * 1000);
 }
 
-export function roundUpToHour(date: Date) {
+function roundUpToHour(date: Date) {
   const rounded = new Date(date);
   const isOnTheHour =
     rounded.getUTCMinutes() === 0 &&

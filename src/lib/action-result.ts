@@ -1,4 +1,4 @@
-export type ActionFailure = {
+type ActionFailure = {
   ok: false;
   code: string;
   message: string;

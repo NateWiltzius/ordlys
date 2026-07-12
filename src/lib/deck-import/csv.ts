@@ -1,6 +1,7 @@
 import { parse } from 'csv-parse/sync';
 import { CONTENT_LIMITS } from '@/lib/validation/content';
-import type { JsonValue, VocabMetadata } from '@/db/schema';
+import type { VocabMetadata } from '@/db/schema';
+import { isJsonValue } from '@/lib/validation/json';
 
 const REQUIRED_HEADERS = ['front', 'back'] as const;
 const SUPPORTED_HEADERS = new Set([
@@ -9,6 +10,8 @@ const SUPPORTED_HEADERS = new Set([
   'reading',
   'front_alternatives',
   'back_alternatives',
+  'front_to_back_quiz_hint',
+  'back_to_front_quiz_hint',
   'tags',
   'metadata',
   'notes',
@@ -26,6 +29,8 @@ export type ImportedVocab = {
   reading: string | null;
   frontAlternatives: string[];
   backAlternatives: string[];
+  frontToBackQuizHint: string | null;
+  backToFrontQuizHint: string | null;
   tags: string[];
   metadata: VocabMetadata;
   notes: string | null;
@@ -92,6 +97,18 @@ function parseRecord(record: CsvRecord, rowNumber: number): ImportedVocab {
       rowNumber,
     ),
     backAlternatives: parseAlternatives(record.back_alternatives, 'back_alternatives', rowNumber),
+    frontToBackQuizHint: optionalCell(
+      record.front_to_back_quiz_hint,
+      'front_to_back_quiz_hint',
+      rowNumber,
+      CONTENT_LIMITS.vocabText,
+    ),
+    backToFrontQuizHint: optionalCell(
+      record.back_to_front_quiz_hint,
+      'back_to_front_quiz_hint',
+      rowNumber,
+      CONTENT_LIMITS.vocabText,
+    ),
     tags: parseDelimitedValues(record.tags, 'tags', rowNumber, CONTENT_LIMITS.vocabTag),
     metadata: parseMetadata(record.metadata, rowNumber),
     notes,
@@ -181,14 +198,6 @@ function parseMetadata(value: string | undefined, row: number): VocabMetadata {
   }
 
   return metadata as VocabMetadata;
-}
-
-function isJsonValue(value: unknown): value is JsonValue {
-  if (value === null) return true;
-  if (['string', 'number', 'boolean'].includes(typeof value)) return true;
-  if (Array.isArray(value)) return value.every(isJsonValue);
-  if (typeof value === 'object') return Object.values(value).every(isJsonValue);
-  return false;
 }
 
 function normalizeHeader(header: unknown): string {

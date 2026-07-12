@@ -114,6 +114,8 @@ export async function publishDeck(
             back: row.revision.back,
             frontAlternatives: row.revision.frontAlternatives,
             backAlternatives: row.revision.backAlternatives,
+            frontToBackQuizHint: row.revision.frontToBackQuizHint,
+            backToFrontQuizHint: row.revision.backToFrontQuizHint,
             reading: row.revision.reading,
             tags: row.revision.tags,
             metadata: row.revision.metadata,
@@ -257,10 +259,6 @@ export async function listReleaseHistory(deckId: number) {
     .orderBy(desc(deckReleases.version));
 }
 
-export async function getReleaseById(releaseId: number) {
-  return (await db.select().from(deckReleases).where(eq(deckReleases.id, releaseId)).limit(1))[0];
-}
-
 export async function hasUnpublishedDraftChanges(deckId: number): Promise<boolean> {
   const rows = await db.execute(sql`
     select case when d.current_release_id is null then true else (
@@ -315,37 +313,6 @@ export async function getDeckFollowState(deckId: number, userId: string) {
   };
 }
 
-export async function getReleaseStudyContent(releaseId: number) {
-  return db
-    .select({
-      lessonId: releaseLessons.lessonId,
-      lessonTitle: lessonRevisions.title,
-      lessonOrder: releaseLessons.orderIndex,
-      vocabId: releaseVocabs.vocabId,
-      vocabOrder: releaseVocabs.orderIndex,
-      front: vocabRevisions.front,
-      back: vocabRevisions.back,
-      frontAlternatives: vocabRevisions.frontAlternatives,
-      backAlternatives: vocabRevisions.backAlternatives,
-      reading: vocabRevisions.reading,
-      tags: vocabRevisions.tags,
-      metadata: vocabRevisions.metadata,
-      notes: vocabRevisions.notes,
-    })
-    .from(releaseVocabs)
-    .innerJoin(
-      releaseLessons,
-      and(
-        eq(releaseLessons.releaseId, releaseVocabs.releaseId),
-        eq(releaseLessons.lessonId, releaseVocabs.lessonId),
-      ),
-    )
-    .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
-    .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
-    .where(eq(releaseVocabs.releaseId, releaseId))
-    .orderBy(releaseLessons.orderIndex, releaseVocabs.orderIndex);
-}
-
 export async function getReleaseLessonVocabs(releaseId: number, lessonId: number) {
   return db
     .select({
@@ -354,6 +321,8 @@ export async function getReleaseLessonVocabs(releaseId: number, lessonId: number
       back: vocabRevisions.back,
       frontAlternatives: vocabRevisions.frontAlternatives,
       backAlternatives: vocabRevisions.backAlternatives,
+      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
+      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
       reading: vocabRevisions.reading,
       tags: vocabRevisions.tags,
       metadata: vocabRevisions.metadata,
@@ -787,6 +756,8 @@ export async function forkRelease(
           back: row.revision.back,
           frontAlternatives: row.revision.frontAlternatives,
           backAlternatives: row.revision.backAlternatives,
+          frontToBackQuizHint: row.revision.frontToBackQuizHint,
+          backToFrontQuizHint: row.revision.backToFrontQuizHint,
           reading: row.revision.reading,
           tags: row.revision.tags,
           metadata: row.revision.metadata,
@@ -1064,21 +1035,6 @@ export async function setDeckUnderReview(
       eventType: 'deck.under_review',
     });
   });
-}
-
-export async function getDeckFamily(rootDeckId: number) {
-  return db
-    .select({ deck: decks, release: deckReleases })
-    .from(decks)
-    .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
-    .where(
-      and(
-        or(eq(decks.id, rootDeckId), eq(decks.rootDeckId, rootDeckId)),
-        ne(decks.visibility, 'private'),
-        eq(decks.status, 'active'),
-      ),
-    )
-    .orderBy(decks.catalogStatus, desc(deckReleases.createdAt));
 }
 
 export type DeckProvenance = {

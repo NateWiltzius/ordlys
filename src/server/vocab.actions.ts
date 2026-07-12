@@ -22,6 +22,7 @@ import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { CONTENT_LIMITS, optionalText, requiredText } from '@/lib/validation/content';
 import type { JsonValue, VocabMetadata } from '@/db/schema';
 import { UserFacingError, withExpectedError } from '@/lib/action-result';
+import { isJsonValue } from '@/lib/validation/json';
 
 export async function getLessonVocabularyAction(deckId: number, lessonId: number) {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -75,12 +76,32 @@ export async function getEditableLessonVocabularyAction(deckId: number, lessonId
 
 export async function createVocabAction(vocab: CreateVocab) {
   return withExpectedError(async () => {
-    const { front, back, frontAlternatives, backAlternatives, lessonId, reading, tags, metadata } =
-      vocab;
+    const {
+      front,
+      back,
+      frontAlternatives,
+      backAlternatives,
+      frontToBackQuizHint,
+      backToFrontQuizHint,
+      lessonId,
+      reading,
+      tags,
+      metadata,
+    } = vocab;
 
     const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
     const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
     const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
+    const normalizedFrontToBackQuizHint = optionalText(
+      frontToBackQuizHint,
+      'Front to back quiz hint',
+      CONTENT_LIMITS.vocabText,
+    );
+    const normalizedBackToFrontQuizHint = optionalText(
+      backToFrontQuizHint,
+      'Back to front quiz hint',
+      CONTENT_LIMITS.vocabText,
+    );
     const normalizedNotes = optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes);
 
     if (typeof lessonId !== 'number' || !Number.isInteger(lessonId) || lessonId <= 0) {
@@ -97,6 +118,8 @@ export async function createVocabAction(vocab: CreateVocab) {
         back: normalizedBack,
         frontAlternatives: normalizedFrontAlternatives,
         backAlternatives: normalizedBackAlternatives,
+        frontToBackQuizHint: normalizedFrontToBackQuizHint,
+        backToFrontQuizHint: normalizedBackToFrontQuizHint,
         reading: normalizedReading,
         tags: normalizeTags(tags),
         metadata: normalizeMetadata(metadata),
@@ -130,11 +153,31 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
       throw new Error('Invalid vocabulary ID.');
     }
 
-    const { front, back, frontAlternatives, backAlternatives, reading, tags, metadata } = vocab;
+    const {
+      front,
+      back,
+      frontAlternatives,
+      backAlternatives,
+      frontToBackQuizHint,
+      backToFrontQuizHint,
+      reading,
+      tags,
+      metadata,
+    } = vocab;
 
     const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
     const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
     const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
+    const normalizedFrontToBackQuizHint = optionalText(
+      frontToBackQuizHint,
+      'Front to back quiz hint',
+      CONTENT_LIMITS.vocabText,
+    );
+    const normalizedBackToFrontQuizHint = optionalText(
+      backToFrontQuizHint,
+      'Back to front quiz hint',
+      CONTENT_LIMITS.vocabText,
+    );
     const normalizedNotes = optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes);
 
     const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
@@ -147,6 +190,8 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
         back: normalizedBack,
         frontAlternatives: normalizedFrontAlternatives,
         backAlternatives: normalizedBackAlternatives,
+        frontToBackQuizHint: normalizedFrontToBackQuizHint,
+        backToFrontQuizHint: normalizedBackToFrontQuizHint,
         reading: normalizedReading,
         tags: tags === undefined ? undefined : normalizeTags(tags),
         metadata: metadata === undefined ? undefined : normalizeMetadata(metadata),
@@ -179,6 +224,16 @@ export async function replaceVocabAction(vocabId: number, vocab: UpdateVocabInpu
       back: requiredText(vocab.back, 'Back text', CONTENT_LIMITS.vocabText),
       frontAlternatives: normalizeAlternatives(vocab.frontAlternatives, vocab.front),
       backAlternatives: normalizeAlternatives(vocab.backAlternatives, vocab.back),
+      frontToBackQuizHint: optionalText(
+        vocab.frontToBackQuizHint,
+        'Front to back quiz hint',
+        CONTENT_LIMITS.vocabText,
+      ),
+      backToFrontQuizHint: optionalText(
+        vocab.backToFrontQuizHint,
+        'Back to front quiz hint',
+        CONTENT_LIMITS.vocabText,
+      ),
       reading: optionalText(vocab.reading, 'Reading', CONTENT_LIMITS.vocabText),
       tags: normalizeTags(vocab.tags),
       metadata: normalizeMetadata(vocab.metadata),
@@ -287,14 +342,6 @@ function normalizeMetadata(metadata: VocabMetadata | null | undefined): VocabMet
   }
 
   return metadata;
-}
-
-function isJsonValue(value: unknown): value is JsonValue {
-  if (value === null) return true;
-  if (['string', 'number', 'boolean'].includes(typeof value)) return true;
-  if (Array.isArray(value)) return value.every(isJsonValue);
-  if (isPlainObject(value)) return Object.values(value).every(isJsonValue);
-  return false;
 }
 
 function isPlainObject(value: unknown): value is Record<string, JsonValue> {

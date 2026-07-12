@@ -16,8 +16,9 @@ export default function RestoreDeckButton({ deckId }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   return (
-    <div>
+    <div className="min-w-0">
       <Button
+        className="w-full sm:w-auto"
         variant="secondary"
         isDisabled={pending}
         onPress={() =>
