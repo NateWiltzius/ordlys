@@ -47,3 +47,8 @@ export const LANGUAGE_OPTIONS = [
   { code: 'vi', name: 'Vietnamese' },
   { code: 'cy', name: 'Welsh' },
 ] as const;
+
+export function getLanguageName(code: string | null | undefined) {
+  if (!code) return null;
+  return LANGUAGE_OPTIONS.find(language => language.code === code)?.name ?? code;
+}

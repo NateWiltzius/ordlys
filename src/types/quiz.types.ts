@@ -1,5 +1,15 @@
 type QuizDirection = 'btf' | 'ftb';
 
+export type QuizSourceItem = {
+  id: number;
+  front: string;
+  back: string;
+  frontAlternatives: string[];
+  backAlternatives: string[];
+  frontLanguage: string | null;
+  backLanguage: string | null;
+};
+
 export type QuizQueueItem = {
   cardId: number;
   direction: QuizDirection;

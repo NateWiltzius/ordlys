@@ -1,7 +1,6 @@
-import { QuizQueueItem, QuizProgress } from '@/types/quiz.types';
-import { LearnItem, ReviewItem } from '@/types/review.types';
+import { QuizQueueItem, QuizProgress, QuizSourceItem } from '@/types/quiz.types';
 
-export function buildQuizQueue(learnItems: LearnItem[] | ReviewItem[]): QuizQueueItem[] {
+export function buildQuizQueue(learnItems: QuizSourceItem[]): QuizQueueItem[] {
   return learnItems.flatMap(item => [
     {
       cardId: item.id,
@@ -20,7 +19,7 @@ export function buildQuizQueue(learnItems: LearnItem[] | ReviewItem[]): QuizQueu
   ]);
 }
 
-export function buildQuizProgress(learnItems: LearnItem[] | ReviewItem[]): QuizProgress {
+export function buildQuizProgress(learnItems: QuizSourceItem[]): QuizProgress {
   return Object.fromEntries(
     learnItems.map(item => [
       item.id,

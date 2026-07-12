@@ -99,8 +99,12 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
       frontAlternatives: vocabRevisions.frontAlternatives,
       backAlternatives: vocabRevisions.backAlternatives,
       reading: vocabRevisions.reading,
+      tags: vocabRevisions.tags,
+      notes: vocabRevisions.notes,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
+      frontLanguage: decks.frontLanguage,
+      backLanguage: decks.backLanguage,
     })
     .from(vocabs)
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
@@ -377,6 +381,8 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
       lessonTitle: lessons.title,
       stateId: userVocabState.id,
       srsLevel: userVocabState.srsLevel,
+      frontLanguage: decks.frontLanguage,
+      backLanguage: decks.backLanguage,
     })
     .from(userVocabState)
     .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
@@ -417,6 +423,8 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
       reading: vocabRevisions.reading,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
+      frontLanguage: decks.frontLanguage,
+      backLanguage: decks.backLanguage,
     })
     .from(vocabs)
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))

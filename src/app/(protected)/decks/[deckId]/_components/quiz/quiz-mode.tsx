@@ -15,8 +15,9 @@ import {
   QuizFeedback,
   QuizAttemptStats,
   QuizProgressStats,
+  QuizSourceItem,
 } from '@/types/quiz.types';
-import { LearnItem, ReviewItem, SrsTransition } from '@/types/review.types';
+import { SrsTransition } from '@/types/review.types';
 import { Alert, Button, Card, ProgressBar } from '@heroui/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
@@ -30,7 +31,7 @@ type SrsUpdate = {
 };
 
 type Props = {
-  quizItems: LearnItem[] | ReviewItem[];
+  quizItems: QuizSourceItem[];
   onVocabComplete: (vocabId: number, wasCorrect: boolean) => Promise<SrsTransition>;
   completionHref: string;
   tone?: StudyTone;
@@ -307,6 +308,8 @@ export default function QuizMode({
             prompt={currentQuizItem.prompt}
             answer={answer}
             direction={currentQuizItem.direction}
+            frontLanguage={quizItems[0]?.frontLanguage ?? null}
+            backLanguage={quizItems[0]?.backLanguage ?? null}
             tone={tone}
             onAnswerChange={setAnswer}
             onSubmit={handleAnswerSubmit}

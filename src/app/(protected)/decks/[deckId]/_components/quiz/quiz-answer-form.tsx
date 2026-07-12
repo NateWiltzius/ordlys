@@ -1,12 +1,16 @@
-import { Button, Card, Chip, Input } from '@heroui/react';
+import { Button, Card, Input } from '@heroui/react';
 import { FormEvent, useRef } from 'react';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
 import { useKeepAboveKeyboard } from '@/hooks/use-keep-above-keyboard';
+import { getLanguageName } from '@/lib/languages';
 
 type Props = {
   prompt: string;
   answer: string;
   direction: 'btf' | 'ftb';
+  frontLanguage: string | null;
+  backLanguage: string | null;
   tone: StudyTone;
   onAnswerChange: (answer: string) => void;
   onSubmit: () => void;
@@ -16,12 +20,21 @@ export default function QuizAnswerForm({
   prompt,
   answer,
   direction,
+  frontLanguage,
+  backLanguage,
   tone,
   onAnswerChange,
   onSubmit,
 }: Props) {
   const answerInputRef = useRef<HTMLInputElement>(null);
   const answerCardRef = useRef<HTMLDivElement>(null);
+  const shownSide = direction === 'btf' ? 'back' : 'front';
+  const answerSide = direction === 'btf' ? 'front' : 'back';
+  const shownLanguage = getLanguageName(direction === 'btf' ? backLanguage : frontLanguage);
+  const answerLanguage = getLanguageName(direction === 'btf' ? frontLanguage : backLanguage);
+  const shownLabel = sideLabel(shownLanguage, shownSide);
+  const answerLabel = sideLabel(answerLanguage, answerSide);
+  const answerInstruction = answerLanguage ? `Type in ${answerLanguage}` : `Type the ${answerSide}`;
   useKeepAboveKeyboard(answerInputRef, answerCardRef);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -32,34 +45,40 @@ export default function QuizAnswerForm({
   return (
     <Card ref={answerCardRef} variant="secondary" className="quiz-answer-card w-full">
       <form onSubmit={handleSubmit}>
-        <Card.Header className="quiz-answer-header flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <Card.Title>Recall the {direction === 'btf' ? 'front' : 'back'}</Card.Title>
-            <Card.Description>
-              You are shown the {direction === 'btf' ? 'back' : 'front'} side.
-            </Card.Description>
-          </div>
-
-          <Chip size="sm" variant="soft" className="w-fit">
-            {direction === 'btf' ? 'Back → Front' : 'Front → Back'}
-          </Chip>
-        </Card.Header>
-
         <Card.Content className="quiz-answer-content space-y-4">
-          <div className="quiz-answer-prompt rounded-lg bg-default-100 px-4 py-6 text-center">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-default-500">
-              {direction === 'btf' ? 'Back' : 'Front'}
+          <div
+            className="overflow-hidden rounded-lg border border-default-200 bg-default-100"
+            role="note"
+            aria-label={`${shownLabel} shown; type the ${answerLabel}`}
+          >
+            <div
+              className={`flex items-center justify-center gap-3 border-b px-3 py-2 ${STUDY_TONE_STYLES[tone].surface}`}
+            >
+              <p className="min-w-0 flex-1 text-center text-xs sm:text-sm">
+                <span className="text-default-500">Shown: </span>
+                <strong className="font-semibold text-default-900">{shownLabel}</strong>
+              </p>
+              <ArrowRightIcon
+                className={`size-4 shrink-0 ${STUDY_TONE_STYLES[tone].text}`}
+                aria-hidden="true"
+              />
+              <p
+                className={`min-w-0 flex-1 text-center text-xs sm:text-sm ${STUDY_TONE_STYLES[tone].text}`}
+              >
+                <span>Type: </span>
+                <strong className="font-bold">{answerLabel}</strong>
+              </p>
+            </div>
+            <p className="quiz-answer-prompt break-words px-4 py-6 text-center text-2xl font-semibold">
+              {prompt}
             </p>
-            <p className="break-words text-2xl font-semibold">{prompt}</p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">
-              Answer with the {direction === 'btf' ? 'front' : 'back'}
-            </p>
+            <p className="text-sm font-medium">{answerInstruction}</p>
             <Input
               ref={answerInputRef}
-              aria-label={`Answer with the ${direction === 'btf' ? 'front' : 'back'}`}
+              aria-label={answerInstruction}
               value={answer}
               onChange={e => onAnswerChange(e.target.value)}
               placeholder="Your answer"
@@ -81,4 +100,9 @@ export default function QuizAnswerForm({
       </form>
     </Card>
   );
+}
+
+function sideLabel(language: string | null, side: 'front' | 'back') {
+  const sideName = side === 'front' ? 'Front' : 'Back';
+  return language ? `${language} · ${sideName}` : sideName;
 }
