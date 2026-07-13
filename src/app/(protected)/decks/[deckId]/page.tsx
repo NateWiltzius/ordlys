@@ -7,7 +7,6 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { getDeckPageDataAction } from '@/server/deck.actions';
-import ReviewForecastCard from '@/components/shared/review-forecast-card';
 import type { Metadata } from 'next';
 import DeckLoading from '@/app/(protected)/decks/[deckId]/loading';
 
@@ -74,14 +73,9 @@ async function DeckContent({ deckId }: DeckContentProps) {
           canStudy={canStudy}
           isOwned={isOwned}
           nextReview={nextReview}
+          reviewForecast={reviewForecast}
         />
       </Suspense>
-
-      <ReviewForecastCard
-        forecast={reviewForecast}
-        nextReview={nextReview}
-        description="Reviews from this deck scheduled over the next 24 hours."
-      />
 
       <Suspense fallback={<LessonsSkeleton />}>
         <DeckLessons deckId={deck.id} canStudy={canStudy} />

@@ -14,7 +14,7 @@ export default function PublicDeckCard({ deck }: Props) {
   const languagePair = formatLanguagePair(deck.frontLanguage, deck.backLanguage);
 
   return (
-    <Card className="flex h-full flex-col border border-default-200 shadow-sm">
+    <Card className="flex h-full flex-col">
       <Card.Header className="flex-row items-start justify-between gap-3 pb-2">
         <div className="min-w-0 flex-1 space-y-1">
           <h3 className="break-words text-lg font-semibold">

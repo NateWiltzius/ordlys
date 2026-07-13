@@ -134,7 +134,7 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
   relationshipBadges.push(deck.visibility);
 
   return (
-    <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm">
+    <Card className="flex h-full w-full flex-col">
       <Card.Header className="flex items-start justify-between gap-3 pb-2">
         <div className="min-w-0 flex-1 space-y-1">
           <h3 className="break-words text-lg font-semibold">{deck.title}</h3>

@@ -78,7 +78,7 @@ export function StudySummarySkeleton() {
 
 export function StudyActionCardSkeleton() {
   return (
-    <Card className="h-full overflow-hidden border border-default-200 bg-gradient-to-br shadow-md">
+    <Card className="h-full overflow-hidden bg-gradient-to-br">
       <Card.Header className="flex-row items-start gap-3">
         <SkeletonBlock className="size-11 shrink-0 rounded-xl" />
         <div className="min-w-0 flex-1 space-y-2">
@@ -138,7 +138,7 @@ const barHeights = ['18%', '42%', '24%', '68%', '34%', '12%', '56%', '28%'];
 
 export function DeckCardSkeleton() {
   return (
-    <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm">
+    <Card className="flex h-full w-full flex-col">
       <Card.Header className="flex items-start justify-between gap-3 pb-2">
         <div className="min-w-0 flex-1 space-y-2">
           <SkeletonLine className="h-6 w-4/5" />
@@ -179,18 +179,22 @@ export function DashboardDeckListSkeleton() {
           {Array.from({ length: 3 }, (_, index) => (
             <div key={index} className="px-6 py-4">
               <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <SkeletonBlock className="size-2 shrink-0 rounded-full border-0 shadow-none" />
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <SkeletonBlock className="size-10 shrink-0 rounded-lg" />
+                  <div className="min-w-0 flex-1 space-y-2">
                     <SkeletonLine className="h-5 w-48 max-w-full" />
+                    <SkeletonLine className="h-4 w-full max-w-xl" />
                   </div>
-                  <SkeletonLine className="h-4 w-full max-w-xl" />
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                   <SkeletonLine className="h-7 w-16 rounded-full" />
                   <SkeletonLine className="h-7 w-14 rounded-full" />
                   <SkeletonLine className="ml-1 hidden h-4 w-8 sm:block" />
                 </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <SkeletonBlock className="h-2 flex-1 rounded-full" />
+                <SkeletonLine className="h-3 w-8" />
               </div>
             </div>
           ))}

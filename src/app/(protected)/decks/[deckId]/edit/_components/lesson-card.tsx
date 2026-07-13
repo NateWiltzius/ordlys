@@ -36,6 +36,7 @@ type Props = {
   isLessonOrderPending: boolean;
   onMoveLesson: (lessonId: number, direction: OrderDirection) => void;
   isExpanded: boolean;
+  onCardCountChange: (lessonId: number, cardCount: number) => void;
 };
 
 export default function LessonCard({
@@ -46,6 +47,7 @@ export default function LessonCard({
   isLessonOrderPending,
   onMoveLesson,
   isExpanded,
+  onCardCountChange,
 }: Props) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -156,6 +158,10 @@ export default function LessonCard({
 
   const vocabCount = orderedVocabs?.length ?? lesson.vocabCount;
   const lessonKey = String(lesson.id);
+
+  useEffect(() => {
+    onCardCountChange(lesson.id, vocabCount);
+  }, [lesson.id, onCardCountChange, vocabCount]);
 
   return (
     <Accordion.Item id={lessonKey}>

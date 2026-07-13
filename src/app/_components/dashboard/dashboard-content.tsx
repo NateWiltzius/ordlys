@@ -61,7 +61,13 @@ export default async function DashboardContent() {
                 <DashboardDeckRow
                   key={deck.id}
                   deck={deck}
-                  stats={deckStats[deck.id] ?? { totalWords: 0, reviewsDue: 0 }}
+                  stats={
+                    deckStats[deck.id] ?? {
+                      totalWords: 0,
+                      reviewsDue: 0,
+                      wordsInReview: 0,
+                    }
+                  }
                 />
               ))}
             </div>

@@ -51,7 +51,7 @@ export function SignUpForm({ nextPath }: Props) {
   };
 
   return (
-    <Card className="w-full overflow-hidden border border-default-200 shadow-sm">
+    <Card className="w-full overflow-hidden">
       <Card.Header className="space-y-1 border-b border-default-200 bg-default-50 px-6 py-5">
         <Card.Title className="text-2xl">Create your account</Card.Title>
         <Card.Description>Start building decks and keep your learning progress.</Card.Description>

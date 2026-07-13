@@ -1,41 +1,37 @@
 import { getCachedLessonProgress } from '@/app/(protected)/decks/[deckId]/_lib/get-cached-lesson-progress';
+import DeckProgressMarker from '@/app/(protected)/decks/[deckId]/_components/deck-progress-marker';
 import StudySummary from '@/components/shared/study-summary';
-import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 import { getDeckStudyCountsAction } from '@/server/deck.actions';
 import { Deck } from '@/types/deck.types';
-import { Button, Card, ProgressBar } from '@heroui/react';
+import { Button } from '@heroui/react';
 import FollowDeckButton from '@/app/(protected)/decks/[deckId]/_components/follow-deck-button';
 import { ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import StudyActionCard from '@/app/(protected)/decks/[deckId]/_components/study-action-card';
 import NextReviewText from '@/components/shared/next-review-text';
 import type { NextReviewBatch } from '@/types/review.types';
 import ButtonLink from '@/components/shared/button-link';
+import ReviewForecastCard from '@/components/shared/review-forecast-card';
+import type { ReviewForecast } from '@/types/review.types';
 
 type Props = {
   deck: Deck;
   canStudy: boolean;
   isOwned: boolean;
   nextReview: NextReviewBatch | null;
+  reviewForecast: ReviewForecast;
 };
 
-export default async function DeckStudyContent({ deck, canStudy, isOwned, nextReview }: Props) {
+export default async function DeckStudyContent({
+  deck,
+  canStudy,
+  isOwned,
+  nextReview,
+  reviewForecast,
+}: Props) {
   const [counts, lessonProgress] = await Promise.all([
     getDeckStudyCountsAction(deck.id),
     getCachedLessonProgress(deck.id),
   ]);
-  const nonEmptyLessonProgress = lessonProgress.filter(lesson => lesson.totalWords > 0);
-  const currentLesson =
-    nonEmptyLessonProgress.find(
-      lesson =>
-        lesson.isUnlocked &&
-        (lesson.learnedWords < lesson.totalWords || lesson.masteredWords < lesson.requiredWords),
-    ) ?? nonEmptyLessonProgress.findLast(lesson => lesson.isUnlocked);
-  const currentLessonNumber = currentLesson
-    ? nonEmptyLessonProgress.findIndex(lesson => lesson.lessonId === currentLesson.lessonId) + 1
-    : 0;
-  const nextLesson = currentLesson
-    ? nonEmptyLessonProgress[currentLessonNumber]
-    : nonEmptyLessonProgress[0];
 
   return (
     <div className="space-y-6">
@@ -98,49 +94,13 @@ export default async function DeckStudyContent({ deck, canStudy, isOwned, nextRe
         />
       </div>
 
-      {currentLesson ? (
-        <Card>
-          <Card.Header>
-            <Card.Title>{currentLesson.lessonTitle}</Card.Title>
-            <Card.Description>
-              Lesson {currentLessonNumber} of {nonEmptyLessonProgress.length} ·{' '}
-              {currentLesson.learnedWords} of {currentLesson.totalWords} words introduced
-            </Card.Description>
-          </Card.Header>
-          <Card.Content className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-default-600">
-                SRS level {LESSON_PROGRESSION_CONFIG.unlockDisplayLevel}
-              </span>
-              <span className="font-medium">
-                {currentLesson.masteredWords} / {currentLesson.requiredWords}
-              </span>
-            </div>
-            <ProgressBar
-              aria-label={`Progress toward unlocking ${nextLesson?.lessonTitle ?? 'deck completion'}`}
-              value={currentLesson.masteredWords}
-              maxValue={currentLesson.requiredWords}
-              color="success"
-              size="md"
-            >
-              <ProgressBar.Track>
-                <ProgressBar.Fill />
-              </ProgressBar.Track>
-            </ProgressBar>
-            <p className="text-sm text-default-600">
-              {currentLesson.masteredWords >= currentLesson.requiredWords
-                ? nextLesson
-                  ? `${nextLesson.lessonTitle} unlocked`
-                  : 'Lesson requirement complete'
-                : `${currentLesson.requiredWords - currentLesson.masteredWords} more ${
-                    currentLesson.requiredWords - currentLesson.masteredWords === 1
-                      ? 'word'
-                      : 'words'
-                  } at SRS level ${LESSON_PROGRESSION_CONFIG.unlockDisplayLevel} to unlock the next lesson`}
-            </p>
-          </Card.Content>
-        </Card>
-      ) : null}
+      {canStudy ? <DeckProgressMarker lessonProgress={lessonProgress} /> : null}
+
+      <ReviewForecastCard
+        forecast={reviewForecast}
+        nextReview={nextReview}
+        description="Reviews from this deck scheduled over the next 24 hours."
+      />
 
       <StudySummary counts={counts} description="Your progress in this deck." />
     </div>

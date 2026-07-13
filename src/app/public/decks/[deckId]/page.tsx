@@ -71,7 +71,7 @@ export default async function PublicDeckPage({ params }: Props) {
         <span aria-hidden="true">/</span> <span>{deck.title}</span>
       </nav>
 
-      <Card className="overflow-hidden border border-default-200">
+      <Card className="overflow-hidden">
         <Card.Header className="flex-col items-start gap-4 bg-default-50 px-6 py-7 sm:flex-row sm:justify-between">
           <div className="max-w-3xl space-y-3">
             <div className="flex flex-wrap gap-2">
@@ -140,7 +140,7 @@ export default async function PublicDeckPage({ params }: Props) {
           <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {deck.lessons.map((lesson, index) => (
               <li key={lesson.id}>
-                <Card className="h-full border border-default-200">
+                <Card className="h-full">
                   <Card.Header className="space-y-1">
                     <p className="text-xs font-semibold uppercase tracking-wide text-default-500">
                       Lesson {index + 1}
@@ -218,7 +218,7 @@ export default async function PublicDeckPage({ params }: Props) {
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {deck.communityVariants.map(variant => (
-              <Card key={variant.id} className="border border-default-200">
+              <Card key={variant.id}>
                 <Card.Header>
                   <div>
                     <Card.Title>{variant.title}</Card.Title>

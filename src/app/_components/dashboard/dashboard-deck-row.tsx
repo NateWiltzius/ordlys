@@ -1,16 +1,20 @@
 import { Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
-import { Chip } from '@heroui/react';
+import { Chip, ProgressBar } from '@heroui/react';
 import Link from 'next/link';
 import { BookOpenIcon } from '@heroicons/react/24/outline';
+import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 
 type Props = {
   deck: Deck;
-  stats: Pick<ReviewCounts, 'totalWords' | 'reviewsDue'>;
+  stats: Pick<ReviewCounts, 'totalWords' | 'reviewsDue' | 'wordsInReview'>;
 };
 
 export default function DashboardDeckRow({ deck, stats }: Props) {
   const hasReviewsDue = stats.reviewsDue > 0;
+  const introducedCards = Math.min(stats.wordsInReview, stats.totalWords);
+  const progressPercentage =
+    stats.totalWords === 0 ? 0 : Math.round((introducedCards / stats.totalWords) * 100);
 
   return (
     <Link
@@ -18,12 +22,12 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
       className="group block px-6 py-4 transition hover:bg-default-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-default-200 bg-default-100 text-default-600 transition group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary">
             <BookOpenIcon className="size-5" aria-hidden="true" />
           </span>
 
-          <div className="min-w-0 space-y-1">
+          <div className="min-w-0 flex-1 space-y-2">
             <h3 className="truncate text-base font-semibold text-default-900">{deck.title}</h3>
 
             {deck.description ? (
@@ -47,6 +51,22 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
             Open
           </span>
         </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <ProgressBar
+          aria-label={`${deck.title}: ${introducedCards} of ${stats.totalWords} cards introduced`}
+          value={progressPercentage}
+          size="sm"
+          className="min-w-0 flex-1"
+        >
+          <ProgressBar.Track>
+            <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
+          </ProgressBar.Track>
+        </ProgressBar>
+        <span className="shrink-0 text-xs font-medium tabular-nums text-default-500">
+          {progressPercentage}%
+        </span>
       </div>
     </Link>
   );

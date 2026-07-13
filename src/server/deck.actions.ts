@@ -60,6 +60,7 @@ export async function getDashboardDataAction() {
       {
         totalWords: deckStudyCounts[deckId]?.totalWords ?? 0,
         reviewsDue: deckStudyCounts[deckId]?.reviewsDue ?? 0,
+        wordsInReview: deckStudyCounts[deckId]?.wordsInReview ?? 0,
       },
     ]),
   );

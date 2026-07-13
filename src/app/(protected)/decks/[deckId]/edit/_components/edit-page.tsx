@@ -10,7 +10,7 @@ import EmptyState from '@/components/shared/empty-state';
 import { moveLessonAction } from '@/server/lesson.actions';
 import { moveItem } from '@/lib/order/move-item';
 import { OrderDirection } from '@/types/order.types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import EditDeckModal from './edit-deck-modal';
 import { Deck } from '@/types/deck.types';
@@ -43,13 +43,32 @@ export default function EditPage({
 }: Props) {
   const router = useRouter();
   const [orderedLessons, setOrderedLessons] = useState(lessons);
+  const [lessonCardCounts, setLessonCardCounts] = useState<Record<number, number>>(() =>
+    Object.fromEntries(lessons.map(lesson => [lesson.id, lesson.vocabCount])),
+  );
   const [expandedLessonKeys, setExpandedLessonKeys] = useState<Set<string | number>>(new Set());
   const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
   useEffect(() => {
     setOrderedLessons(lessons);
+    setLessonCardCounts(Object.fromEntries(lessons.map(lesson => [lesson.id, lesson.vocabCount])));
   }, [lessons]);
+
+  const totalCardCount = useMemo(
+    () =>
+      orderedLessons.reduce(
+        (total, lesson) => total + (lessonCardCounts[lesson.id] ?? lesson.vocabCount),
+        0,
+      ),
+    [lessonCardCounts, orderedLessons],
+  );
+
+  const handleLessonCardCountChange = useCallback((lessonId: number, cardCount: number) => {
+    setLessonCardCounts(current =>
+      current[lessonId] === cardCount ? current : { ...current, [lessonId]: cardCount },
+    );
+  }, []);
 
   const handleMoveLesson = async (lessonId: number, direction: OrderDirection) => {
     if (movingLessonId !== null) return;
@@ -117,7 +136,8 @@ export default function EditPage({
           </div>
 
           <p className="text-sm text-default-500">
-            {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'}
+            {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
+            {totalCardCount} {totalCardCount === 1 ? 'card' : 'cards'}
           </p>
         </Card.Header>
 
@@ -143,6 +163,7 @@ export default function EditPage({
                   isLessonOrderPending={movingLessonId !== null}
                   onMoveLesson={handleMoveLesson}
                   isExpanded={expandedLessonKeys.has(String(lesson.id))}
+                  onCardCountChange={handleLessonCardCountChange}
                 />
               ))}
             </Accordion>

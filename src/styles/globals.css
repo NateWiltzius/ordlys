@@ -7,6 +7,14 @@
   --font-sans: 'font', sans-serif;
 }
 
+@layer components {
+  .card--default,
+  .card--secondary,
+  .card--tertiary {
+    border: 1px solid var(--border);
+  }
+}
+
 html[data-quiz-active='true'] [data-app-navigation],
 html[data-quiz-active='true'] [data-app-footer] {
   display: none;

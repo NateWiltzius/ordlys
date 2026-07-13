@@ -53,8 +53,8 @@ export default function StudyActionCard({
     <Card
       className={`h-full overflow-hidden border transition duration-200 ${
         isDisabled
-          ? 'border-default-200 bg-default-50 shadow-sm'
-          : `bg-gradient-to-br shadow-md group-hover:-translate-y-0.5 group-hover:shadow-lg ${toneStyles.surface} ${cardStyles.gradient} ${cardStyles.hover}`
+          ? 'border-default-200 bg-default-50'
+          : `bg-gradient-to-br ${toneStyles.surface} ${cardStyles.gradient} ${cardStyles.hover}`
       }`}
     >
       <Card.Header className="flex-row items-start gap-3">

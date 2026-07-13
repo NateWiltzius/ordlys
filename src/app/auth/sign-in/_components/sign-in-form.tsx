@@ -44,7 +44,7 @@ export function SignInForm({ nextPath }: Props) {
   };
 
   return (
-    <Card className="w-full overflow-hidden border border-default-200 shadow-sm">
+    <Card className="w-full overflow-hidden">
       <Card.Header className="space-y-1 border-b border-default-200 bg-default-50 px-6 py-5">
         <Card.Title className="text-2xl">Welcome back</Card.Title>
         <Card.Description>Sign in to continue learning with your saved progress.</Card.Description>

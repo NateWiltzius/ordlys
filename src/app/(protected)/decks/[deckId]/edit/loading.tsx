@@ -66,7 +66,7 @@ function PublicationPanelSkeleton() {
 
 function LessonEditorSkeleton() {
   return (
-    <Card variant="secondary" className="border border-default-200 shadow-none">
+    <Card variant="secondary">
       <Card.Header className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <SkeletonLine className="h-5 w-40" />
