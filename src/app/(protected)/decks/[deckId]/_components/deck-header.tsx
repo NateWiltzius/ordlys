@@ -7,6 +7,7 @@ import DeckBadge, { type DeckBadgeKind } from '@/components/shared/deck-badge';
 import DeckSafetyControls from './deck-safety-controls';
 import FollowReleaseControls from './follow-release-controls';
 import RestoreDeckButton from './restore-deck-button';
+import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
 
 type Props = {
   deck: Deck;
@@ -16,6 +17,7 @@ type Props = {
   releases: DeckRelease[];
   releaseChanges: Awaited<ReturnType<typeof inspectReleaseChanges>> | null;
   canModerate: boolean;
+  protectedFollowerCount: number | null;
 };
 
 export default function DeckHeader({
@@ -26,6 +28,7 @@ export default function DeckHeader({
   releases,
   releaseChanges,
   canModerate,
+  protectedFollowerCount,
 }: Props) {
   const badges: DeckBadgeKind[] = [];
 
@@ -65,6 +68,7 @@ export default function DeckHeader({
             isOwned={isOwned}
             isFollowing={isFollowing}
             canModerate={canModerate}
+            protectedFollowerCount={protectedFollowerCount}
           />
         </>
       }
@@ -77,7 +81,10 @@ export default function DeckHeader({
 
       {isOwned && deck.status === 'deleted' && deck.retentionUntil ? (
         <p className="text-sm text-default-500">
-          Recoverable until {deck.retentionUntil.toLocaleDateString()}.
+          {protectedFollowerCount !== null &&
+          canFinalizeDeckDeletion(protectedFollowerCount, deck.retentionUntil)
+            ? 'Ready for permanent deletion.'
+            : `Recoverable until ${deck.retentionUntil.toLocaleDateString()}.`}
         </p>
       ) : null}
 

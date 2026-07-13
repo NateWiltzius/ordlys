@@ -34,6 +34,7 @@ import {
 import { buildReviewForecast } from '@/lib/review-forecast';
 import {
   getDeckFollowState,
+  getProtectedDeckFollowerCount,
   getDeckProvenance,
   getRemovedDraftItems,
   hasUnpublishedDraftChanges,
@@ -108,6 +109,8 @@ export async function getDeckPageDataAction(id: number) {
     ]);
   if (!deck) return null;
   const isOwned = deck.ownerId === userId;
+  const protectedFollowerCount =
+    isOwned && deck.status === 'deleted' ? await getProtectedDeckFollowerCount(deckId) : null;
   const isFollowing = followState?.status === 'active' || followState?.status === 'frozen';
   const releaseChanges =
     followState?.currentRelease &&
@@ -126,6 +129,7 @@ export async function getDeckPageDataAction(id: number) {
     releases,
     releaseChanges,
     canModerate,
+    protectedFollowerCount,
   };
 }
 

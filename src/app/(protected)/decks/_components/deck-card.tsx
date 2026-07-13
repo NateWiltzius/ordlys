@@ -167,7 +167,9 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
           {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
           {relationship === 'restorable' && deck.status === 'deleted' ? (
             <p className="text-xs text-default-500">
-              Recoverable until {deck.retentionUntil?.toLocaleDateString() ?? 'an unknown date'}.
+              {deck.retentionUntil && deck.retentionUntil.getTime() <= Date.now()
+                ? 'Ready for permanent deletion.'
+                : `Recoverable until ${deck.retentionUntil?.toLocaleDateString() ?? 'an unknown date'}.`}
             </p>
           ) : null}
           <div className="flex items-start gap-2">
@@ -292,7 +294,7 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
             ? 'The published release becomes an independent private deck. Source learning progress is not copied.'
             : confirmation === 'unfollow'
               ? 'Updates will stop, but your learning progress will be retained.'
-              : 'The deck will be soft-deleted and can be restored during the retention period.'
+              : 'The deck will be removed from your active decks. If it has no followers, permanent deletion is available immediately; otherwise it remains recoverable for 30 days.'
         }
         confirmLabel={
           confirmation === 'copy'

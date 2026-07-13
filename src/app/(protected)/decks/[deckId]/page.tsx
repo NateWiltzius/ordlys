@@ -52,6 +52,7 @@ async function DeckContent({ deckId }: DeckContentProps) {
     releases,
     releaseChanges,
     canModerate,
+    protectedFollowerCount,
   } = data;
 
   return (
@@ -64,6 +65,7 @@ async function DeckContent({ deckId }: DeckContentProps) {
         releases={releases}
         releaseChanges={releaseChanges}
         canModerate={canModerate}
+        protectedFollowerCount={protectedFollowerCount}
       />
 
       <Suspense fallback={<StudyContentSkeleton />}>

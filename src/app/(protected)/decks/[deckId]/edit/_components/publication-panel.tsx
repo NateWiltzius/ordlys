@@ -341,7 +341,12 @@ export default function PublicationPanel({
             isPending={pending && activeOperation === 'delete'}
             isDisabled={pending && activeOperation !== 'delete'}
             onPress={() =>
-              run('delete', () => softDeleteDeckAction(deck.id), 'Deck deletion scheduled.', true)
+              run(
+                'delete',
+                () => softDeleteDeckAction(deck.id),
+                'Deck moved to deleted decks.',
+                true,
+              )
             }
           >
             Delete deck

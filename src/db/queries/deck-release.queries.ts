@@ -26,6 +26,20 @@ import { resolveFollowReleaseId } from '@/lib/deck-access-policy';
 import { vocabContentValues, vocabRevisionContentSelection } from '@/db/queries/vocab-content';
 import { assertAuthoringCapacity } from '@/lib/authoring-quota';
 import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
+import { canFinalizeDeckDeletion, getDeckDeletionRetentionUntil } from '@/lib/deck-deletion-policy';
+
+export async function getProtectedDeckFollowerCount(deckId: number): Promise<number> {
+  const [result] = await db
+    .select({ value: count(deckFollows.id) })
+    .from(deckFollows)
+    .where(
+      and(
+        eq(deckFollows.deckId, deckId),
+        or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+      ),
+    );
+  return Number(result.value);
+}
 
 export async function publishDeck(
   deckId: number,
@@ -543,12 +557,25 @@ export async function changeDeckStatus(
         `Cannot change ${deck.status} deck to ${status}.`,
       );
     const now = new Date();
+    const [followers] =
+      status === 'deleted'
+        ? await tx
+            .select({ value: count(deckFollows.id) })
+            .from(deckFollows)
+            .where(
+              and(
+                eq(deckFollows.deckId, deckId),
+                or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+              ),
+            )
+        : [{ value: 0 }];
     await tx
       .update(decks)
       .set({
         status,
         deletedAt: status === 'deleted' ? now : null,
-        retentionUntil: status === 'deleted' ? new Date(now.getTime() + 30 * 86400000) : null,
+        retentionUntil:
+          status === 'deleted' ? getDeckDeletionRetentionUntil(now, Number(followers.value)) : null,
         updatedAt: now,
       })
       .where(eq(decks.id, deckId));
@@ -1040,12 +1067,22 @@ export async function restrictedHardDeleteDeck(deckId: number, actorId: string):
       .where(and(eq(decks.id, deckId), eq(decks.ownerId, actorId)))
       .for('update')
       .limit(1);
-    if (
-      !deck ||
-      deck.status !== 'deleted' ||
-      !deck.retentionUntil ||
-      deck.retentionUntil > new Date()
-    ) {
+    if (!deck || deck.status !== 'deleted') {
+      throw new DeckDomainError(
+        'HARD_DELETE_FORBIDDEN',
+        'The deck is not eligible for hard deletion.',
+      );
+    }
+    const [followers] = await tx
+      .select({ value: count(deckFollows.id) })
+      .from(deckFollows)
+      .where(
+        and(
+          eq(deckFollows.deckId, deckId),
+          or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+        ),
+      );
+    if (!canFinalizeDeckDeletion(Number(followers.value), deck.retentionUntil)) {
       throw new DeckDomainError(
         'HARD_DELETE_FORBIDDEN',
         'The deck is not eligible for hard deletion.',

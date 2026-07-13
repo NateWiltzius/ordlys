@@ -9,6 +9,7 @@ import {
 } from '@/server/deck-release.actions';
 import { unfollowDeckAction } from '@/server/deck-follow.actions';
 import type { Deck } from '@/types/deck.types';
+import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
 import { Button, Input, Label, Modal, Popover, TextArea, useOverlayState } from '@heroui/react';
 import { EllipsisHorizontalIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -28,6 +29,7 @@ export default function DeckSafetyControls({
   isOwned,
   isFollowing,
   canModerate,
+  protectedFollowerCount,
 }: {
   deckId: number;
   deckTitle: string;
@@ -36,6 +38,7 @@ export default function DeckSafetyControls({
   isOwned: boolean;
   isFollowing: boolean;
   canModerate: boolean;
+  protectedFollowerCount: number | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -49,7 +52,9 @@ export default function DeckSafetyControls({
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const hardDeleteEligible =
-    status === 'deleted' && retentionUntil !== null && retentionUntil.getTime() <= Date.now();
+    status === 'deleted' &&
+    protectedFollowerCount !== null &&
+    canFinalizeDeckDeletion(protectedFollowerCount, retentionUntil);
 
   function run(operation: () => Promise<unknown>, success: string, leave = false) {
     startTransition(async () => {
