@@ -58,7 +58,7 @@ export default function EditDeckModal({ deck }: Props) {
       </Button>
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Dialog className="min-h-0 sm:max-w-xl">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
               <Modal.Heading>Edit deck</Modal.Heading>
@@ -66,7 +66,7 @@ export default function EditDeckModal({ deck }: Props) {
                 Keep the deck details and language labels clear for learners.
               </p>
             </Modal.Header>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-6">
                 <DeckFormFields idPrefix={`edit-deck-${deck.id}`} defaults={deck} autoFocus />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}

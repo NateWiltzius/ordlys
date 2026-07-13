@@ -252,7 +252,7 @@ export default function DeckSafetyControls({
       />
       <Modal.Backdrop isOpen={reportModalState.isOpen} onOpenChange={reportModalState.setOpen}>
         <Modal.Container scroll="inside">
-          <Modal.Dialog className="sm:max-w-md">
+          <Modal.Dialog className="min-h-0 sm:max-w-md">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
               <Modal.Heading>Report this deck</Modal.Heading>
@@ -260,7 +260,7 @@ export default function DeckSafetyControls({
                 Tell us what needs review. Your report will be associated with this deck.
               </p>
             </Modal.Header>
-            <form onSubmit={report}>
+            <form onSubmit={report} className="mt-2 flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor={`report-reason-${deckId}`}>Reason</Label>

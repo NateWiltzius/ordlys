@@ -61,7 +61,7 @@ export default function CreateLessonModal({
       </Button>
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog className="sm:max-w-md">
+          <Modal.Dialog className="min-h-0 sm:max-w-md">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create lesson</Modal.Heading>
@@ -69,7 +69,7 @@ export default function CreateLessonModal({
                 Add a focused section to organize this deck’s vocabulary.
               </p>
             </Modal.Header>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-6">
                 <LessonFormFields id={`create-lesson-${deckId}-title`} autoFocus />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}

@@ -39,12 +39,12 @@ export default function DeleteAccountModal() {
       </Button>
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog className="sm:max-w-md">
+          <Modal.Dialog className="min-h-0 sm:max-w-md">
             <Modal.CloseTrigger />
             <Modal.Header>
               <Modal.Heading>Delete account permanently?</Modal.Heading>
             </Modal.Header>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-4">
                 <div className="rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm">
                   <p className="font-medium text-danger">This action cannot be undone.</p>

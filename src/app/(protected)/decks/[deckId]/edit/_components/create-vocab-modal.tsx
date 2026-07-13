@@ -85,7 +85,7 @@ export default function CreateVocabModal({
 
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog className="sm:max-w-xl">
+          <Modal.Dialog className="min-h-0 sm:max-w-xl">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create vocabulary</Modal.Heading>
@@ -93,7 +93,7 @@ export default function CreateVocabModal({
                 Add a new word and configure how it appears during quizzes.
               </p>
             </Modal.Header>
-            <form onSubmit={handleCreateVocab}>
+            <form onSubmit={handleCreateVocab} className="mt-2 flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-6">
                 <VocabFormFields />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}

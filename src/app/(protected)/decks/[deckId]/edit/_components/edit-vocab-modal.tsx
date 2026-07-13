@@ -72,7 +72,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
   return (
     <Modal.Backdrop isOpen={modalState.isOpen} onOpenChange={modalState.setOpen}>
       <Modal.Container scroll="inside">
-        <Modal.Dialog className="sm:max-w-xl">
+        <Modal.Dialog className="min-h-0 sm:max-w-xl">
           <Modal.CloseTrigger />
           <Modal.Header className="space-y-1">
             <Modal.Heading>Edit vocabulary</Modal.Heading>
@@ -80,7 +80,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
               Update the word, quiz hints, and accepted answers.
             </p>
           </Modal.Header>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
             <Modal.Body className="space-y-6">
               {vocab ? <VocabFormFields key={vocab.id} vocab={vocab} /> : null}
               <label className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm">

@@ -55,7 +55,7 @@ export default function EditLessonModal({ lesson }: Props) {
       </Button>
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog className="sm:max-w-md">
+          <Modal.Dialog className="min-h-0 sm:max-w-md">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
               <Modal.Heading>Rename lesson</Modal.Heading>
@@ -63,7 +63,7 @@ export default function EditLessonModal({ lesson }: Props) {
                 Update the lesson name without changing its vocabulary or learner progress.
               </p>
             </Modal.Header>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-6">
                 <LessonFormFields
                   id={`edit-lesson-${lesson.id}-title`}
