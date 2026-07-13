@@ -61,14 +61,28 @@ export const updateDeck = async (
 
 export const getDecksByOwnerId = async (ownerId: string) => {
   return db
-    .select()
+    .select({
+      ...getTableColumns(decks),
+      subscriberCount: sql<number>`(
+        select count(*)::int
+        from ${deckFollows} follows
+        where follows.deck_id = ${decks.id} and follows.status = 'active'
+      )`,
+    })
     .from(decks)
     .where(and(eq(decks.ownerId, ownerId), eq(decks.status, 'active')));
 };
 
 export const getRestorableDecksByOwnerId = async (ownerId: string) => {
   return db
-    .select()
+    .select({
+      ...getTableColumns(decks),
+      subscriberCount: sql<number>`(
+        select count(*)::int
+        from ${deckFollows} follows
+        where follows.deck_id = ${decks.id} and follows.status = 'active'
+      )`,
+    })
     .from(decks)
     .where(
       and(
@@ -89,6 +103,11 @@ export const getUserFollowedDecks = async (userId: string) => {
       copyPolicy: sql<
         Deck['copyPolicy']
       >`(select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, false)})`,
+      subscriberCount: sql<number>`(
+        select count(*)::int
+        from ${deckFollows} followers
+        where followers.deck_id = ${decks.id} and followers.status = 'active'
+      )`,
     })
     .from(decks)
     .innerJoin(deckFollows, eq(deckFollows.deckId, decks.id))
@@ -99,6 +118,8 @@ export const getUserFollowedDecks = async (userId: string) => {
       ),
     );
 };
+
+export type LibraryDeck = Awaited<ReturnType<typeof getDecksByOwnerId>>[number];
 
 export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
   return db

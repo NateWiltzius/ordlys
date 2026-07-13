@@ -10,6 +10,7 @@ const sortOptions: Array<{ id: DeckDiscoverySort; label: string }> = [
 ];
 
 type Props = {
+  idPrefix?: string;
   query: string;
   sort: DeckDiscoverySort;
   visibleCount: number;
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export default function DeckDiscoveryControls({
+  idPrefix = 'deck-discovery',
   query,
   sort,
   visibleCount,
@@ -26,13 +28,15 @@ export default function DeckDiscoveryControls({
   onQueryChange,
   onSortChange,
 }: Props) {
+  const searchId = `${idPrefix}-search`;
+
   return (
     <div className="space-y-2">
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
         <div className="flex flex-col gap-1">
-          <Label htmlFor="deck-discovery-search">Search decks</Label>
+          <Label htmlFor={searchId}>Search decks</Label>
           <Input
-            id="deck-discovery-search"
+            id={searchId}
             value={query}
             onChange={event => onQueryChange(event.target.value)}
             placeholder="Search deck names or descriptions"

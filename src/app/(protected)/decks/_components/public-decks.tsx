@@ -15,7 +15,7 @@ type Props = {
 
 export default function PublicDecks({ decks, libraryDeckIds }: Props) {
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<DeckDiscoverySort>('popular');
+  const [sort, setSort] = useState<DeckDiscoverySort>('name');
   const discoverableDecks = useMemo(() => {
     const libraryIds = new Set(libraryDeckIds);
     return decks.filter(deck => !libraryIds.has(deck.id));
@@ -36,6 +36,7 @@ export default function PublicDecks({ decks, libraryDeckIds }: Props) {
   return (
     <div className="space-y-4">
       <DeckDiscoveryControls
+        idPrefix="discover-decks"
         query={query}
         sort={sort}
         visibleCount={visibleDecks.length}

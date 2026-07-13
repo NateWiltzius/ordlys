@@ -1,20 +1,49 @@
+'use client';
+
 import { DeckCard } from '@/app/(protected)/decks/_components/deck-card';
 import CreateDeckModal from '@/app/(protected)/decks/_components/create-deck-modal';
+import DeckDiscoveryControls from '@/components/deck-discovery-controls';
 import EmptyState from '@/components/shared/empty-state';
-import { Deck } from '@/types/deck.types';
+import type { LibraryDeck } from '@/db/queries/deck.queries';
+import { filterAndSortDecks, type DeckDiscoverySort } from '@/lib/deck-discovery';
+import { Button } from '@heroui/react';
+import { useMemo, useState } from 'react';
 
 type Props = {
-  ownedDecks: Deck[];
-  followedDecks: Deck[];
-  restorableDecks: Deck[];
+  ownedDecks: LibraryDeck[];
+  followedDecks: LibraryDeck[];
+  restorableDecks: LibraryDeck[];
 };
 
 export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks }: Props) {
-  const followedDeckIds = new Set(followedDecks.map(deck => deck.id));
-  const ownedDeckIds = new Set(ownedDecks.map(deck => deck.id));
-  const followedOnlyDecks = followedDecks.filter(deck => !ownedDeckIds.has(deck.id));
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<DeckDiscoverySort>('name');
+  const libraryDecks = useMemo(() => {
+    const followedDeckIds = new Set(followedDecks.map(deck => deck.id));
+    const ownedDeckIds = new Set(ownedDecks.map(deck => deck.id));
 
-  if (ownedDecks.length === 0 && followedOnlyDecks.length === 0 && restorableDecks.length === 0) {
+    return [
+      ...ownedDecks.map(deck => ({
+        ...deck,
+        relationship: deck.sourceReleaseId ? ('copy' as const) : ('owned' as const),
+        isFollowing: followedDeckIds.has(deck.id),
+      })),
+      ...followedDecks
+        .filter(deck => !ownedDeckIds.has(deck.id))
+        .map(deck => ({ ...deck, relationship: 'following' as const, isFollowing: true })),
+      ...restorableDecks.map(deck => ({
+        ...deck,
+        relationship: 'restorable' as const,
+        isFollowing: false,
+      })),
+    ];
+  }, [followedDecks, ownedDecks, restorableDecks]);
+  const visibleDecks = useMemo(
+    () => filterAndSortDecks(libraryDecks, query, sort),
+    [libraryDecks, query, sort],
+  );
+
+  if (!libraryDecks.length) {
     return (
       <EmptyState
         title="Your library is empty"
@@ -25,21 +54,39 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {ownedDecks.map(deck => (
-        <DeckCard
-          key={deck.id}
-          deck={deck}
-          relationship={deck.sourceReleaseId ? 'copy' : 'owned'}
-          isFollowing={followedDeckIds.has(deck.id)}
+    <div className="space-y-4">
+      <DeckDiscoveryControls
+        idPrefix="library-decks"
+        query={query}
+        sort={sort}
+        visibleCount={visibleDecks.length}
+        totalCount={libraryDecks.length}
+        onQueryChange={setQuery}
+        onSortChange={setSort}
+      />
+
+      {visibleDecks.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {visibleDecks.map(deck => (
+            <DeckCard
+              key={deck.id}
+              deck={deck}
+              relationship={deck.relationship}
+              isFollowing={deck.isFollowing}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No decks match your search"
+          description="Try another name or clear the search to browse every deck in your library."
+          action={
+            <Button variant="secondary" onPress={() => setQuery('')}>
+              Clear search
+            </Button>
+          }
         />
-      ))}
-      {followedOnlyDecks.map(deck => (
-        <DeckCard key={deck.id} deck={deck} relationship="following" isFollowing />
-      ))}
-      {restorableDecks.map(deck => (
-        <DeckCard key={deck.id} deck={deck} relationship="restorable" />
-      ))}
+      )}
     </div>
   );
 }
