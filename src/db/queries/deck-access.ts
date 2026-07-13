@@ -1,7 +1,9 @@
-import { decks, lessons, vocabs } from '@/db/schema';
+import { deckFollows, decks, lessons, vocabs } from '@/db/schema';
 import { and, eq, ne, or, sql } from 'drizzle-orm';
+import { resolveAccessibleReleaseId } from '@/lib/deck-access-policy';
 
 export function activeReleaseIdExpression(userId: string, allowPublic: boolean) {
+  // SQL counterpart to resolveAccessibleReleaseId. Policy tests cover this precedence order.
   const ownerFallback = allowPublic
     ? sql`when ${decks.ownerId} = ${userId} and ${decks.status} <> 'moderation_removed' then ${decks.currentReleaseId}`
     : sql``;
@@ -86,29 +88,12 @@ export async function getActiveReleaseId(
     .from(decks)
     .where(eq(decks.id, deckId))
     .limit(1);
-  if (!deck || deck.status === 'moderation_removed') return null;
-  if (allowPublic && deck.ownerId === userId) return deck.currentReleaseId;
+  if (!deck) return null;
 
-  const { deckFollows } = await import('@/db/schema');
   const [follow] = await db
     .select()
     .from(deckFollows)
-    .where(
-      and(
-        eq(deckFollows.deckId, deckId),
-        eq(deckFollows.userId, userId),
-        or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
-      ),
-    )
+    .where(and(eq(deckFollows.deckId, deckId), eq(deckFollows.userId, userId)))
     .limit(1);
-  if (follow) {
-    if (follow.updateMode === 'manual') {
-      return follow.pinnedReleaseId ?? follow.lastSeenReleaseId;
-    }
-    if (follow.status === 'frozen') return follow.lastSeenReleaseId;
-    return deck.currentReleaseId;
-  }
-  return allowPublic && deck.status === 'active' && deck.visibility !== 'private'
-    ? deck.currentReleaseId
-    : null;
+  return resolveAccessibleReleaseId({ deck, follow, userId, allowPublic });
 }

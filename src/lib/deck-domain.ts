@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { UserFacingError } from '@/lib/action-result';
+import { UserFacingError } from './action-result';
 
 type DeckStatus = 'active' | 'archived' | 'deleted' | 'moderation_removed';
 export type CopyPolicy = 'follow_only' | 'private_forks' | 'public_forks';

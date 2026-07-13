@@ -1,10 +1,9 @@
 'use client';
 
-import DeckLanguageSelect, {
-  languageFormValue,
-} from '@/app/(protected)/decks/_components/deck-language-select';
+import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields';
+import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import { importCsvDeckAction } from '@/server/deck-import.actions';
-import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/react';
+import { Button, Label, Modal, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
@@ -45,44 +44,34 @@ export default function ImportDeckModal() {
 
   return (
     <Modal state={modalState}>
-      <Button variant="secondary">Import CSV</Button>
+      <Button
+        variant="secondary"
+        onPress={() => {
+          setError(null);
+          modalState.open();
+        }}
+      >
+        Import CSV
+      </Button>
       <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[520px]">
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className="sm:max-w-xl">
             <Modal.CloseTrigger />
-            <Modal.Header>
+            <Modal.Header className="space-y-1">
               <Modal.Heading>Import a CSV deck</Modal.Heading>
+              <p className="text-sm text-default-500">
+                Create a private deck from a structured vocabulary file.
+              </p>
             </Modal.Header>
             <form onSubmit={submit}>
-              <Modal.Body className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="import-title">Deck title</Label>
-                  <Input
-                    id="import-title"
-                    name="title"
-                    placeholder="e.g. Norwegian essentials"
-                    required
-                    maxLength={255}
-                    className="w-full"
-                  />
+              <Modal.Body className="space-y-6">
+                <DeckFormFields idPrefix="import-deck" autoFocus />
+                <div className="rounded-lg border border-default-200 bg-default-50 p-3 text-sm">
+                  <p className="font-medium text-default-700">Starts private</p>
+                  <p className="mt-1 text-xs leading-5 text-default-500">
+                    Review the imported vocabulary before publishing or choosing sharing options.
+                  </p>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="import-description">Description</Label>
-                  <TextArea
-                    id="import-description"
-                    name="description"
-                    placeholder="What does this deck cover?"
-                    maxLength={255}
-                    className="w-full"
-                  />
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <DeckLanguageSelect name="frontLanguage" label="Front language" />
-                  <DeckLanguageSelect name="backLanguage" label="Back language" />
-                </div>
-                <p className="text-sm text-default-500">
-                  Imported decks start private. Publish and choose sharing options after review.
-                </p>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="csv-file">CSV file</Label>
                   <input
@@ -121,7 +110,16 @@ export default function ImportDeckModal() {
                 </div>
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer>
+              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  className="w-full sm:w-auto"
+                  isDisabled={pending}
+                  onPress={modalState.close}
+                >
+                  Cancel
+                </Button>
                 <Button type="submit" isPending={pending} className="w-full sm:w-auto">
                   Import deck
                 </Button>

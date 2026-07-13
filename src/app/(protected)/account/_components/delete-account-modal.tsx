@@ -38,7 +38,7 @@ export default function DeleteAccountModal() {
         Delete account
       </Button>
       <Modal.Backdrop>
-        <Modal.Container>
+        <Modal.Container scroll="inside">
           <Modal.Dialog className="sm:max-w-md">
             <Modal.CloseTrigger />
             <Modal.Header>

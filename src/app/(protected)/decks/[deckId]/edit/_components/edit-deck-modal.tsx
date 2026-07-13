@@ -1,97 +1,87 @@
 'use client';
 
-import { updateDeckAction } from '@/server/deck.actions';
-import { Deck } from '@/types/deck.types';
-import { Button, Input, Label, Modal, TextArea, useOverlayState } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
-import DeckLanguageSelect, {
-  languageFormValue,
-} from '@/app/(protected)/decks/_components/deck-language-select';
+import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields';
+import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import { updateDeckAction } from '@/server/deck.actions';
+import { Deck } from '@/types/deck.types';
+import { Button, Modal, useOverlayState } from '@heroui/react';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 
 type Props = {
   deck: Deck;
 };
 
 export default function EditDeckModal({ deck }: Props) {
-  const state = useOverlayState();
+  const modalState = useOverlayState();
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
+    const formData = new FormData(event.currentTarget);
     try {
-      setPending(true);
+      setIsSubmitting(true);
       setError(null);
       const result = await updateDeckAction(deck.id, {
-        title: String(data.get('title') ?? ''),
-        description: String(data.get('description') ?? ''),
-        frontLanguage: languageFormValue(data.get('frontLanguage')),
-        backLanguage: languageFormValue(data.get('backLanguage')),
+        title: String(formData.get('title') ?? ''),
+        description: String(formData.get('description') ?? ''),
+        frontLanguage: languageFormValue(formData.get('frontLanguage')),
+        backLanguage: languageFormValue(formData.get('backLanguage')),
       });
       if (isActionFailure(result)) {
         setError(result.message);
         return;
       }
-      state.close();
+      modalState.close();
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not update the deck.');
     } finally {
-      setPending(false);
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <Modal state={state}>
-      <Button variant="secondary" onPress={state.open}>
+    <Modal state={modalState}>
+      <Button
+        variant="secondary"
+        onPress={() => {
+          setError(null);
+          modalState.open();
+        }}
+      >
         Edit details
       </Button>
       <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[420px]">
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className="sm:max-w-xl">
             <Modal.CloseTrigger />
-            <Modal.Header>
+            <Modal.Header className="space-y-1">
               <Modal.Heading>Edit deck</Modal.Heading>
+              <p className="text-sm text-default-500">
+                Keep the deck details and language labels clear for learners.
+              </p>
             </Modal.Header>
-            <form onSubmit={submit}>
-              <Modal.Body className="flex flex-col gap-3">
-                <Label htmlFor="deck-title">Title</Label>
-                <Input
-                  id="deck-title"
-                  name="title"
-                  defaultValue={deck.title}
-                  required
-                  maxLength={255}
-                />
-                <Label htmlFor="deck-description">Description</Label>
-                <TextArea
-                  id="deck-description"
-                  name="description"
-                  defaultValue={deck.description ?? ''}
-                  maxLength={255}
-                />
-                <DeckLanguageSelect
-                  name="frontLanguage"
-                  defaultValue={deck.frontLanguage}
-                  label="Front language"
-                />
-                <DeckLanguageSelect
-                  name="backLanguage"
-                  defaultValue={deck.backLanguage}
-                  label="Back language"
-                />
-                <p className="text-xs text-default-500">
-                  Choose “Not specified” for decks that are not tied to a language.
-                </p>
+            <form onSubmit={handleSubmit}>
+              <Modal.Body className="space-y-6">
+                <DeckFormFields idPrefix={`edit-deck-${deck.id}`} defaults={deck} autoFocus />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer>
-                <Button type="submit" isPending={pending} className="w-full sm:w-auto">
+              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  className="w-full sm:w-auto"
+                  isDisabled={isSubmitting}
+                  onPress={modalState.close}
+                >
+                  Cancel
+                </Button>
+                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
                   Save changes
                 </Button>
               </Modal.Footer>

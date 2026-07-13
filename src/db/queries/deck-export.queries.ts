@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { decks, lessonRevisions, lessons, vocabRevisions, vocabs } from '@/db/schema';
 import { and, asc, eq, isNull, ne } from 'drizzle-orm';
+import { vocabRevisionContentSelection } from '@/db/queries/vocab-content';
 
 export async function getOwnedDeckExport(deckId: number, userId: string) {
   const [deck] = await db
@@ -21,17 +22,8 @@ export async function getOwnedDeckExport(deckId: number, userId: string) {
 
   const rows = await db
     .select({
-      front: vocabRevisions.front,
-      back: vocabRevisions.back,
+      ...vocabRevisionContentSelection,
       lesson: lessonRevisions.title,
-      reading: vocabRevisions.reading,
-      frontAlternatives: vocabRevisions.frontAlternatives,
-      backAlternatives: vocabRevisions.backAlternatives,
-      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
-      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
-      tags: vocabRevisions.tags,
-      metadata: vocabRevisions.metadata,
-      notes: vocabRevisions.notes,
     })
     .from(lessons)
     .innerJoin(lessonRevisions, eq(lessonRevisions.id, lessons.currentRevisionId))

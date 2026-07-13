@@ -22,6 +22,10 @@ import {
   DeckDomainError,
 } from '@/lib/deck-domain';
 import { DECK_LIMITS } from '@/config/deck-limits';
+import { resolveFollowReleaseId } from '@/lib/deck-access-policy';
+import { vocabContentValues, vocabRevisionContentSelection } from '@/db/queries/vocab-content';
+import { assertAuthoringCapacity } from '@/lib/authoring-quota';
+import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
 
 export async function publishDeck(
   deckId: number,
@@ -110,16 +114,7 @@ export async function publishDeck(
         vocabs: draftVocabs
           .filter(row => row.vocab.lessonId === lesson.id)
           .map(row => ({
-            front: row.revision.front,
-            back: row.revision.back,
-            frontAlternatives: row.revision.frontAlternatives,
-            backAlternatives: row.revision.backAlternatives,
-            frontToBackQuizHint: row.revision.frontToBackQuizHint,
-            backToFrontQuizHint: row.revision.backToFrontQuizHint,
-            reading: row.revision.reading,
-            tags: row.revision.tags,
-            metadata: row.revision.metadata,
-            notes: row.revision.notes,
+            ...vocabContentValues(row.revision),
             order: row.vocab.orderIndex,
           })),
       })),
@@ -294,12 +289,7 @@ export async function getDeckFollowState(deckId: number, userId: string) {
     .where(and(eq(deckFollows.deckId, deckId), eq(deckFollows.userId, userId)))
     .limit(1);
   if (!row) return null;
-  const studiedReleaseId =
-    row.follow.updateMode === 'manual'
-      ? (row.follow.pinnedReleaseId ?? row.follow.lastSeenReleaseId)
-      : row.follow.status === 'frozen'
-        ? row.follow.lastSeenReleaseId
-        : row.currentRelease?.id;
+  const studiedReleaseId = resolveFollowReleaseId(row.follow, row.currentRelease?.id ?? null);
   const [studiedRelease] = studiedReleaseId
     ? await db.select().from(deckReleases).where(eq(deckReleases.id, studiedReleaseId)).limit(1)
     : [undefined];
@@ -317,16 +307,7 @@ export async function getReleaseLessonVocabs(releaseId: number, lessonId: number
   return db
     .select({
       ...getTableColumns(vocabs),
-      front: vocabRevisions.front,
-      back: vocabRevisions.back,
-      frontAlternatives: vocabRevisions.frontAlternatives,
-      backAlternatives: vocabRevisions.backAlternatives,
-      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
-      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
-      reading: vocabRevisions.reading,
-      tags: vocabRevisions.tags,
-      metadata: vocabRevisions.metadata,
-      notes: vocabRevisions.notes,
+      ...vocabRevisionContentSelection,
       orderIndex: releaseVocabs.orderIndex,
     })
     .from(releaseVocabs)
@@ -634,22 +615,9 @@ export async function forkRelease(
     if (source.release.copyPolicy === 'follow_only') {
       throw new DeckDomainError('FORK_FORBIDDEN', 'This release does not permit forks.');
     }
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${actorId}))`);
-    const [[owned], [logicalVocabCount]] = await Promise.all([
-      tx
-        .select({ value: count(decks.id) })
-        .from(decks)
-        .where(and(eq(decks.ownerId, actorId), eq(decks.status, 'active'))),
-      tx
-        .select({ value: count(vocabs.id) })
-        .from(vocabs)
-        .innerJoin(lessons, eq(lessons.id, vocabs.lessonId))
-        .innerJoin(decks, eq(decks.id, lessons.deckId))
-        .where(eq(decks.ownerId, actorId)),
-    ]);
-    if (Number(owned.value) >= DECK_LIMITS.activeOwnedDecks) {
-      throw new DeckDomainError('DECK_QUOTA', 'Active deck limit reached.');
-    }
+    await lockAuthoringAccount(tx, actorId);
+    const authoringUsage = await getAuthoringUsage(tx, actorId);
+    assertAuthoringCapacity(authoringUsage, { activeDecks: 1 });
 
     const now = new Date();
     const dayAgo = new Date(now.getTime() - 86_400_000);
@@ -696,12 +664,14 @@ export async function forkRelease(
       .innerJoin(vocabs, eq(releaseVocabs.vocabId, vocabs.id))
       .where(eq(releaseVocabs.releaseId, sourceReleaseId))
       .orderBy(releaseVocabs.orderIndex, releaseVocabs.vocabId);
-    if (
-      sourceVocabRows.length > DECK_LIMITS.cardsPerDeck ||
-      Number(logicalVocabCount.value) + sourceVocabRows.length > DECK_LIMITS.logicalVocabsPerAccount
-    ) {
-      throw new DeckDomainError('VOCAB_QUOTA', 'Vocabulary quota reached.');
-    }
+    assertAuthoringCapacity(
+      authoringUsage,
+      { deckCards: sourceVocabRows.length, logicalVocabs: sourceVocabRows.length },
+      {
+        deckCards: { code: 'VOCAB_QUOTA', message: 'Vocabulary quota reached.' },
+        logicalVocabs: { message: 'Vocabulary quota reached.' },
+      },
+    );
 
     const [fork] = await tx
       .insert(decks)
@@ -752,16 +722,7 @@ export async function forkRelease(
           sourceVocabId: row.logical.id,
           rootVocabId: row.logical.rootVocabId ?? row.logical.id,
           currentRevisionId: row.revision.id,
-          front: row.revision.front,
-          back: row.revision.back,
-          frontAlternatives: row.revision.frontAlternatives,
-          backAlternatives: row.revision.backAlternatives,
-          frontToBackQuizHint: row.revision.frontToBackQuizHint,
-          backToFrontQuizHint: row.revision.backToFrontQuizHint,
-          reading: row.revision.reading,
-          tags: row.revision.tags,
-          metadata: row.revision.metadata,
-          notes: row.revision.notes,
+          ...vocabContentValues(row.revision),
           orderIndex: row.membership.orderIndex,
         })
         .returning({ id: vocabs.id });
@@ -842,21 +803,9 @@ export async function changeDeckVisibility(
       .limit(1);
     if (!deck) throw new DeckDomainError('NOT_OWNER', 'Deck not found or access denied.');
     assertActive(deck.status, 'change visibility of');
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${actorId}))`);
+    await lockAuthoringAccount(tx, actorId);
     if (visibility === 'public' && deck.visibility !== 'public') {
-      const [publicDecks] = await tx
-        .select({ value: count(decks.id) })
-        .from(decks)
-        .where(
-          and(
-            eq(decks.ownerId, actorId),
-            eq(decks.visibility, 'public'),
-            eq(decks.status, 'active'),
-          ),
-        );
-      if (Number(publicDecks.value) >= DECK_LIMITS.publicCatalogDecks) {
-        throw new DeckDomainError('PUBLIC_DECK_QUOTA', 'Public catalog deck limit reached.');
-      }
+      assertAuthoringCapacity(await getAuthoringUsage(tx, actorId, deckId), { publicDecks: 1 });
     }
     if (visibility !== 'private' && !deck.currentReleaseId) {
       throw new DeckDomainError('UNPUBLISHED_DECK', 'Publish the deck before sharing it.');

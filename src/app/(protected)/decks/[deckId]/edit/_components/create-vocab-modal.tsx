@@ -72,7 +72,14 @@ export default function CreateVocabModal({
 
   return (
     <Modal state={modalState}>
-      <Button size="sm" variant="secondary" onPress={modalState.open}>
+      <Button
+        size="sm"
+        variant="secondary"
+        onPress={() => {
+          setError(null);
+          modalState.open();
+        }}
+      >
         {triggerLabel}
       </Button>
 
@@ -80,8 +87,11 @@ export default function CreateVocabModal({
         <Modal.Container scroll="inside">
           <Modal.Dialog className="sm:max-w-xl">
             <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>Create Vocab</Modal.Heading>
+            <Modal.Header className="space-y-1">
+              <Modal.Heading>Create vocabulary</Modal.Heading>
+              <p className="text-sm text-default-500">
+                Add a new word and configure how it appears during quizzes.
+              </p>
             </Modal.Header>
             <form onSubmit={handleCreateVocab}>
               <Modal.Body className="space-y-6">
@@ -89,8 +99,8 @@ export default function CreateVocabModal({
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer>
-                <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create vocab'}
+                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
+                  Create vocabulary
                 </Button>
               </Modal.Footer>
             </form>

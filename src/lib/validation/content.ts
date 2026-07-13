@@ -1,3 +1,5 @@
+import { UserFacingError } from '../action-result';
+
 export const CONTENT_LIMITS = {
   deckTitle: 255,
   deckDescription: 255,
@@ -54,4 +56,3 @@ export function optionalLanguageTag(value: unknown, label: string): string | nul
 export function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
-import { UserFacingError } from '@/lib/action-result';

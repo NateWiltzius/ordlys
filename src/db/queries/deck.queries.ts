@@ -19,19 +19,13 @@ import {
   studyDeckAccess,
   viewDeckAccess,
 } from '@/db/queries/deck-access';
-import { DeckDomainError } from '@/lib/deck-domain';
-import { DECK_LIMITS } from '@/config/deck-limits';
+import { assertAuthoringCapacity } from '@/lib/authoring-quota';
+import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
 
 export const createDeck = async (deck: CreateDeck) => {
   await db.transaction(async tx => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${deck.ownerId}))`);
-    const [owned] = await tx
-      .select({ value: count(decks.id) })
-      .from(decks)
-      .where(and(eq(decks.ownerId, deck.ownerId), eq(decks.status, 'active')));
-    if (Number(owned.value) >= DECK_LIMITS.activeOwnedDecks) {
-      throw new DeckDomainError('DECK_QUOTA', 'Active deck limit reached.');
-    }
+    await lockAuthoringAccount(tx, deck.ownerId);
+    assertAuthoringCapacity(await getAuthoringUsage(tx, deck.ownerId), { activeDecks: 1 });
     const [created] = await tx
       .insert(decks)
       .values({

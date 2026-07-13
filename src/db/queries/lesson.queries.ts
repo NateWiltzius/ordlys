@@ -4,11 +4,12 @@ import { CreateLesson, EditLessonSummary, Lesson } from '@/types/lesson.types';
 import { and, count, eq, isNull, sql } from 'drizzle-orm';
 import { OrderDirection } from '@/types/order.types';
 import { DeckDomainError } from '@/lib/deck-domain';
-import { DECK_LIMITS } from '@/config/deck-limits';
+import { assertAuthoringCapacity } from '@/lib/authoring-quota';
+import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
 
 export const createLesson = async (lesson: CreateLesson, userId: string) => {
   await db.transaction(async tx => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
+    await lockAuthoringAccount(tx, userId);
     const [deck] = await tx
       .select({ id: decks.id })
       .from(decks)
@@ -21,13 +22,9 @@ export const createLesson = async (lesson: CreateLesson, userId: string) => {
     if (!deck) {
       throw new Error('Deck not found or access denied');
     }
-    const revisionRows = await tx.execute(sql`
-      select ((select count(*) from vocab_revisions where creator_id=${userId} and created_at >= now() - interval '1 day') +
-      (select count(*) from lesson_revisions where creator_id=${userId} and created_at >= now() - interval '1 day'))::int as value
-    `);
-    if (Number(revisionRows[0].value) >= DECK_LIMITS.revisionsPerDay) {
-      throw new DeckDomainError('REVISION_RATE_LIMIT', 'Daily revision limit reached.');
-    }
+    assertAuthoringCapacity(await getAuthoringUsage(tx, userId, lesson.deckId), {
+      revisionsToday: 1,
+    });
 
     const [order] = await tx
       .select({
@@ -89,7 +86,7 @@ export const getEditLessonSummaries = async (deckId: number): Promise<EditLesson
 
 export const updateLesson = async (lessonId: number, title: string, userId: string) => {
   return db.transaction(async tx => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
+    await lockAuthoringAccount(tx, userId);
     const [target] = await tx
       .select({ deckId: lessons.deckId })
       .from(lessons)
@@ -105,13 +102,9 @@ export const updateLesson = async (lessonId: number, title: string, userId: stri
       .for('update', { of: lessons })
       .limit(1);
     if (!target) throw new Error('Lesson not found or access denied.');
-    const revisionRows = await tx.execute(sql`
-      select ((select count(*) from vocab_revisions where creator_id=${userId} and created_at >= now() - interval '1 day') +
-      (select count(*) from lesson_revisions where creator_id=${userId} and created_at >= now() - interval '1 day'))::int as value
-    `);
-    if (Number(revisionRows[0].value) >= DECK_LIMITS.revisionsPerDay) {
-      throw new DeckDomainError('REVISION_RATE_LIMIT', 'Daily revision limit reached.');
-    }
+    assertAuthoringCapacity(await getAuthoringUsage(tx, userId, target.deckId), {
+      revisionsToday: 1,
+    });
     const [revision] = await tx
       .insert(lessonRevisions)
       .values({ lessonId, title, creatorId: userId })

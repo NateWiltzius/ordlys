@@ -12,6 +12,7 @@ import {
   vocabs,
 } from '@/db/schema';
 import { and, asc, eq, inArray } from 'drizzle-orm';
+import { vocabRevisionContentSelection } from '@/db/queries/vocab-content';
 
 const ANONYMOUS_OWNER_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -40,16 +41,7 @@ export async function getAccountExportData(userId: string) {
             lessonOrder: lessons.orderIndex,
             lessonRemovedAt: lessons.removedAt,
             vocabId: vocabs.id,
-            front: vocabRevisions.front,
-            back: vocabRevisions.back,
-            frontAlternatives: vocabRevisions.frontAlternatives,
-            backAlternatives: vocabRevisions.backAlternatives,
-            frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
-            backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
-            reading: vocabRevisions.reading,
-            tags: vocabRevisions.tags,
-            metadata: vocabRevisions.metadata,
-            notes: vocabRevisions.notes,
+            ...vocabRevisionContentSelection,
             vocabOrder: vocabs.orderIndex,
             vocabRemovedAt: vocabs.removedAt,
           })

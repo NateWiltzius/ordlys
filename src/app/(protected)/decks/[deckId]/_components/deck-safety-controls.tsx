@@ -251,11 +251,14 @@ export default function DeckSafetyControls({
         }}
       />
       <Modal.Backdrop isOpen={reportModalState.isOpen} onOpenChange={reportModalState.setOpen}>
-        <Modal.Container>
+        <Modal.Container scroll="inside">
           <Modal.Dialog className="sm:max-w-md">
             <Modal.CloseTrigger />
-            <Modal.Header>
+            <Modal.Header className="space-y-1">
               <Modal.Heading>Report this deck</Modal.Heading>
+              <p className="text-sm text-default-500">
+                Tell us what needs review. Your report will be associated with this deck.
+              </p>
             </Modal.Header>
             <form onSubmit={report}>
               <Modal.Body className="space-y-4">
@@ -285,6 +288,7 @@ export default function DeckSafetyControls({
                   variant="tertiary"
                   className="w-full sm:w-auto"
                   onPress={reportModalState.close}
+                  isDisabled={pending}
                 >
                   Cancel
                 </Button>
@@ -293,6 +297,7 @@ export default function DeckSafetyControls({
                   variant="primary"
                   className="w-full sm:w-auto"
                   isDisabled={!reportReason.trim()}
+                  isPending={pending}
                 >
                   Submit report
                 </Button>

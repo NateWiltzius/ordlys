@@ -1,16 +1,14 @@
 'use client';
 
-import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
-import { FormEvent, useState } from 'react';
-import { TextArea } from '@heroui/react';
-import { CreateDeckInput } from '@/types/deck.types';
-import { createDeckAction } from '@/server/deck.actions';
-import { useRouter } from 'next/navigation';
-import DeckLanguageSelect, {
-  languageFormValue,
-} from '@/app/(protected)/decks/_components/deck-language-select';
+import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields';
+import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import { createDeckAction } from '@/server/deck.actions';
+import { CreateDeckInput } from '@/types/deck.types';
+import { Button, Modal, useOverlayState } from '@heroui/react';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 
 type CreateDeckModalProps = {
   triggerLabel?: string;
@@ -22,21 +20,15 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleCreateDeck = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const form = e.currentTarget;
+  const handleCreateDeck = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
     const formData = new FormData(form);
-    const rawTitle = formData.get('title');
-    const rawDescription = formData.get('description');
-    const rawFrontLanguage = formData.get('frontLanguage');
-    const rawBackLanguage = formData.get('backLanguage');
-
     const deck: CreateDeckInput = {
-      title: rawTitle as string,
-      description: rawDescription as string,
-      frontLanguage: languageFormValue(rawFrontLanguage),
-      backLanguage: languageFormValue(rawBackLanguage),
+      title: String(formData.get('title') ?? ''),
+      description: String(formData.get('description') ?? ''),
+      frontLanguage: languageFormValue(formData.get('frontLanguage')),
+      backLanguage: languageFormValue(formData.get('backLanguage')),
       visibility: 'private',
     };
 
@@ -60,58 +52,48 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
 
   return (
     <Modal state={modalState}>
-      <Button variant="secondary">{triggerLabel}</Button>
-
+      <Button
+        variant="secondary"
+        onPress={() => {
+          setError(null);
+          modalState.open();
+        }}
+      >
+        {triggerLabel}
+      </Button>
       <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[360px]">
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className="sm:max-w-xl">
             <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>Create Deck</Modal.Heading>
+            <Modal.Header className="space-y-1">
+              <Modal.Heading>Create deck</Modal.Heading>
+              <p className="text-sm text-default-500">
+                Set up the basics now. You can change these details before or after publishing.
+              </p>
             </Modal.Header>
             <form onSubmit={handleCreateDeck}>
-              <Modal.Body className="flex flex-col gap-4">
-                <div>
-                  <Label className="text-sm text-default-600" htmlFor="title">
-                    Deck title
-                  </Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    placeholder="e.g. Norwegian Vocabulary"
-                    required
-                    maxLength={255}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-default-600" htmlFor="description">
-                    Description
-                  </Label>
-                  <TextArea
-                    id="description"
-                    name="description"
-                    placeholder="e.g. A deck for learning Norwegian vocabulary"
-                    required
-                    maxLength={255}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex flex-col gap-4">
-                  <DeckLanguageSelect name="frontLanguage" label="Front language" />
-                  <DeckLanguageSelect name="backLanguage" label="Back language" />
-                  <p className="mt-1 text-xs text-default-500">
-                    Choose “Not specified” for decks that are not tied to a language.
+              <Modal.Body className="space-y-6">
+                <DeckFormFields idPrefix="create-deck" autoFocus />
+                <div className="rounded-lg border border-default-200 bg-default-50 p-3 text-sm">
+                  <p className="font-medium text-default-700">Starts private</p>
+                  <p className="mt-1 text-xs leading-5 text-default-500">
+                    Only you can access this deck until you publish and choose a sharing option.
                   </p>
                 </div>
-                <p className="text-xs text-default-500">
-                  New decks start private. Publish when the first draft is ready.
-                </p>
-              </Modal.Body>
-              <Modal.Footer>
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
-                <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Deck'}
+              </Modal.Body>
+              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  className="w-full sm:w-auto"
+                  isDisabled={isSubmitting}
+                  onPress={modalState.close}
+                >
+                  Cancel
+                </Button>
+                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
+                  Create deck
                 </Button>
               </Modal.Footer>
             </form>

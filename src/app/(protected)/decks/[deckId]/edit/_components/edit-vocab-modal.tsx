@@ -23,7 +23,10 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) setReplaceIdentity(false);
+    if (isOpen) {
+      setReplaceIdentity(false);
+      setError(null);
+    }
   }, [isOpen, vocab?.id]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -71,8 +74,11 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
       <Modal.Container scroll="inside">
         <Modal.Dialog className="sm:max-w-xl">
           <Modal.CloseTrigger />
-          <Modal.Header>
+          <Modal.Header className="space-y-1">
             <Modal.Heading>Edit vocabulary</Modal.Heading>
+            <p className="text-sm text-default-500">
+              Update the word, quiz hints, and accepted answers.
+            </p>
           </Modal.Header>
           <form onSubmit={handleSubmit}>
             <Modal.Body className="space-y-6">

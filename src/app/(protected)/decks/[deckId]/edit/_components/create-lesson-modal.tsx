@@ -1,12 +1,13 @@
 'use client';
 
-import { createLessonAction } from '@/server/lesson.actions';
-import { CreateLesson } from '@/types/lesson.types';
-import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import LessonFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/lesson-form-fields';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import { createLessonAction } from '@/server/lesson.actions';
+import { CreateLesson } from '@/types/lesson.types';
+import { Button, Modal, useOverlayState } from '@heroui/react';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 
 type CreateLessonModalProps = {
   triggerLabel?: string;
@@ -22,29 +23,14 @@ export default function CreateLessonModal({
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleCreateLesson = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const title = String(new FormData(form).get('title') ?? '').trim();
+    if (!title) return;
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const rawTitle = formData.get('title');
-
-    if (typeof rawTitle !== 'string') {
-      return;
-    }
-
-    const title = rawTitle.trim();
-    if (!title) {
-      return;
-    }
-
-    const lesson: CreateLesson = {
-      title,
-      deckId,
-    };
-
+    const lesson: CreateLesson = { title, deckId };
     setIsSubmitting(true);
-
     try {
       setError(null);
       const result = await createLessonAction(lesson);
@@ -64,35 +50,42 @@ export default function CreateLessonModal({
 
   return (
     <Modal state={modalState}>
-      <Button variant="secondary" onPress={modalState.open}>
+      <Button
+        variant="secondary"
+        onPress={() => {
+          setError(null);
+          modalState.open();
+        }}
+      >
         {triggerLabel}
       </Button>
-
       <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[360px]">
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className="sm:max-w-md">
             <Modal.CloseTrigger />
-            <Modal.Header>
+            <Modal.Header className="space-y-1">
               <Modal.Heading>Create lesson</Modal.Heading>
+              <p className="text-sm text-default-500">
+                Add a focused section to organize this deck’s vocabulary.
+              </p>
             </Modal.Header>
-            <form onSubmit={handleCreateLesson}>
-              <Modal.Body>
-                <Label className="text-sm text-default-600" htmlFor="title">
-                  Lesson title
-                </Label>
-                <Input
-                  id="title"
-                  name="title"
-                  placeholder="e.g. Present tense verbs"
-                  required
-                  maxLength={255}
-                  className="w-full"
-                />
+            <form onSubmit={handleSubmit}>
+              <Modal.Body className="space-y-6">
+                <LessonFormFields id={`create-lesson-${deckId}-title`} autoFocus />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer>
-                <Button className="w-full sm:w-auto" type="submit" isDisabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create lesson'}
+              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  className="w-full sm:w-auto"
+                  isDisabled={isSubmitting}
+                  onPress={modalState.close}
+                >
+                  Cancel
+                </Button>
+                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
+                  Create lesson
                 </Button>
               </Modal.Footer>
             </form>

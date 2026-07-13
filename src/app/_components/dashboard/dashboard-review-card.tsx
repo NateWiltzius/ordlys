@@ -39,7 +39,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
       />
 
       <Modal.Backdrop>
-        <Modal.Container>
+        <Modal.Container scroll="inside">
           <Modal.Dialog className="sm:max-w-lg">
             <Modal.CloseTrigger />
             <Modal.Header>

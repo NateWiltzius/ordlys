@@ -1,68 +1,89 @@
 'use client';
 
-import { updateLessonAction } from '@/server/lesson.actions';
-import type { Lesson } from '@/types/lesson.types';
-import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import LessonFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/lesson-form-fields';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import { updateLessonAction } from '@/server/lesson.actions';
+import type { Lesson } from '@/types/lesson.types';
+import { Button, Modal, useOverlayState } from '@heroui/react';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 
 type Props = {
   lesson: Lesson;
 };
 
 export default function EditLessonModal({ lesson }: Props) {
-  const state = useOverlayState();
+  const modalState = useOverlayState();
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  async function submit(event: FormEvent<HTMLFormElement>) {
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const title = String(new FormData(event.currentTarget).get('title') ?? '');
+    const title = String(new FormData(event.currentTarget).get('title') ?? '').trim();
+    if (!title) return;
+
     try {
-      setPending(true);
+      setIsSubmitting(true);
       setError(null);
       const result = await updateLessonAction(lesson.id, title);
       if (isActionFailure(result)) {
         setError(result.message);
         return;
       }
-      state.close();
+      modalState.close();
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not rename the lesson.');
     } finally {
-      setPending(false);
+      setIsSubmitting(false);
     }
   }
+
   return (
-    <Modal state={state}>
-      <Button size="sm" variant="tertiary" onPress={state.open}>
+    <Modal state={modalState}>
+      <Button
+        size="sm"
+        variant="tertiary"
+        onPress={() => {
+          setError(null);
+          modalState.open();
+        }}
+      >
         Rename
       </Button>
       <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-[360px]">
+        <Modal.Container scroll="inside">
+          <Modal.Dialog className="sm:max-w-md">
             <Modal.CloseTrigger />
-            <Modal.Header>
+            <Modal.Header className="space-y-1">
               <Modal.Heading>Rename lesson</Modal.Heading>
+              <p className="text-sm text-default-500">
+                Update the lesson name without changing its vocabulary or learner progress.
+              </p>
             </Modal.Header>
-            <form onSubmit={submit}>
-              <Modal.Body>
-                <Label htmlFor={`lesson-title-${lesson.id}`}>Title</Label>
-                <Input
-                  id={`lesson-title-${lesson.id}`}
-                  name="title"
-                  defaultValue={lesson.title}
-                  required
-                  maxLength={255}
+            <form onSubmit={handleSubmit}>
+              <Modal.Body className="space-y-6">
+                <LessonFormFields
+                  id={`edit-lesson-${lesson.id}-title`}
+                  defaultTitle={lesson.title}
+                  autoFocus
                 />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer>
-                <Button type="submit" isPending={pending} className="w-full sm:w-auto">
-                  Save
+              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  className="w-full sm:w-auto"
+                  isDisabled={isSubmitting}
+                  onPress={modalState.close}
+                >
+                  Cancel
+                </Button>
+                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
+                  Save changes
                 </Button>
               </Modal.Footer>
             </form>

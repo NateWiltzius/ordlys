@@ -9,9 +9,10 @@ import {
 } from '@/db/schema';
 import { ImportedVocab } from '@/lib/deck-import/csv';
 import { CreateDeck } from '@/types/deck.types';
-import { and, count, eq, sql } from 'drizzle-orm';
-import { DECK_LIMITS } from '@/config/deck-limits';
-import { DeckDomainError } from '@/lib/deck-domain';
+import { eq } from 'drizzle-orm';
+import { vocabContentValues, vocabRevisionValues } from '@/db/queries/vocab-content';
+import { assertAuthoringCapacity } from '@/lib/authoring-quota';
+import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
 
 type ImportDeckInput = Pick<
   CreateDeck,
@@ -20,32 +21,21 @@ type ImportDeckInput = Pick<
 
 export async function importDeck(input: ImportDeckInput, rows: ImportedVocab[]): Promise<number> {
   return db.transaction(async tx => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${input.ownerId}))`);
-    const [[owned], [accountVocabs], revisionRows] = await Promise.all([
-      tx
-        .select({ value: count(decks.id) })
-        .from(decks)
-        .where(and(eq(decks.ownerId, input.ownerId), eq(decks.status, 'active'))),
-      tx
-        .select({ value: count(vocabs.id) })
-        .from(vocabs)
-        .innerJoin(lessons, eq(lessons.id, vocabs.lessonId))
-        .innerJoin(decks, eq(decks.id, lessons.deckId))
-        .where(eq(decks.ownerId, input.ownerId)),
-      tx.execute(sql`
-        select ((select count(*) from vocab_revisions where creator_id=${input.ownerId} and created_at >= now() - interval '1 day') +
-        (select count(*) from lesson_revisions where creator_id=${input.ownerId} and created_at >= now() - interval '1 day'))::int as value
-      `),
-    ]);
+    await lockAuthoringAccount(tx, input.ownerId);
     const lessonCount = new Set(rows.map(row => row.lesson)).size;
-    if (Number(owned.value) >= DECK_LIMITS.activeOwnedDecks)
-      throw new DeckDomainError('DECK_QUOTA', 'Active deck limit reached.');
-    if (rows.length > DECK_LIMITS.cardsPerDeck)
-      throw new DeckDomainError('CARD_QUOTA', 'Import exceeds the deck card limit.');
-    if (Number(accountVocabs.value) + rows.length > DECK_LIMITS.logicalVocabsPerAccount)
-      throw new DeckDomainError('VOCAB_QUOTA', 'Account vocabulary limit reached.');
-    if (Number(revisionRows[0].value) + rows.length + lessonCount > DECK_LIMITS.revisionsPerDay)
-      throw new DeckDomainError('REVISION_RATE_LIMIT', 'Import exceeds the daily revision limit.');
+    assertAuthoringCapacity(
+      await getAuthoringUsage(tx, input.ownerId),
+      {
+        activeDecks: 1,
+        deckCards: rows.length,
+        logicalVocabs: rows.length,
+        revisionsToday: rows.length + lessonCount,
+      },
+      {
+        deckCards: { message: 'Import exceeds the deck card limit.' },
+        revisionsToday: { message: 'Import exceeds the daily revision limit.' },
+      },
+    );
     const [deck] = await tx
       .insert(decks)
       .values({ ...input, visibility: 'private' })
@@ -94,16 +84,7 @@ export async function importDeck(input: ImportDeckInput, rows: ImportedVocab[]):
       if (!lessonId) throw new Error(`Could not create the lesson “${row.lesson}”.`);
       return {
         lessonId,
-        front: row.front,
-        back: row.back,
-        reading: row.reading,
-        frontAlternatives: row.frontAlternatives,
-        backAlternatives: row.backAlternatives,
-        frontToBackQuizHint: row.frontToBackQuizHint,
-        backToFrontQuizHint: row.backToFrontQuizHint,
-        tags: row.tags,
-        metadata: row.metadata,
-        notes: row.notes,
+        ...vocabContentValues(row),
         orderIndex,
       };
     });
@@ -114,20 +95,9 @@ export async function importDeck(input: ImportDeckInput, rows: ImportedVocab[]):
       const revisions = await tx
         .insert(vocabRevisions)
         .values(
-          inserted.map((created, index) => ({
-            vocabId: created.id,
-            front: batch[index].front,
-            back: batch[index].back,
-            frontAlternatives: batch[index].frontAlternatives,
-            backAlternatives: batch[index].backAlternatives,
-            frontToBackQuizHint: batch[index].frontToBackQuizHint,
-            backToFrontQuizHint: batch[index].backToFrontQuizHint,
-            reading: batch[index].reading,
-            tags: batch[index].tags,
-            metadata: batch[index].metadata,
-            notes: batch[index].notes,
-            creatorId: input.ownerId,
-          })),
+          inserted.map((created, index) =>
+            vocabRevisionValues(created.id, batch[index], input.ownerId),
+          ),
         )
         .returning({ id: vocabRevisions.id, vocabId: vocabRevisions.vocabId });
       for (const revision of revisions) {

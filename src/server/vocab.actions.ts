@@ -19,10 +19,8 @@ import { CreateVocab, UpdateVocabInput } from '@/types/vocab.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
-import { CONTENT_LIMITS, optionalText, requiredText } from '@/lib/validation/content';
-import type { JsonValue, VocabMetadata } from '@/db/schema';
-import { UserFacingError, withExpectedError } from '@/lib/action-result';
-import { isJsonValue } from '@/lib/validation/json';
+import { withExpectedError } from '@/lib/action-result';
+import { normalizeVocabContent, normalizeVocabUpdate } from '@/lib/vocab/normalize-vocab-content';
 
 export async function getLessonVocabularyAction(deckId: number, lessonId: number) {
   const parsedDeckId = parsePositiveInteger(deckId);
@@ -76,54 +74,15 @@ export async function getEditableLessonVocabularyAction(deckId: number, lessonId
 
 export async function createVocabAction(vocab: CreateVocab) {
   return withExpectedError(async () => {
-    const {
-      front,
-      back,
-      frontAlternatives,
-      backAlternatives,
-      frontToBackQuizHint,
-      backToFrontQuizHint,
-      lessonId,
-      reading,
-      tags,
-      metadata,
-    } = vocab;
-
-    const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
-    const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
-    const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
-    const normalizedFrontToBackQuizHint = optionalText(
-      frontToBackQuizHint,
-      'Front to back quiz hint',
-      CONTENT_LIMITS.vocabText,
-    );
-    const normalizedBackToFrontQuizHint = optionalText(
-      backToFrontQuizHint,
-      'Back to front quiz hint',
-      CONTENT_LIMITS.vocabText,
-    );
-    const normalizedNotes = optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes);
-
+    const { lessonId } = vocab;
     if (typeof lessonId !== 'number' || !Number.isInteger(lessonId) || lessonId <= 0) {
       throw new Error('Invalid lesson ID.');
     }
 
-    const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
-    const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, normalizedBack);
-
     const deckId = await createVocab(
       {
         lessonId,
-        front: normalizedFront,
-        back: normalizedBack,
-        frontAlternatives: normalizedFrontAlternatives,
-        backAlternatives: normalizedBackAlternatives,
-        frontToBackQuizHint: normalizedFrontToBackQuizHint,
-        backToFrontQuizHint: normalizedBackToFrontQuizHint,
-        reading: normalizedReading,
-        tags: normalizeTags(tags),
-        metadata: normalizeMetadata(metadata),
-        notes: normalizedNotes,
+        ...normalizeVocabContent(vocab),
       },
       await getCurrentUserId(),
     );
@@ -153,50 +112,9 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
       throw new Error('Invalid vocabulary ID.');
     }
 
-    const {
-      front,
-      back,
-      frontAlternatives,
-      backAlternatives,
-      frontToBackQuizHint,
-      backToFrontQuizHint,
-      reading,
-      tags,
-      metadata,
-    } = vocab;
-
-    const normalizedFront = requiredText(front, 'Front text', CONTENT_LIMITS.vocabText);
-    const normalizedBack = requiredText(back, 'Back text', CONTENT_LIMITS.vocabText);
-    const normalizedReading = optionalText(reading, 'Reading', CONTENT_LIMITS.vocabText);
-    const normalizedFrontToBackQuizHint = optionalText(
-      frontToBackQuizHint,
-      'Front to back quiz hint',
-      CONTENT_LIMITS.vocabText,
-    );
-    const normalizedBackToFrontQuizHint = optionalText(
-      backToFrontQuizHint,
-      'Back to front quiz hint',
-      CONTENT_LIMITS.vocabText,
-    );
-    const normalizedNotes = optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes);
-
-    const normalizedFrontAlternatives = normalizeAlternatives(frontAlternatives, normalizedFront);
-    const normalizedBackAlternatives = normalizeAlternatives(backAlternatives, normalizedBack);
-
     const deckId = await updateVocab(
       vocabId,
-      {
-        front: normalizedFront,
-        back: normalizedBack,
-        frontAlternatives: normalizedFrontAlternatives,
-        backAlternatives: normalizedBackAlternatives,
-        frontToBackQuizHint: normalizedFrontToBackQuizHint,
-        backToFrontQuizHint: normalizedBackToFrontQuizHint,
-        reading: normalizedReading,
-        tags: tags === undefined ? undefined : normalizeTags(tags),
-        metadata: metadata === undefined ? undefined : normalizeMetadata(metadata),
-        notes: vocab.notes === undefined ? undefined : normalizedNotes,
-      },
+      normalizeVocabUpdate(vocab),
       await getCurrentUserId(),
     );
 
@@ -219,26 +137,7 @@ export async function replaceVocabAction(vocabId: number, vocab: UpdateVocabInpu
   return withExpectedError(async () => {
     const parsedVocabId = parsePositiveInteger(vocabId);
     if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
-    const normalized: UpdateVocabInput = {
-      front: requiredText(vocab.front, 'Front text', CONTENT_LIMITS.vocabText),
-      back: requiredText(vocab.back, 'Back text', CONTENT_LIMITS.vocabText),
-      frontAlternatives: normalizeAlternatives(vocab.frontAlternatives, vocab.front),
-      backAlternatives: normalizeAlternatives(vocab.backAlternatives, vocab.back),
-      frontToBackQuizHint: optionalText(
-        vocab.frontToBackQuizHint,
-        'Front to back quiz hint',
-        CONTENT_LIMITS.vocabText,
-      ),
-      backToFrontQuizHint: optionalText(
-        vocab.backToFrontQuizHint,
-        'Back to front quiz hint',
-        CONTENT_LIMITS.vocabText,
-      ),
-      reading: optionalText(vocab.reading, 'Reading', CONTENT_LIMITS.vocabText),
-      tags: normalizeTags(vocab.tags),
-      metadata: normalizeMetadata(vocab.metadata),
-      notes: optionalText(vocab.notes, 'Notes', CONTENT_LIMITS.vocabNotes),
-    };
+    const normalized = normalizeVocabContent(vocab);
     const result = await replaceVocab(parsedVocabId, normalized, await getCurrentUserId());
     revalidatePath(`/decks/${result.deckId}`);
     revalidatePath(`/decks/${result.deckId}/edit`);
@@ -253,97 +152,4 @@ export async function restoreVocabAction(vocabId: number) {
     const deckId = await restoreVocab(parsedVocabId, await getCurrentUserId());
     revalidatePath(`/decks/${deckId}/edit`);
   });
-}
-
-function normalizeAlternatives(
-  alternatives: string[] | undefined,
-  canonicalAnswer: string,
-): string[] {
-  if (alternatives === undefined) {
-    return [];
-  }
-
-  if (!Array.isArray(alternatives) || alternatives.length > CONTENT_LIMITS.alternatives) {
-    throw new UserFacingError(
-      'VALIDATION_ERROR',
-      `Alternatives must contain at most ${CONTENT_LIMITS.alternatives} answers.`,
-    );
-  }
-
-  const canonicalNormalized = canonicalAnswer.trim().normalize('NFKC').toLowerCase();
-  const uniqueAlternatives = new Map<string, string>();
-
-  for (const alternative of alternatives) {
-    if (typeof alternative !== 'string') {
-      throw new UserFacingError('VALIDATION_ERROR', 'Each alternative must be text.');
-    }
-
-    const trimmedAlternative = alternative.trim();
-    if (!trimmedAlternative) continue;
-    if (trimmedAlternative.length > CONTENT_LIMITS.vocabText) {
-      throw new UserFacingError(
-        'VALIDATION_ERROR',
-        `Each alternative must be ${CONTENT_LIMITS.vocabText} characters or fewer.`,
-      );
-    }
-
-    const normalizedAlternative = trimmedAlternative.normalize('NFKC').toLowerCase();
-    if (normalizedAlternative !== canonicalNormalized) {
-      uniqueAlternatives.set(normalizedAlternative, trimmedAlternative);
-    }
-  }
-
-  return [...uniqueAlternatives.values()];
-}
-
-function normalizeTags(tags: string[] | undefined): string[] {
-  if (tags === undefined) {
-    return [];
-  }
-
-  if (!Array.isArray(tags)) {
-    throw new UserFacingError('VALIDATION_ERROR', 'Tags must be a list of text values.');
-  }
-
-  const uniqueTags = new Map<string, string>();
-  for (const tag of tags) {
-    if (typeof tag !== 'string') {
-      throw new UserFacingError('VALIDATION_ERROR', 'Each tag must be text.');
-    }
-
-    const normalizedTag = tag.trim();
-    if (!normalizedTag) continue;
-    if (normalizedTag.length > CONTENT_LIMITS.vocabTag) {
-      throw new UserFacingError(
-        'VALIDATION_ERROR',
-        `Each tag must be ${CONTENT_LIMITS.vocabTag} characters or fewer.`,
-      );
-    }
-
-    uniqueTags.set(normalizedTag.normalize('NFKC').toLowerCase(), normalizedTag);
-  }
-
-  return [...uniqueTags.values()];
-}
-
-function normalizeMetadata(metadata: VocabMetadata | null | undefined): VocabMetadata {
-  if (metadata === undefined || metadata === null) {
-    return {};
-  }
-
-  if (!isPlainObject(metadata)) {
-    throw new UserFacingError('VALIDATION_ERROR', 'Metadata must be an object.');
-  }
-
-  for (const value of Object.values(metadata)) {
-    if (!isJsonValue(value)) {
-      throw new UserFacingError('VALIDATION_ERROR', 'Metadata must contain only JSON values.');
-    }
-  }
-
-  return metadata;
-}
-
-function isPlainObject(value: unknown): value is Record<string, JsonValue> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

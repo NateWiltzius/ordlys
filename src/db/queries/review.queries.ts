@@ -21,6 +21,10 @@ import {
 } from '@/db/queries/deck-access';
 import { getReviewForecastEnd } from '@/lib/review-forecast';
 import { buildLessonProgress } from '@/lib/srs/lesson-progress';
+import {
+  vocabRevisionExtendedSelection,
+  vocabRevisionQuizSelection,
+} from '@/db/queries/vocab-content';
 
 export async function getLessonProgressForDeck(
   deckId: number,
@@ -78,15 +82,9 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
   return db
     .select({
       id: vocabs.id,
-      front: vocabRevisions.front,
-      back: vocabRevisions.back,
-      frontAlternatives: vocabRevisions.frontAlternatives,
-      backAlternatives: vocabRevisions.backAlternatives,
-      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
-      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
-      reading: vocabRevisions.reading,
-      tags: vocabRevisions.tags,
-      notes: vocabRevisions.notes,
+      ...vocabRevisionQuizSelection,
+      tags: vocabRevisionExtendedSelection.tags,
+      notes: vocabRevisionExtendedSelection.notes,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
       frontLanguage: decks.frontLanguage,
@@ -358,13 +356,7 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
   return db
     .select({
       id: vocabs.id,
-      front: vocabRevisions.front,
-      back: vocabRevisions.back,
-      frontAlternatives: vocabRevisions.frontAlternatives,
-      backAlternatives: vocabRevisions.backAlternatives,
-      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
-      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
-      reading: vocabRevisions.reading,
+      ...vocabRevisionQuizSelection,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
       stateId: userVocabState.id,
@@ -404,13 +396,7 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
   return db
     .select({
       id: vocabs.id,
-      front: vocabRevisions.front,
-      back: vocabRevisions.back,
-      frontAlternatives: vocabRevisions.frontAlternatives,
-      backAlternatives: vocabRevisions.backAlternatives,
-      frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
-      backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
-      reading: vocabRevisions.reading,
+      ...vocabRevisionQuizSelection,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
       frontLanguage: decks.frontLanguage,

@@ -45,11 +45,15 @@ export default function QuizMode({
   tone = 'neutral',
   allowAnswerOverride = true,
 }: Props) {
+  // A server action can reconcile this route with fresh due-card data (for example when an
+  // auth cookie is refreshed). Keep the cards that started this session so that reconciliation
+  // does not replace the active queue and reset the learner's in-memory progress.
+  const [sessionQuizItems] = useState(() => quizItems);
   const [answer, setAnswer] = useState('');
   const [failedCardIds, setFailedCardIds] = useState<Set<number>>(() => new Set());
   const [quizQueue, setQuizQueue] = useState<QuizQueueItem[] | null>(null);
   const [quizProgress, setQuizProgress] = useState<QuizProgress>(() =>
-    buildQuizProgress(quizItems),
+    buildQuizProgress(sessionQuizItems),
   );
   const [attemptStats, setAttemptStats] = useState<QuizAttemptStats>({
     totalAttempts: 0,
@@ -74,8 +78,8 @@ export default function QuizMode({
     setHasMounted(true);
     setAnswer('');
     setFailedCardIds(new Set());
-    setQuizQueue(shuffleArray(buildQuizQueue(quizItems)));
-    setQuizProgress(buildQuizProgress(quizItems));
+    setQuizQueue(shuffleArray(buildQuizQueue(sessionQuizItems)));
+    setQuizProgress(buildQuizProgress(sessionQuizItems));
     setAttemptStats({
       totalAttempts: 0,
       correctAttempts: 0,
@@ -85,7 +89,7 @@ export default function QuizMode({
     setPendingSaveCount(0);
     setSrsUpdate(null);
     continueHandledRef.current = false;
-  }, [quizItems]);
+  }, [sessionQuizItems]);
 
   const currentQuizItem = quizQueue?.[0];
   const exitQuizButton = (
@@ -102,7 +106,7 @@ export default function QuizMode({
 
   const progressStats: QuizProgressStats = useMemo(() => {
     const progressItems = Object.values(quizProgress);
-    const totalCards = quizItems.length;
+    const totalCards = sessionQuizItems.length;
     const totalDirections = totalCards * 2;
 
     const passedDirections = progressItems.reduce((total, item) => {
@@ -124,7 +128,7 @@ export default function QuizMode({
           ? 0
           : Math.round((attemptStats.correctAttempts / attemptStats.totalAttempts) * 100),
     };
-  }, [quizItems.length, quizProgress, attemptStats]);
+  }, [sessionQuizItems.length, quizProgress, attemptStats]);
 
   useEffect(() => {
     if (quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0) {
@@ -190,7 +194,7 @@ export default function QuizMode({
       setQuizQueue(prev => prev?.slice(1) ?? []);
 
       if (isNowFullyPassed && !wasAlreadyFullyPassed) {
-        const completedVocab = quizItems.find(item => item.id === quizItem.cardId);
+        const completedVocab = sessionQuizItems.find(item => item.id === quizItem.cardId);
         const vocabLabel = completedVocab?.front ?? quizItem.prompt;
 
         setPendingSaveCount(count => count + 1);
@@ -318,8 +322,8 @@ export default function QuizMode({
             hint={currentQuizItem.hint}
             answer={answer}
             direction={currentQuizItem.direction}
-            frontLanguage={quizItems[0]?.frontLanguage ?? null}
-            backLanguage={quizItems[0]?.backLanguage ?? null}
+            frontLanguage={sessionQuizItems[0]?.frontLanguage ?? null}
+            backLanguage={sessionQuizItems[0]?.backLanguage ?? null}
             tone={tone}
             onAnswerChange={setAnswer}
             onSubmit={handleAnswerSubmit}
