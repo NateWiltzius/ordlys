@@ -5,6 +5,7 @@ import { PropsWithChildren, Suspense } from 'react';
 import Navbar from '@/app/_components/navbar';
 import Link from 'next/link';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { OPEN_GRAPH_IMAGE, SITE_URL, TWITTER_IMAGE } from '@/lib/site';
 
 const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <Navbar />
         </Suspense>
         <Analytics />
+        <SpeedInsights />
         <main className="flex-1">{children}</main>
         <footer
           data-app-footer
