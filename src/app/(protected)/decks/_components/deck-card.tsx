@@ -131,9 +131,7 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
   }[relationship] as DeckBadgeKind[];
 
   if (following) relationshipBadges.push('following');
-  if (relationship === 'following' || relationship === 'discover') {
-    relationshipBadges.push('public');
-  }
+  relationshipBadges.push(deck.visibility);
 
   return (
     <Card className="flex h-full w-full flex-col border border-default-200 shadow-sm">

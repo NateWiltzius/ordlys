@@ -13,9 +13,15 @@ type Props = {
   idPrefix: string;
   defaults?: DeckFormDefaults;
   autoFocus?: boolean;
+  isDisabled?: boolean;
 };
 
-export default function DeckFormFields({ idPrefix, defaults, autoFocus = false }: Props) {
+export default function DeckFormFields({
+  idPrefix,
+  defaults,
+  autoFocus = false,
+  isDisabled = false,
+}: Props) {
   const titleId = `${idPrefix}-title`;
   const descriptionId = `${idPrefix}-description`;
 
@@ -37,6 +43,7 @@ export default function DeckFormFields({ idPrefix, defaults, autoFocus = false }
             maxLength={CONTENT_LIMITS.deckTitle}
             className="w-full"
             autoFocus={autoFocus}
+            disabled={isDisabled}
           />
         </div>
 
@@ -55,6 +62,7 @@ export default function DeckFormFields({ idPrefix, defaults, autoFocus = false }
             maxLength={CONTENT_LIMITS.deckDescription}
             rows={3}
             className="w-full"
+            disabled={isDisabled}
           />
         </div>
       </fieldset>
@@ -70,11 +78,13 @@ export default function DeckFormFields({ idPrefix, defaults, autoFocus = false }
             name="frontLanguage"
             label="Front language"
             defaultValue={defaults?.frontLanguage}
+            isDisabled={isDisabled}
           />
           <DeckLanguageSelect
             name="backLanguage"
             label="Back language"
             defaultValue={defaults?.backLanguage}
+            isDisabled={isDisabled}
           />
         </div>
       </fieldset>

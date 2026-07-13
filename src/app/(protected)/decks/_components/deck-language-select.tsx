@@ -9,16 +9,22 @@ type Props = {
   name: 'frontLanguage' | 'backLanguage';
   label: string;
   defaultValue?: string | null;
+  isDisabled?: boolean;
 };
 
-export default function DeckLanguageSelect({ name, label, defaultValue }: Props) {
+export default function DeckLanguageSelect({
+  name,
+  label,
+  defaultValue,
+  isDisabled = false,
+}: Props) {
   const selectedValue = defaultValue || NO_LANGUAGE_VALUE;
   const hasCustomValue =
     selectedValue !== NO_LANGUAGE_VALUE &&
     !LANGUAGE_OPTIONS.some(language => language.code === selectedValue);
 
   return (
-    <Select name={name} defaultValue={selectedValue}>
+    <Select name={name} defaultValue={selectedValue} isDisabled={isDisabled}>
       <Label>{label}</Label>
       <Select.Trigger>
         <Select.Value />

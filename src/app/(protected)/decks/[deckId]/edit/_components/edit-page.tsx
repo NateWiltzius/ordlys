@@ -4,7 +4,7 @@ import LessonCard from '@/app/(protected)/decks/[deckId]/edit/_components/lesson
 import CreateLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/create-lesson-modal';
 import PageHeader from '@/components/shared/layout/page-header';
 import { EditLessonSummary } from '@/types/lesson.types';
-import { Card } from '@heroui/react';
+import { Accordion, Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
 import { moveLessonAction } from '@/server/lesson.actions';
@@ -43,6 +43,7 @@ export default function EditPage({
 }: Props) {
   const router = useRouter();
   const [orderedLessons, setOrderedLessons] = useState(lessons);
+  const [expandedLessonKeys, setExpandedLessonKeys] = useState<Set<string | number>>(new Set());
   const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
@@ -80,7 +81,7 @@ export default function EditPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Edit deck"
+        title={`Editing ${deck.title}`}
         description={
           deck.sourceReleaseId
             ? 'This is your independent editable copy. Your changes stay here, and updates from the original author will not be applied.'
@@ -128,7 +129,10 @@ export default function EditPage({
               action={<CreateLessonModal deckId={parsedDeckId} />}
             />
           ) : (
-            <div className="space-y-3">
+            <Accordion
+              expandedKeys={expandedLessonKeys}
+              onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}
+            >
               {orderedLessons.map((lesson, index) => (
                 <LessonCard
                   key={lesson.id}
@@ -138,9 +142,10 @@ export default function EditPage({
                   canMoveDown={index < orderedLessons.length - 1}
                   isLessonOrderPending={movingLessonId !== null}
                   onMoveLesson={handleMoveLesson}
+                  isExpanded={expandedLessonKeys.has(String(lesson.id))}
                 />
               ))}
-            </div>
+            </Accordion>
           )}
         </Card.Content>
       </Card>

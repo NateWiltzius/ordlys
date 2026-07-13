@@ -23,9 +23,9 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { Button, Card, Chip } from '@heroui/react';
+import { Accordion, Button, Chip } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { isActionFailure } from '@/lib/action-result';
 
 type Props = {
@@ -35,6 +35,7 @@ type Props = {
   canMoveDown: boolean;
   isLessonOrderPending: boolean;
   onMoveLesson: (lessonId: number, direction: OrderDirection) => void;
+  isExpanded: boolean;
 };
 
 export default function LessonCard({
@@ -44,9 +45,9 @@ export default function LessonCard({
   canMoveDown,
   isLessonOrderPending,
   onMoveLesson,
+  isExpanded,
 }: Props) {
   const router = useRouter();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [orderedVocabs, setOrderedVocabs] = useState<Vocab[] | null>(null);
@@ -55,10 +56,11 @@ export default function LessonCard({
   const [selectedVocab, setSelectedVocab] = useState<Vocab | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<'lesson' | Vocab | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const loadRequested = useRef(false);
 
   useEffect(() => {
     setOrderedVocabs(null);
-    setIsExpanded(false);
+    loadRequested.current = false;
   }, [lesson.id]);
 
   const loadVocabulary = useCallback(
@@ -79,11 +81,16 @@ export default function LessonCard({
     [deckId, lesson.id],
   );
 
-  const handleToggle = () => {
-    const nextExpanded = !isExpanded;
-    setIsExpanded(nextExpanded);
-    if (nextExpanded && orderedVocabs === null && !isLoading) void loadVocabulary();
-  };
+  useEffect(() => {
+    if (!isExpanded) {
+      loadRequested.current = false;
+      return;
+    }
+    if (loadRequested.current || orderedVocabs !== null || isLoading) return;
+
+    loadRequested.current = true;
+    void loadVocabulary();
+  }, [isExpanded, isLoading, loadVocabulary, orderedVocabs]);
 
   const handleDeleteLesson = async () => {
     if (isDeleting) return;
@@ -148,64 +155,52 @@ export default function LessonCard({
   };
 
   const vocabCount = orderedVocabs?.length ?? lesson.vocabCount;
-  const contentId = `lesson-editor-${lesson.id}`;
+  const lessonKey = String(lesson.id);
 
   return (
-    <Card variant="secondary" className="border border-default-200 shadow-none">
-      <Card.Header className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <Card.Title className="text-base">{lesson.title}</Card.Title>
-          <Card.Description>
-            {isExpanded
-              ? 'Manage the cards in this lesson.'
-              : 'Expand to load and edit vocabulary.'}
-          </Card.Description>
-        </div>
+    <Accordion.Item id={lessonKey}>
+      <Accordion.Heading>
+        <Accordion.Trigger>
+          <span className="flex min-w-0 flex-1 items-center justify-between gap-4 pr-2 text-left">
+            <span className="min-w-0 break-words font-medium">{lesson.title}</span>
+            <Chip size="sm" variant="soft" className="shrink-0">
+              {vocabCount} {vocabCount === 1 ? 'card' : 'cards'}
+            </Chip>
+          </span>
+          <Accordion.Indicator />
+        </Accordion.Trigger>
+      </Accordion.Heading>
 
-        <div className="flex flex-wrap items-center gap-1">
-          <EditLessonModal lesson={lesson} />
-          <Chip size="sm" variant="soft">
-            {vocabCount} {vocabCount === 1 ? 'card' : 'cards'}
-          </Chip>
-          <Button
-            size="sm"
-            variant="tertiary"
-            isIconOnly
-            isDisabled={!canMoveUp || isLessonOrderPending}
-            aria-label={`Move ${lesson.title} up`}
-            onPress={() => onMoveLesson(lesson.id, 'up')}
-          >
-            <ChevronUpIcon className="size-4" aria-hidden="true" />
-          </Button>
-          <Button
-            size="sm"
-            variant="tertiary"
-            isIconOnly
-            isDisabled={!canMoveDown || isLessonOrderPending}
-            aria-label={`Move ${lesson.title} down`}
-            onPress={() => onMoveLesson(lesson.id, 'down')}
-          >
-            <ChevronDownIcon className="size-4" aria-hidden="true" />
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            aria-expanded={isExpanded}
-            aria-controls={contentId}
-            onPress={handleToggle}
-          >
-            {isExpanded ? 'Collapse' : 'Edit cards'}
-            <ChevronDownIcon
-              className={`size-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-              aria-hidden="true"
-            />
-          </Button>
-        </div>
-      </Card.Header>
+      <Accordion.Panel>
+        <Accordion.Body>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-default-500">Manage the cards in this lesson.</p>
+              <div className="flex flex-wrap items-center gap-1">
+                <EditLessonModal lesson={lesson} />
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  isIconOnly
+                  isDisabled={!canMoveUp || isLessonOrderPending}
+                  aria-label={`Move ${lesson.title} up`}
+                  onPress={() => onMoveLesson(lesson.id, 'up')}
+                >
+                  <ChevronUpIcon className="size-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  isIconOnly
+                  isDisabled={!canMoveDown || isLessonOrderPending}
+                  aria-label={`Move ${lesson.title} down`}
+                  onPress={() => onMoveLesson(lesson.id, 'down')}
+                >
+                  <ChevronDownIcon className="size-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
 
-      {isExpanded ? (
-        <>
-          <Card.Content id={contentId} className="space-y-3 border-t border-default-200 p-4">
             {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
 
             {isLoading ? (
@@ -262,55 +257,55 @@ export default function LessonCard({
                 Try loading again
               </Button>
             )}
-          </Card.Content>
 
-          <Card.Footer className="flex flex-wrap gap-2 border-t border-default-200 p-4">
-            <CreateVocabModal lessonId={lesson.id} onCreated={() => loadVocabulary(false)} />
-            <Button
-              size="sm"
-              variant="danger-soft"
-              isPending={isDeleting}
-              onPress={() => setDeleteTarget('lesson')}
-            >
-              Delete lesson
-            </Button>
-          </Card.Footer>
+            <div className="flex flex-wrap gap-2 border-t border-default-200 pt-4">
+              <CreateVocabModal lessonId={lesson.id} onCreated={() => loadVocabulary(false)} />
+              <Button
+                size="sm"
+                variant="danger-soft"
+                isPending={isDeleting}
+                onPress={() => setDeleteTarget('lesson')}
+              >
+                Delete lesson
+              </Button>
+            </div>
 
-          <EditVocabModal
-            vocab={selectedVocab}
-            isOpen={selectedVocab !== null}
-            onOpenChange={isOpen => {
-              if (!isOpen) setSelectedVocab(null);
-            }}
-            onSaved={() => loadVocabulary(false)}
-          />
-          <ConfirmationDialog
-            isOpen={deleteTarget !== null}
-            onOpenChange={isOpen => {
-              if (!isOpen && !isDeleting && deletingVocabId === null) setDeleteTarget(null);
-            }}
-            title={
-              deleteTarget === 'lesson'
-                ? `Delete lesson “${lesson.title}”?`
-                : `Delete “${deleteTarget?.front ?? ''}”?`
-            }
-            description={
-              deleteTarget === 'lesson'
-                ? 'The lesson and all of its vocabulary will be deleted.'
-                : 'This vocabulary item will be permanently deleted. This cannot be undone.'
-            }
-            confirmLabel={deleteTarget === 'lesson' ? 'Delete lesson' : 'Delete vocabulary'}
-            isPending={isDeleting || deletingVocabId !== null}
-            onConfirm={async () => {
-              const target = deleteTarget;
-              if (target === 'lesson') await handleDeleteLesson();
-              else if (target) await handleDeleteVocab(target);
-              setDeleteTarget(null);
-            }}
-          />
-        </>
-      ) : null}
-    </Card>
+            <EditVocabModal
+              vocab={selectedVocab}
+              isOpen={selectedVocab !== null}
+              onOpenChange={isOpen => {
+                if (!isOpen) setSelectedVocab(null);
+              }}
+              onSaved={() => loadVocabulary(false)}
+            />
+            <ConfirmationDialog
+              isOpen={deleteTarget !== null}
+              onOpenChange={isOpen => {
+                if (!isOpen && !isDeleting && deletingVocabId === null) setDeleteTarget(null);
+              }}
+              title={
+                deleteTarget === 'lesson'
+                  ? `Delete lesson “${lesson.title}”?`
+                  : `Delete “${deleteTarget?.front ?? ''}”?`
+              }
+              description={
+                deleteTarget === 'lesson'
+                  ? 'The lesson and all of its vocabulary will be deleted.'
+                  : 'This vocabulary item will be permanently deleted. This cannot be undone.'
+              }
+              confirmLabel={deleteTarget === 'lesson' ? 'Delete lesson' : 'Delete vocabulary'}
+              isPending={isDeleting || deletingVocabId !== null}
+              onConfirm={async () => {
+                const target = deleteTarget;
+                if (target === 'lesson') await handleDeleteLesson();
+                else if (target) await handleDeleteVocab(target);
+                setDeleteTarget(null);
+              }}
+            />
+          </div>
+        </Accordion.Body>
+      </Accordion.Panel>
+    </Accordion.Item>
   );
 }
 

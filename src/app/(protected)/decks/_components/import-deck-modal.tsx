@@ -5,7 +5,7 @@ import { languageFormValue } from '@/app/(protected)/decks/_components/deck-lang
 import { importCsvDeckAction } from '@/server/deck-import.actions';
 import { Button, Label, Modal, Spinner, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 
@@ -18,16 +18,20 @@ export default function ImportDeckModal() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submissionLocked = useRef(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    formData.set('frontLanguage', languageFormValue(formData.get('frontLanguage')));
-    formData.set('backLanguage', languageFormValue(formData.get('backLanguage')));
+    if (submissionLocked.current) return;
+    submissionLocked.current = true;
 
     try {
       setPending(true);
       setError(null);
+      const formData = new FormData(event.currentTarget);
+      formData.set('frontLanguage', languageFormValue(formData.get('frontLanguage')));
+      formData.set('backLanguage', languageFormValue(formData.get('backLanguage')));
+
       const deckId = await importCsvDeckAction(formData);
       if (isActionFailure(deckId)) {
         setError(deckId.message);
@@ -38,6 +42,7 @@ export default function ImportDeckModal() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not import the deck.');
     } finally {
+      submissionLocked.current = false;
       setPending(false);
     }
   }
@@ -53,7 +58,7 @@ export default function ImportDeckModal() {
       >
         Import CSV
       </Button>
-      <Modal.Backdrop isDismissable={!pending}>
+      <Modal.Backdrop isDismissable={!pending} isKeyboardDismissDisabled={pending}>
         <Modal.Container scroll="inside">
           <Modal.Dialog className="min-h-0 sm:max-w-xl">
             {!pending ? <Modal.CloseTrigger /> : null}
@@ -69,7 +74,7 @@ export default function ImportDeckModal() {
               aria-busy={pending}
             >
               <Modal.Body className="space-y-6">
-                <DeckFormFields idPrefix="import-deck" autoFocus />
+                <DeckFormFields idPrefix="import-deck" autoFocus isDisabled={pending} />
                 <div className="rounded-lg border border-default-200 bg-default-50 p-3 text-sm">
                   <p className="font-medium text-default-700">Starts private</p>
                   <p className="mt-1 text-xs leading-5 text-default-500">
@@ -84,6 +89,7 @@ export default function ImportDeckModal() {
                     type="file"
                     accept=".csv,text/csv"
                     required
+                    disabled={pending}
                     className="mt-1 block w-full rounded-lg border border-default-200 bg-default-50 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-default-200 file:px-3 file:py-1.5"
                   />
                 </div>
@@ -139,7 +145,12 @@ export default function ImportDeckModal() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" isPending={pending} className="w-full sm:w-auto">
+                <Button
+                  type="submit"
+                  isPending={pending}
+                  isDisabled={pending}
+                  className="w-full sm:w-auto"
+                >
                   {pending ? 'Importing deck…' : 'Import deck'}
                 </Button>
               </Modal.Footer>
