@@ -3,7 +3,7 @@
 import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields';
 import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import { importCsvDeckAction } from '@/server/deck-import.actions';
-import { Button, Label, Modal, useOverlayState } from '@heroui/react';
+import { Button, Label, Modal, Spinner, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
@@ -53,17 +53,21 @@ export default function ImportDeckModal() {
       >
         Import CSV
       </Button>
-      <Modal.Backdrop>
+      <Modal.Backdrop isDismissable={!pending}>
         <Modal.Container scroll="inside">
           <Modal.Dialog className="min-h-0 sm:max-w-xl">
-            <Modal.CloseTrigger />
+            {!pending ? <Modal.CloseTrigger /> : null}
             <Modal.Header className="space-y-1">
               <Modal.Heading>Import a CSV deck</Modal.Heading>
               <p className="text-sm text-default-500">
                 Create a private deck from a structured vocabulary file.
               </p>
             </Modal.Header>
-            <form onSubmit={submit} className="mt-2 flex min-h-0 flex-1 flex-col">
+            <form
+              onSubmit={submit}
+              className="mt-2 flex min-h-0 flex-1 flex-col"
+              aria-busy={pending}
+            >
               <Modal.Body className="space-y-6">
                 <DeckFormFields idPrefix="import-deck" autoFocus />
                 <div className="rounded-lg border border-default-200 bg-default-50 p-3 text-sm">
@@ -108,6 +112,21 @@ export default function ImportDeckModal() {
                     “Imported vocabulary.”
                   </p>
                 </div>
+                {pending ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/10 p-4"
+                  >
+                    <Spinner color="accent" size="sm" aria-hidden="true" />
+                    <div>
+                      <p className="text-sm font-medium text-default-700">Importing your deck…</p>
+                      <p className="mt-0.5 text-xs leading-5 text-default-500">
+                        Large CSV files can take a little while. Keep this window open.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -121,7 +140,7 @@ export default function ImportDeckModal() {
                   Cancel
                 </Button>
                 <Button type="submit" isPending={pending} className="w-full sm:w-auto">
-                  Import deck
+                  {pending ? 'Importing deck…' : 'Import deck'}
                 </Button>
               </Modal.Footer>
             </form>
