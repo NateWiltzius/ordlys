@@ -6,6 +6,7 @@ import DeckDiscoveryControls from '@/components/deck-discovery-controls';
 import EmptyState from '@/components/shared/empty-state';
 import type { LibraryDeck } from '@/db/queries/deck.queries';
 import { filterAndSortDecks, type DeckDiscoverySort } from '@/lib/deck-discovery';
+import { buildDeckLibrary } from '@/lib/deck-library';
 import { Button } from '@heroui/react';
 import { useMemo, useState } from 'react';
 
@@ -18,26 +19,10 @@ type Props = {
 export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks }: Props) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<DeckDiscoverySort>('name');
-  const libraryDecks = useMemo(() => {
-    const followedDeckIds = new Set(followedDecks.map(deck => deck.id));
-    const ownedDeckIds = new Set(ownedDecks.map(deck => deck.id));
-
-    return [
-      ...ownedDecks.map(deck => ({
-        ...deck,
-        relationship: deck.sourceReleaseId ? ('copy' as const) : ('owned' as const),
-        isFollowing: followedDeckIds.has(deck.id),
-      })),
-      ...followedDecks
-        .filter(deck => !ownedDeckIds.has(deck.id))
-        .map(deck => ({ ...deck, relationship: 'following' as const, isFollowing: true })),
-      ...restorableDecks.map(deck => ({
-        ...deck,
-        relationship: 'restorable' as const,
-        isFollowing: false,
-      })),
-    ];
-  }, [followedDecks, ownedDecks, restorableDecks]);
+  const libraryDecks = useMemo(
+    () => buildDeckLibrary(ownedDecks, followedDecks, restorableDecks),
+    [followedDecks, ownedDecks, restorableDecks],
+  );
   const visibleDecks = useMemo(
     () => filterAndSortDecks(libraryDecks, query, sort),
     [libraryDecks, query, sort],
