@@ -17,8 +17,11 @@ export default async function Navbar() {
       className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
     >
       <div className="shrink-0">
-        <Link href={homeHref} className="text-2xl font-semibold">
-          Ordlys
+        <Link href={homeHref} className="flex items-center gap-2">
+          <span className="text-2xl font-semibold">Ordlys</span>
+          <span className="rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-primary">
+            Beta
+          </span>
         </Link>
       </div>
       <div className="hidden min-w-0 items-center gap-2 text-base sm:flex">

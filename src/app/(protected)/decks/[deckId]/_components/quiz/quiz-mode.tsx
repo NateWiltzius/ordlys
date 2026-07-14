@@ -296,7 +296,7 @@ export default function QuizMode({
         <Alert
           status={srsUpdate.status}
           role="status"
-          className="pointer-events-none fixed left-1/2 top-16 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 shadow-xl"
+          className="pointer-events-none relative z-40 mb-4 w-full shadow-xl sm:fixed sm:left-1/2 sm:top-16 sm:mb-0 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2"
         >
           <Alert.Indicator />
           <Alert.Content>
