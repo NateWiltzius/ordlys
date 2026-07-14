@@ -9,6 +9,8 @@ export function buildQuizQueue(learnItems: QuizSourceItem[]): QuizQueueItem[] {
       hint: item.backToFrontQuizHint,
       answer: item.front,
       acceptedAnswers: [item.front, ...item.frontAlternatives],
+      frontLanguage: item.frontLanguage,
+      backLanguage: item.backLanguage,
     },
     {
       cardId: item.id,
@@ -17,6 +19,8 @@ export function buildQuizQueue(learnItems: QuizSourceItem[]): QuizQueueItem[] {
       hint: item.frontToBackQuizHint,
       answer: item.back,
       acceptedAnswers: [item.back, ...item.backAlternatives],
+      frontLanguage: item.frontLanguage,
+      backLanguage: item.backLanguage,
     },
   ]);
 }

@@ -1,4 +1,6 @@
-type QuizDirection = 'btf' | 'ftb';
+export type QuizDirection = 'btf' | 'ftb';
+
+export type StudyMode = 'learn' | 'review' | 'placement';
 
 export type QuizSourceItem = {
   id: number;
@@ -19,6 +21,8 @@ export type QuizQueueItem = {
   hint: string | null;
   answer: string;
   acceptedAnswers: string[];
+  frontLanguage: string | null;
+  backLanguage: string | null;
 };
 
 export type QuizProgressItem = {

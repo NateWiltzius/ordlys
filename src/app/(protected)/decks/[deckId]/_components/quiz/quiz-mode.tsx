@@ -16,6 +16,7 @@ import {
   QuizAttemptStats,
   QuizProgressStats,
   QuizSourceItem,
+  StudyMode,
 } from '@/types/quiz.types';
 import { SrsTransition } from '@/types/review.types';
 import { Button, Card, ProgressBar } from '@heroui/react';
@@ -23,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StudyTone } from '@/lib/study-colors';
 import { HomeIcon } from '@heroicons/react/24/outline';
 import StatusAlert from '@/components/shared/status-alert';
+import { recordReviewAttemptAction } from '@/server/review.actions';
 
 type Props = {
   quizItems: QuizSourceItem[];
@@ -30,6 +32,8 @@ type Props = {
   completionHref: string;
   tone?: StudyTone;
   allowAnswerOverride?: boolean;
+  studyMode: StudyMode;
+  recordAttempts?: boolean;
 };
 
 export default function QuizMode({
@@ -38,6 +42,8 @@ export default function QuizMode({
   completionHref,
   tone = 'neutral',
   allowAnswerOverride = true,
+  studyMode,
+  recordAttempts = true,
 }: Props) {
   // A server action can reconcile this route with fresh due-card data (for example when an
   // auth cookie is refreshed). Keep the cards that started this session so that reconciliation
@@ -86,6 +92,9 @@ export default function QuizMode({
   }, [sessionQuizItems]);
 
   const currentQuizItem = quizQueue?.[0];
+  const currentSourceItem = currentQuizItem
+    ? sessionQuizItems.find(item => item.id === currentQuizItem.cardId)
+    : undefined;
   const exitQuizButton = (
     <Button
       variant="tertiary"
@@ -149,6 +158,23 @@ export default function QuizMode({
 
     const { quizItem } = feedback;
     const isCorrect = feedback.isCorrect || acceptAnyway;
+
+    if (recordAttempts) {
+      setPendingSaveCount(count => count + 1);
+      void recordReviewAttemptAction(
+        quizItem.cardId,
+        studyMode,
+        quizItem.direction,
+        isCorrect,
+        acceptAnyway,
+      )
+        .catch(() => {
+          setSaveError('Could not save this answer to your review history.');
+        })
+        .finally(() => {
+          setPendingSaveCount(count => Math.max(0, count - 1));
+        });
+    }
 
     setAttemptStats(prev => ({
       totalAttempts: prev.totalAttempts + 1,
@@ -307,8 +333,8 @@ export default function QuizMode({
             hint={currentQuizItem.hint}
             answer={answer}
             direction={currentQuizItem.direction}
-            frontLanguage={sessionQuizItems[0]?.frontLanguage ?? null}
-            backLanguage={sessionQuizItems[0]?.backLanguage ?? null}
+            frontLanguage={currentSourceItem?.frontLanguage ?? null}
+            backLanguage={currentSourceItem?.backLanguage ?? null}
             tone={tone}
             onAnswerChange={setAnswer}
             onSubmit={handleAnswerSubmit}

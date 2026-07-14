@@ -7,11 +7,12 @@ import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 
 type Props = {
   deck: Deck;
-  stats: Pick<ReviewCounts, 'totalWords' | 'reviewsDue' | 'wordsInReview'>;
+  stats: Pick<ReviewCounts, 'totalWords' | 'newWordsAvailable' | 'reviewsDue' | 'wordsInReview'>;
 };
 
 export default function DashboardDeckRow({ deck, stats }: Props) {
   const hasReviewsDue = stats.reviewsDue > 0;
+  const hasNewWords = stats.newWordsAvailable > 0;
   const introducedCards = Math.min(stats.wordsInReview, stats.totalWords);
   const progressPercentage =
     stats.totalWords === 0 ? 0 : Math.round((introducedCards / stats.totalWords) * 100);
@@ -43,6 +44,18 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
             {stats.totalWords} cards
           </Chip>
 
+          <Chip
+            variant="soft"
+            size="sm"
+            className={
+              hasNewWords
+                ? 'border-blue-500/30 bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                : undefined
+            }
+          >
+            {stats.newWordsAvailable} to learn
+          </Chip>
+
           <Chip variant="soft" size="sm" color={hasReviewsDue ? 'success' : 'default'}>
             {stats.reviewsDue} due
           </Chip>
@@ -65,7 +78,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
           </ProgressBar.Track>
         </ProgressBar>
         <span className="shrink-0 text-xs font-medium tabular-nums text-default-500">
-          {progressPercentage}%
+          {progressPercentage}% introduced
         </span>
       </div>
     </Link>

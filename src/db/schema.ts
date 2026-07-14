@@ -1,5 +1,6 @@
 import {
   AnyPgColumn,
+  boolean,
   check,
   index,
   integer,
@@ -39,6 +40,8 @@ export const catalogStatusEnum = pgEnum('catalog_status', [
 ]);
 export const followUpdateModeEnum = pgEnum('follow_update_mode', ['automatic', 'manual']);
 export const followStatusEnum = pgEnum('follow_status', ['active', 'unfollowed', 'frozen']);
+export const studyModeEnum = pgEnum('study_mode', ['learn', 'review', 'placement']);
+export const quizDirectionEnum = pgEnum('quiz_direction', ['btf', 'ftb']);
 
 export const decks = pgTable(
   'decks',
@@ -338,6 +341,31 @@ export const userVocabState = pgTable(
     unique('user_vocab_state_user_id_vocab_id_unique').on(table.userId, table.vocabId),
     index('user_vocab_state_user_id_due_at_idx').on(table.userId, table.dueAt),
     check('user_vocab_state_srs_level_range', sql`${table.srsLevel} between 0 and 8`),
+  ],
+);
+
+export const reviewAttempts = pgTable(
+  'review_attempts',
+  {
+    id: serial('id').primaryKey(),
+    userId: uuid('user_id').notNull(),
+    vocabId: integer('vocab_id')
+      .notNull()
+      .references(() => vocabs.id, { onDelete: 'cascade' }),
+    mode: studyModeEnum().notNull(),
+    direction: quizDirectionEnum().notNull(),
+    isCorrect: boolean('is_correct').notNull(),
+    wasOverridden: boolean('was_overridden').default(false).notNull(),
+    attemptedAt: timestamp('attempted_at').defaultNow().notNull(),
+  },
+  table => [
+    index('review_attempts_user_attempted_at_idx').on(table.userId, table.attemptedAt),
+    index('review_attempts_user_correct_attempted_at_idx').on(
+      table.userId,
+      table.isCorrect,
+      table.attemptedAt,
+    ),
+    index('review_attempts_vocab_id_idx').on(table.vocabId),
   ],
 );
 

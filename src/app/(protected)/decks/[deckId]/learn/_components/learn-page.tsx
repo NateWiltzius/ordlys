@@ -10,14 +10,24 @@ import ButtonLink from '@/components/shared/button-link';
 import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
+import SessionSizePicker from '@/components/shared/session-size-picker';
+import { LEARN_SESSION_SIZES } from '@/lib/study-session-size';
 
 type Props = {
   deckId: number;
   learnItems: LearnItem[];
   lessonProgress: LessonProgress[];
+  selectedSize: number | 'all';
+  availableCount: number;
 };
 
-export default function LearnPage({ deckId, learnItems, lessonProgress }: Props) {
+export default function LearnPage({
+  deckId,
+  learnItems,
+  lessonProgress,
+  selectedSize,
+  availableCount,
+}: Props) {
   const [mode, setMode] = useState<'learn' | 'quiz'>('learn');
 
   if (learnItems.length === 0) {
@@ -57,11 +67,22 @@ export default function LearnPage({ deckId, learnItems, lessonProgress }: Props)
         {mode === 'quiz' ? 'Learning quiz' : 'Learn new words'}
       </h1>
       {mode === 'learn' ? (
+        <SessionSizePicker
+          baseHref={`/decks/${deckId}/learn`}
+          selectedSize={selectedSize}
+          sizes={LEARN_SESSION_SIZES}
+          totalCount={availableCount}
+          noun="word"
+          allowAll
+        />
+      ) : null}
+      {mode === 'learn' ? (
         <LearnMode learnItems={learnItems} onStartQuiz={() => setMode('quiz')} />
       ) : (
         <QuizMode
           quizItems={learnItems}
           tone="learning"
+          studyMode="learn"
           completionHref={`/decks/${deckId}`}
           onVocabComplete={async vocabId => {
             return await startVocabAction(vocabId);

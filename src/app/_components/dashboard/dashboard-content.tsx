@@ -1,16 +1,20 @@
 import PageHeader from '@/components/shared/layout/page-header';
 import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
-import StudySummary from '@/components/shared/study-summary';
 import EmptyState from '@/components/shared/empty-state';
 import DashboardDeckRow from '@/app/_components/dashboard/dashboard-deck-row';
 import { getDashboardDataAction } from '@/server/deck.actions';
 import ReviewForecastCard from '@/components/shared/review-forecast-card';
 import DashboardReviewCard from '@/app/_components/dashboard/dashboard-review-card';
+import DashboardRecentMistakesCard from '@/app/_components/dashboard/dashboard-recent-mistakes-card';
+import { getRecentMistakeCountAction } from '@/server/review.actions';
 
 export default async function DashboardContent() {
-  const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview } =
-    await getDashboardDataAction();
+  const [dashboardData, recentMistakeCount] = await Promise.all([
+    getDashboardDataAction(),
+    getRecentMistakeCountAction(),
+  ]);
+  const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview } = dashboardData;
 
   return (
     <div className="space-y-6">
@@ -24,13 +28,15 @@ export default async function DashboardContent() {
         }
       />
 
-      <StudySummary counts={allDeckStats} description="Your progress across all active decks." />
+      <div className="grid gap-4 md:grid-cols-2">
+        <DashboardReviewCard
+          decks={activeDecks}
+          deckStats={deckStats}
+          reviewsDue={allDeckStats.reviewsDue}
+        />
 
-      <DashboardReviewCard
-        decks={activeDecks}
-        deckStats={deckStats}
-        reviewsDue={allDeckStats.reviewsDue}
-      />
+        <DashboardRecentMistakesCard count={recentMistakeCount} />
+      </div>
 
       <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} />
 
@@ -64,6 +70,7 @@ export default async function DashboardContent() {
                   stats={
                     deckStats[deck.id] ?? {
                       totalWords: 0,
+                      newWordsAvailable: 0,
                       reviewsDue: 0,
                       wordsInReview: 0,
                     }

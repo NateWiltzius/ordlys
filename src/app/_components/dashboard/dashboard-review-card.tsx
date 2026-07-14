@@ -23,7 +23,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
     <Modal state={modalState}>
       <StudyActionCard
         title="Review due cards"
-        description="Choose one deck and keep your review session focused."
+        description="Review everything together or focus on a single deck."
         count={reviewsDue}
         countLabel="reviews due across your decks"
         actionLabel="Start review"
@@ -43,13 +43,27 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
           <Modal.Dialog className="sm:max-w-lg">
             <Modal.CloseTrigger />
             <Modal.Header>
-              <Modal.Heading>Choose a deck to review</Modal.Heading>
+              <Modal.Heading>Choose what to review</Modal.Heading>
             </Modal.Header>
             <Modal.Body>
-              <p className="mb-2 text-sm text-default-600">
-                Each review stays within one deck so you can focus on a single subject.
+              <p className="mb-3 text-sm text-default-600">
+                Review everything together or focus on one deck.
               </p>
               <ul className="divide-y divide-default-200 rounded-xl border border-default-200">
+                <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <p className="truncate font-medium text-default-900">All decks</p>
+                    <Chip size="sm" variant="soft" color="success" className="shrink-0">
+                      {reviewsDue} due
+                    </Chip>
+                  </div>
+                  <ButtonLink
+                    href="/review"
+                    className={`w-full shrink-0 sm:w-auto ${STUDY_TONE_STYLES.review.button}`}
+                  >
+                    Review all
+                  </ButtonLink>
+                </li>
                 {decksWithReviews.map(deck => {
                   const count = deckStats[deck.id]?.reviewsDue ?? 0;
 

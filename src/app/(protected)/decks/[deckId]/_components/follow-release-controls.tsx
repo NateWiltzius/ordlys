@@ -108,112 +108,35 @@ export default function FollowReleaseControls({
     >
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold">Release settings</h2>
+          <h2 className="text-sm font-semibold">Deck updates</h2>
           <p className="text-sm text-default-500">
-            Choose the version you study and how future updates are handled.
+            {followState.updateMode === 'automatic'
+              ? 'New changes from the author are applied automatically.'
+              : 'You chose a specific version of this deck.'}
           </p>
         </div>
 
-        <Chip size="sm" variant="soft" className="shrink-0 self-start">
-          {followState.updateMode === 'automatic'
-            ? 'Automatic updates'
-            : studied
-              ? `Pinned to v${studied.version}`
-              : 'No release selected'}
+        <Chip
+          size="sm"
+          variant="soft"
+          color={followState.updateAvailable ? 'warning' : 'default'}
+          className="shrink-0 self-start"
+        >
+          {followState.updateAvailable
+            ? 'Update available'
+            : followState.updateMode === 'automatic'
+              ? 'Up to date'
+              : studied
+                ? `Using version ${studied.version}`
+                : 'No version selected'}
         </Chip>
       </div>
 
-      <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_auto_auto] xl:items-end">
-        <Select
-          className="min-w-0 md:col-span-2 xl:col-span-1"
-          value={studied?.id ?? null}
-          isDisabled={pending || releases.length === 0}
-          variant="secondary"
-          onChange={value => {
-            if (value === null || Array.isArray(value)) return;
-
-            const releaseId = Number(value);
-
-            if (!Number.isFinite(releaseId) || releaseId === studied?.id) {
-              return;
-            }
-
-            run('pin', () => pinDeckReleaseAction(deckId, releaseId), 'Release pinned.');
-          }}
-        >
-          <Label>Studied release</Label>
-
-          <Select.Trigger className="min-w-0">
-            <Select.Value className="truncate" />
-            <Select.Indicator />
-          </Select.Trigger>
-
-          <Select.Popover>
-            <ListBox>
-              {releases.map(release => {
-                const label = `v${release.version} · ${release.changeSummary}`;
-
-                return (
-                  <ListBox.Item key={release.id} id={release.id} textValue={label}>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="font-medium">Version {release.version}</span>
-                      <span className="truncate text-sm text-default-500">
-                        {release.changeSummary}
-                      </span>
-                    </span>
-
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                );
-              })}
-            </ListBox>
-          </Select.Popover>
-        </Select>
-
-        {followState.updateMode === 'manual' || followState.updateAvailable ? (
-          <Button
-            size="sm"
-            variant={followState.updateAvailable ? 'primary' : 'secondary'}
-            className="w-full xl:w-auto"
-            isPending={pending && activeOperation === 'automatic'}
-            isDisabled={pending && activeOperation !== 'automatic'}
-            onPress={() =>
-              run(
-                'automatic',
-                () => setAutomaticUpdatesAction(deckId),
-                'Following latest releases.',
-              )
-            }
-          >
-            {followState.updateAvailable ? 'Update to latest' : 'Use automatic updates'}
-          </Button>
-        ) : null}
-
-        {studied && studied.copyPolicy !== 'follow_only' ? (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="w-full xl:w-auto"
-            isPending={pending && activeOperation === 'fork'}
-            isDisabled={pending && activeOperation !== 'fork'}
-            onPress={makeCopy}
-          >
-            Make a copy
-          </Button>
-        ) : null}
-      </div>
-
-      {releaseChanges ? (
-        <Alert status="default" className="mt-4">
+      {releaseChanges && followState.updateAvailable ? (
+        <Alert status="default" className="mb-4">
           <Alert.Indicator />
-
           <Alert.Content>
-            <Alert.Title>
-              {followState.updateAvailable
-                ? `Version ${releaseChanges.release.version} is available`
-                : `Latest release: version ${releaseChanges.release.version}`}
-            </Alert.Title>
-
+            <Alert.Title>Changes are ready</Alert.Title>
             <Alert.Description>
               {releaseChanges.addedVocabIds.length} added, {releaseChanges.changedVocabIds.length}{' '}
               changed, and {releaseChanges.removedVocabIds.length} removed.{' '}
@@ -222,9 +145,110 @@ export default function FollowReleaseControls({
           </Alert.Content>
         </Alert>
       ) : null}
-      {studied?.copyPolicy === 'follow_only' ? (
-        <span className="text-sm text-default-500">Copying is disabled by the author.</span>
-      ) : null}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        {followState.updateAvailable ? (
+          <Button
+            size="sm"
+            variant="primary"
+            className="w-full sm:w-auto"
+            isPending={pending && activeOperation === 'automatic'}
+            isDisabled={pending && activeOperation !== 'automatic'}
+            onPress={() =>
+              run(
+                'automatic',
+                () => setAutomaticUpdatesAction(deckId),
+                'Deck updated. Future changes will be applied automatically.',
+              )
+            }
+          >
+            Update deck
+          </Button>
+        ) : null}
+
+        {studied && studied.copyPolicy !== 'follow_only' ? (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="w-full sm:w-auto"
+            isPending={pending && activeOperation === 'fork'}
+            isDisabled={pending && activeOperation !== 'fork'}
+            onPress={makeCopy}
+          >
+            Make an editable copy
+          </Button>
+        ) : null}
+      </div>
+
+      <details className="mt-4 overflow-hidden rounded-lg border border-default-200 bg-default-50/50">
+        <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-default-700">
+          Advanced update settings
+        </summary>
+        <div className="space-y-3 border-t border-default-200 bg-background p-3">
+          <Select
+            className="min-w-0"
+            value={studied?.id ?? null}
+            isDisabled={pending || releases.length === 0}
+            variant="secondary"
+            onChange={value => {
+              if (value === null || Array.isArray(value)) return;
+
+              const releaseId = Number(value);
+
+              if (!Number.isFinite(releaseId) || releaseId === studied?.id) return;
+
+              run('pin', () => pinDeckReleaseAction(deckId, releaseId), 'Version selected.');
+            }}
+          >
+            <Label>Version to study</Label>
+
+            <Select.Trigger className="min-w-0">
+              <Select.Value className="truncate" />
+              <Select.Indicator />
+            </Select.Trigger>
+
+            <Select.Popover>
+              <ListBox>
+                {releases.map(release => {
+                  const label = `Version ${release.version} · ${release.changeSummary}`;
+
+                  return (
+                    <ListBox.Item key={release.id} id={release.id} textValue={label}>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="font-medium">Version {release.version}</span>
+                        <span className="truncate text-sm text-default-500">
+                          {release.changeSummary}
+                        </span>
+                      </span>
+
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  );
+                })}
+              </ListBox>
+            </Select.Popover>
+          </Select>
+
+          {followState.updateMode === 'manual' ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              isPending={pending && activeOperation === 'automatic'}
+              isDisabled={pending && activeOperation !== 'automatic'}
+              onPress={() =>
+                run(
+                  'automatic',
+                  () => setAutomaticUpdatesAction(deckId),
+                  'Automatic updates enabled.',
+                )
+              }
+            >
+              Use automatic updates
+            </Button>
+          ) : null}
+        </div>
+      </details>
 
       {feedback ? (
         <Alert status={feedback.status} className="mt-4" role="status">

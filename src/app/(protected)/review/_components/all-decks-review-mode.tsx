@@ -1,27 +1,23 @@
 'use client';
 
 import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mode';
-import { reviewVocabAction } from '@/server/review.actions';
-import { ReviewItem } from '@/types/review.types';
-import { Card } from '@heroui/react';
+import SessionSizePicker from '@/components/shared/session-size-picker';
 import ButtonLink from '@/components/shared/button-link';
-import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
 import NextReviewText from '@/components/shared/next-review-text';
-import type { NextReviewBatch } from '@/types/review.types';
-import SessionSizePicker from '@/components/shared/session-size-picker';
 import { REVIEW_SESSION_SIZES } from '@/lib/study-session-size';
+import { reviewVocabAction } from '@/server/review.actions';
+import type { NextReviewBatch, ReviewItem } from '@/types/review.types';
+import { Card } from '@heroui/react';
 
 type Props = {
-  deckId: number;
   dueReviews: ReviewItem[];
   totalDueReviews: number;
   selectedSize: number | 'all';
   nextReview: NextReviewBatch | null;
 };
 
-export default function ReviewMode({
-  deckId,
+export default function AllDecksReviewMode({
   dueReviews,
   totalDueReviews,
   selectedSize,
@@ -38,7 +34,7 @@ export default function ReviewMode({
             </Card.Description>
           </Card.Header>
           <Card.Footer>
-            <ButtonLink href={`/decks/${deckId}`}>Back to deck</ButtonLink>
+            <ButtonLink href="/dashboard">Back to dashboard</ButtonLink>
           </Card.Footer>
         </Card>
       </StudySession>
@@ -47,11 +43,9 @@ export default function ReviewMode({
 
   return (
     <StudySession className="space-y-6">
-      <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.review.text}`}>
-        Review due cards
-      </h1>
+      <h1 className="text-2xl font-semibold text-success">Review due cards</h1>
       <SessionSizePicker
-        baseHref={`/decks/${deckId}/review`}
+        baseHref="/review"
         selectedSize={selectedSize}
         sizes={REVIEW_SESSION_SIZES}
         totalCount={totalDueReviews}
@@ -62,7 +56,7 @@ export default function ReviewMode({
         quizItems={dueReviews}
         tone="review"
         studyMode="review"
-        completionHref={`/decks/${deckId}`}
+        completionHref="/dashboard"
         onVocabComplete={async (vocabId, wasCorrect) => {
           return await reviewVocabAction(vocabId, wasCorrect);
         }}

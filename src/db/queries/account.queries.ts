@@ -7,6 +7,7 @@ import {
   feedback,
   lessonRevisions,
   lessons,
+  reviewAttempts,
   userVocabState,
   vocabRevisions,
   vocabs,
@@ -31,6 +32,7 @@ export async function getAccountExportData(userId: string) {
     submittedFeedback,
     submittedReports,
     auditEvents,
+    reviewHistory,
   ] = await Promise.all([
     ownedDeckIds.length
       ? db
@@ -81,6 +83,11 @@ export async function getAccountExportData(userId: string) {
       .from(deckAuditEvents)
       .where(and(eq(deckAuditEvents.actorId, userId)))
       .orderBy(deckAuditEvents.id),
+    db
+      .select()
+      .from(reviewAttempts)
+      .where(eq(reviewAttempts.userId, userId))
+      .orderBy(reviewAttempts.id),
   ]);
 
   return {
@@ -92,6 +99,7 @@ export async function getAccountExportData(userId: string) {
     feedback: submittedFeedback,
     deckReports: submittedReports,
     auditEvents,
+    reviewHistory,
   };
 }
 
@@ -119,6 +127,7 @@ export async function deleteAccountData(
       .set({ actorId: null })
       .where(eq(deckAuditEvents.actorId, userId));
     await tx.delete(deckReports).where(eq(deckReports.reporterId, userId));
+    await tx.delete(reviewAttempts).where(eq(reviewAttempts.userId, userId));
     await tx.delete(userVocabState).where(eq(userVocabState.userId, userId));
     await tx.delete(deckFollows).where(eq(deckFollows.userId, userId));
 

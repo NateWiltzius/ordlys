@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ComponentType, ReactNode, SVGProps } from 'react';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
 
-type ActionTone = Exclude<StudyTone, 'neutral'>;
+type ActionTone = StudyTone;
 
 type Props = {
   title: string;
@@ -30,6 +30,11 @@ const TONE_CARD_STYLES: Record<ActionTone, { gradient: string; hover: string; fo
     gradient: 'from-success/15 via-success/5 to-transparent',
     hover: 'group-hover:border-success/50',
     focus: 'focus-visible:ring-success',
+  },
+  neutral: {
+    gradient: 'from-primary/10 via-primary/5 to-transparent',
+    hover: 'group-hover:border-primary/40',
+    focus: 'focus-visible:ring-primary',
   },
 };
 
@@ -123,11 +128,11 @@ export default function StudyActionCard({
   return href ? (
     <Link
       href={href}
-      className={`group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${cardStyles.focus}`}
+      className={`group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${cardStyles.focus}`}
     >
       {card}
     </Link>
   ) : (
-    <div className="group">{card}</div>
+    <div className="group h-full">{card}</div>
   );
 }

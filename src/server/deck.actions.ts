@@ -59,6 +59,7 @@ export async function getDashboardDataAction() {
       deckId,
       {
         totalWords: deckStudyCounts[deckId]?.totalWords ?? 0,
+        newWordsAvailable: newVocabCounts[deckId] ?? 0,
         reviewsDue: deckStudyCounts[deckId]?.reviewsDue ?? 0,
         wordsInReview: deckStudyCounts[deckId]?.wordsInReview ?? 0,
       },

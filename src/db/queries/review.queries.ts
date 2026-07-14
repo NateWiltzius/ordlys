@@ -352,7 +352,7 @@ async function getNextUnlockedLessonWithNewVocab(deckId: number, userId: string)
   return nextLesson;
 }
 
-export async function getDueReviewsForDeck(deckId: number, userId: string) {
+export async function getDueReviews(userId: string, deckId?: number) {
   return db
     .select({
       id: vocabs.id,
@@ -380,12 +380,16 @@ export async function getDueReviewsForDeck(deckId: number, userId: string) {
     .where(
       and(
         eq(userVocabState.userId, userId),
-        eq(decks.id, deckId),
+        deckId === undefined ? undefined : eq(decks.id, deckId),
         studyDeckAccess(userId),
         lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
       ),
     )
     .orderBy(userVocabState.dueAt);
+}
+
+export async function getDueReviewsForDeck(deckId: number, userId: string) {
+  return getDueReviews(userId, deckId);
 }
 
 export async function getPlacementTestVocabs(deckId: number, lessonId: number, userId: string) {

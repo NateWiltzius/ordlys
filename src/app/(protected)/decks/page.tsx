@@ -40,13 +40,13 @@ async function DecksContent() {
         }
       />
       <Tabs className="w-full">
-        <Tabs.ListContainer className="max-w-full overflow-x-auto">
-          <Tabs.List aria-label="Deck categories" className="min-w-max">
-            <Tabs.Tab id="library">
+        <Tabs.ListContainer className="w-full">
+          <Tabs.List aria-label="Deck categories" className="grid w-full grid-cols-2">
+            <Tabs.Tab id="library" className="w-full justify-center">
               My library
               <Tabs.Indicator />
             </Tabs.Tab>
-            <Tabs.Tab id="public">
+            <Tabs.Tab id="public" className="w-full justify-center">
               Discover
               <Tabs.Indicator />
             </Tabs.Tab>

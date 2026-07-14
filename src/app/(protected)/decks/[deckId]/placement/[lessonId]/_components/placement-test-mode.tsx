@@ -29,6 +29,7 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
 
       <QuizMode
         quizItems={placementItems}
+        studyMode="placement"
         completionHref={`/decks/${deckId}`}
         allowAnswerOverride={false}
         onVocabComplete={async (vocabId, wasCorrect) => {
