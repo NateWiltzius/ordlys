@@ -18,17 +18,11 @@ import {
   QuizSourceItem,
 } from '@/types/quiz.types';
 import { SrsTransition } from '@/types/review.types';
-import { Alert, Button, Card, ProgressBar } from '@heroui/react';
+import { Button, Card, ProgressBar } from '@heroui/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
 import { StudyTone } from '@/lib/study-colors';
 import { HomeIcon } from '@heroicons/react/24/outline';
-
-type SrsUpdate = {
-  status: 'success' | 'warning' | 'danger';
-  title: string;
-  description: string;
-};
+import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
   quizItems: QuizSourceItem[];
@@ -62,7 +56,7 @@ export default function QuizMode({
   });
   const [feedback, setFeedback] = useState<QuizFeedback | null>(null);
   const [pendingSaveCount, setPendingSaveCount] = useState(0);
-  const [srsUpdate, setSrsUpdate] = useState<SrsUpdate | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const continueHandledRef = useRef(false);
 
@@ -87,7 +81,7 @@ export default function QuizMode({
     });
     setFeedback(null);
     setPendingSaveCount(0);
-    setSrsUpdate(null);
+    setSaveError(null);
     continueHandledRef.current = false;
   }, [sessionQuizItems]);
 
@@ -135,17 +129,6 @@ export default function QuizMode({
       window.location.replace(completionHref);
     }
   }, [completionHref, pendingSaveCount, quizQueue]);
-
-  useEffect(() => {
-    if (!srsUpdate) return;
-
-    const timeout = window.setTimeout(
-      () => setSrsUpdate(null),
-      srsUpdate.status === 'danger' ? 8000 : 3500,
-    );
-
-    return () => window.clearTimeout(timeout);
-  }, [srsUpdate]);
 
   const handleAnswerSubmit = () => {
     if (!currentQuizItem) return;
@@ -199,15 +182,8 @@ export default function QuizMode({
 
         setPendingSaveCount(count => count + 1);
         void onVocabComplete(quizItem.cardId, !failedCardIds.has(quizItem.cardId))
-          .then(transition => {
-            setSrsUpdate(buildSrsUpdate(vocabLabel, transition));
-          })
           .catch(() => {
-            setSrsUpdate({
-              status: 'danger',
-              title: 'Progress not saved',
-              description: `Could not save progress for ${vocabLabel}.`,
-            });
+            setSaveError(`Could not save progress for ${vocabLabel}.`);
           })
           .finally(() => {
             setPendingSaveCount(count => Math.max(0, count - 1));
@@ -289,28 +265,37 @@ export default function QuizMode({
     );
   }
 
+  const currentFeedbackProgress = feedback ? quizProgress[feedback.quizItem.cardId] : undefined;
+  const completesCurrentWord = Boolean(
+    feedback?.isCorrect &&
+      currentFeedbackProgress &&
+      (feedback.quizItem.direction === 'btf'
+        ? currentFeedbackProgress.ftbPassed
+        : currentFeedbackProgress.btfPassed),
+  );
+  const wordCompletion: 'clean' | 'recovered' | undefined =
+    feedback && completesCurrentWord
+      ? failedCardIds.has(feedback.quizItem.cardId)
+        ? 'recovered'
+        : 'clean'
+      : undefined;
+
   return (
     <>
       {exitQuizButton}
-      {srsUpdate ? (
-        <Alert
-          status={srsUpdate.status}
-          role="status"
-          className="pointer-events-none relative z-40 mb-4 w-full shadow-xl sm:fixed sm:left-1/2 sm:top-16 sm:mb-0 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2"
-        >
-          <Alert.Indicator />
-          <Alert.Content>
-            <Alert.Title>{srsUpdate.title}</Alert.Title>
-            <Alert.Description>{srsUpdate.description}</Alert.Description>
-          </Alert.Content>
-        </Alert>
-      ) : null}
       <div className="w-full space-y-4">
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
+
+        {saveError ? (
+          <StatusAlert status="danger" title="Progress not saved">
+            {saveError}
+          </StatusAlert>
+        ) : null}
 
         {feedback ? (
           <QuizFeedbackPanel
             feedback={feedback}
+            wordCompletion={wordCompletion}
             onContinue={() => handleContinue()}
             onAcceptAnyway={
               allowAnswerOverride && !feedback.isCorrect ? () => handleContinue(true) : undefined
@@ -332,46 +317,4 @@ export default function QuizMode({
       </div>
     </>
   );
-}
-
-function formatSrsTransition({ previousLevel, nextLevel }: SrsTransition) {
-  if (nextLevel === null) {
-    return 'Remains Not started';
-  }
-
-  const nextLabel = formatSrsLevel(nextLevel);
-
-  if (previousLevel === null) {
-    return `Started at ${nextLabel}`;
-  }
-
-  if (previousLevel === nextLevel) {
-    return `Remains at ${nextLabel}`;
-  }
-
-  return `${formatSrsLevel(previousLevel)} → ${nextLabel}`;
-}
-
-function buildSrsUpdate(vocabLabel: string, transition: SrsTransition): SrsUpdate {
-  const levelIncreased =
-    transition.nextLevel !== null &&
-    (transition.previousLevel === null || transition.nextLevel > transition.previousLevel);
-  const levelDecreased =
-    transition.previousLevel !== null &&
-    (transition.nextLevel === null || transition.nextLevel < transition.previousLevel);
-
-  return {
-    status: levelDecreased ? 'warning' : 'success',
-    title: levelIncreased ? 'Level up' : levelDecreased ? 'Review needs work' : 'Review saved',
-    description: `${vocabLabel}: ${formatSrsTransition(transition)}`,
-  };
-}
-
-function formatSrsLevel(srsLevel: number) {
-  const normalizedLevel = Math.min(
-    DEFAULT_SRS_CONFIG.maxLevel,
-    Math.max(DEFAULT_SRS_CONFIG.initialLevel, srsLevel),
-  );
-
-  return `Level ${normalizedLevel + 1} · ${SRS_LEVEL_LABELS[normalizedLevel]}`;
 }

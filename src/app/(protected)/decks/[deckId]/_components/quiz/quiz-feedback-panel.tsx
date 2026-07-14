@@ -3,15 +3,30 @@ import { Button, Card, Chip } from '@heroui/react';
 import { useEffect } from 'react';
 import AnswerRow from '@/app/(protected)/decks/[deckId]/_components/quiz/answer-row';
 import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
+import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+
+type WordCompletion = 'clean' | 'recovered';
 
 type Props = {
   feedback: QuizFeedback;
+  wordCompletion?: WordCompletion;
   onContinue: () => void;
   onAcceptAnyway?: () => void;
 };
 
-export default function QuizFeedbackPanel({ feedback, onContinue, onAcceptAnyway }: Props) {
+export default function QuizFeedbackPanel({
+  feedback,
+  wordCompletion,
+  onContinue,
+  onAcceptAnyway,
+}: Props) {
   const styles = feedback.isCorrect ? QUIZ_FEEDBACK_STYLES.correct : QUIZ_FEEDBACK_STYLES.incorrect;
+  const completionStyles =
+    wordCompletion === 'recovered' ? QUIZ_FEEDBACK_STYLES.incorrect : QUIZ_FEEDBACK_STYLES.correct;
+  const completionSurface =
+    wordCompletion === 'recovered'
+      ? 'border-danger/60 bg-danger/25'
+      : 'border-success/60 bg-success/25';
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Enter' || event.repeat || event.isComposing) {
@@ -47,6 +62,34 @@ export default function QuizFeedbackPanel({ feedback, onContinue, onAcceptAnyway
       </Card.Header>
 
       <Card.Content className="space-y-3">
+        {wordCompletion ? (
+          <div
+            role="status"
+            className={`flex items-start gap-2 rounded-lg border px-3 py-2 ${completionSurface}`}
+          >
+            {wordCompletion === 'clean' ? (
+              <CheckCircleIcon
+                className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
+                aria-hidden="true"
+              />
+            ) : (
+              <ExclamationCircleIcon
+                className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
+                aria-hidden="true"
+              />
+            )}
+            <div>
+              <p className={`font-semibold ${completionStyles.text}`}>
+                {wordCompletion === 'clean' ? 'Word complete' : 'Word complete — keep practicing'}
+              </p>
+              <p className="text-sm text-foreground/80">
+                {wordCompletion === 'clean'
+                  ? 'You passed both directions with no misses.'
+                  : 'You passed both directions, but missed this word earlier.'}
+              </p>
+            </div>
+          </div>
+        ) : null}
         <AnswerRow
           label={feedback.quizItem.direction === 'btf' ? 'Back shown' : 'Front shown'}
           value={feedback.quizItem.prompt}
