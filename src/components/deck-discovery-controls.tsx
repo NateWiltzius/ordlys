@@ -33,7 +33,7 @@ export default function DeckDiscoveryControls({
   return (
     <div className="space-y-2">
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
-        <div className="flex flex-col gap-1">
+        <div className="form-field">
           <Label htmlFor={searchId}>Search decks</Label>
           <Input
             id={searchId}

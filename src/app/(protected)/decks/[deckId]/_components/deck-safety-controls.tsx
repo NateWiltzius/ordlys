@@ -267,7 +267,7 @@ export default function DeckSafetyControls({
             </Modal.Header>
             <form onSubmit={report} className="mt-2 flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-4">
-                <div className="space-y-2">
+                <div className="form-field">
                   <Label htmlFor={`report-reason-${deckId}`}>Reason</Label>
                   <Input
                     id={`report-reason-${deckId}`}
@@ -277,7 +277,7 @@ export default function DeckSafetyControls({
                     autoFocus
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="form-field">
                   <Label htmlFor={`report-details-${deckId}`}>Details (optional)</Label>
                   <TextArea
                     id={`report-details-${deckId}`}

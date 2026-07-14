@@ -8,13 +8,15 @@ import ReviewForecastCard from '@/components/shared/review-forecast-card';
 import DashboardReviewCard from '@/app/_components/dashboard/dashboard-review-card';
 import DashboardRecentMistakesCard from '@/app/_components/dashboard/dashboard-recent-mistakes-card';
 import { getRecentMistakeCountAction } from '@/server/review.actions';
+import DashboardSrsCard from '@/app/_components/dashboard/dashboard-srs-card';
 
 export default async function DashboardContent() {
   const [dashboardData, recentMistakeCount] = await Promise.all([
     getDashboardDataAction(),
     getRecentMistakeCountAction(),
   ]);
-  const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview } = dashboardData;
+  const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview, srsCategoryCounts } =
+    dashboardData;
 
   return (
     <div className="space-y-6">
@@ -39,6 +41,8 @@ export default async function DashboardContent() {
       </div>
 
       <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} />
+
+      <DashboardSrsCard counts={srsCategoryCounts} />
 
       <Card>
         <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">

@@ -9,6 +9,8 @@ import {
   vocabRevisions,
 } from '@/db/schema';
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { unstable_cache } from 'next/cache';
+import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 
 const PUBLIC_VOCABULARY_PREVIEW_LIMIT = 20;
 
@@ -22,8 +24,16 @@ const publicDeckSummarySelection = {
   rootDeckId: decks.rootDeckId,
   sourceDeckId: decks.sourceDeckId,
   sourceReleaseId: decks.sourceReleaseId,
-  lessonCount: sql<number>`count(distinct ${releaseLessons.lessonId})::int`,
-  wordCount: sql<number>`count(distinct ${releaseVocabs.vocabId})::int`,
+  lessonCount: sql<number>`(
+    select count(*)::int
+    from ${releaseLessons}
+    where ${releaseLessons.releaseId} = ${deckReleases.id}
+  )`,
+  wordCount: sql<number>`(
+    select count(*)::int
+    from ${releaseVocabs}
+    where ${releaseVocabs.releaseId} = ${deckReleases.id}
+  )`,
   subscriberCount: sql<number>`(
     select count(*)::int
     from ${deckFollows} follows
@@ -49,20 +59,7 @@ export async function getPublicDeckSummaries(limit?: number) {
     .select(publicDeckSummarySelection)
     .from(decks)
     .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
-    .leftJoin(releaseLessons, eq(releaseLessons.releaseId, deckReleases.id))
-    .leftJoin(releaseVocabs, eq(releaseVocabs.releaseId, deckReleases.id))
     .where(publicDeckPredicate)
-    .groupBy(
-      decks.id,
-      deckReleases.title,
-      deckReleases.description,
-      decks.frontLanguage,
-      decks.backLanguage,
-      decks.updatedAt,
-      decks.rootDeckId,
-      decks.sourceDeckId,
-      decks.sourceReleaseId,
-    )
     .orderBy(desc(decks.updatedAt), asc(decks.id));
 
   if (limit === undefined) return query;
@@ -71,25 +68,18 @@ export async function getPublicDeckSummaries(limit?: number) {
   return query.limit(safeLimit);
 }
 
+export const getCachedPublicDeckSummaries = unstable_cache(
+  async (limit?: number) => getPublicDeckSummaries(limit),
+  ['public-deck-summaries'],
+  { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
+);
+
 export async function getPublicDeckSummaryById(deckId: number) {
   const [deck] = await db
     .select(publicDeckSummarySelection)
     .from(decks)
     .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
-    .leftJoin(releaseLessons, eq(releaseLessons.releaseId, deckReleases.id))
-    .leftJoin(releaseVocabs, eq(releaseVocabs.releaseId, deckReleases.id))
     .where(and(eq(decks.id, deckId), sharedDeckPredicate))
-    .groupBy(
-      decks.id,
-      deckReleases.title,
-      deckReleases.description,
-      decks.frontLanguage,
-      decks.backLanguage,
-      decks.updatedAt,
-      decks.rootDeckId,
-      decks.sourceDeckId,
-      decks.sourceReleaseId,
-    )
     .limit(1);
 
   return deck;

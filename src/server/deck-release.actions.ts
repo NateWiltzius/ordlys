@@ -22,7 +22,8 @@ import {
 import { CONTENT_LIMITS, requiredText } from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { actionFailure, withExpectedError } from '@/lib/action-result';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 
 function deckId(value: number) {
   const id = parsePositiveInteger(value);
@@ -31,6 +32,7 @@ function deckId(value: number) {
 }
 
 function refresh(id: number) {
+  revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
   revalidatePath('/decks');
   revalidatePath('/dashboard');
   revalidatePath(`/decks/${id}`);

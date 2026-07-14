@@ -12,7 +12,13 @@ import {
   vocabRevisions,
 } from '@/db/schema';
 import { getInitialSrsState, getNextSrsState, getSrsStateForLevel } from '@/lib/srs/srs-scheduler';
-import { LESSON_PROGRESSION_CONFIG, PLACEMENT_TEST_CONFIG } from '@/lib/srs/srs-config';
+import {
+  getSrsCategoryKey,
+  LESSON_PROGRESSION_CONFIG,
+  PLACEMENT_TEST_CONFIG,
+  SRS_CATEGORIES,
+  type SrsCategoryCounts,
+} from '@/lib/srs/srs-config';
 import type { LessonProgress, SrsTransition } from '@/types/review.types';
 import {
   activeReleaseIdExpression,
@@ -25,6 +31,41 @@ import {
   vocabRevisionExtendedSelection,
   vocabRevisionQuizSelection,
 } from '@/db/queries/vocab-content';
+
+export async function getSrsCategoryCountsForDecks(
+  deckIds: number[],
+  userId: string,
+): Promise<SrsCategoryCounts> {
+  const counts = Object.fromEntries(
+    SRS_CATEGORIES.map(category => [category.key, 0]),
+  ) as SrsCategoryCounts;
+  if (deckIds.length === 0) return counts;
+
+  const rows = await db
+    .select({
+      srsLevel: userVocabState.srsLevel,
+      count: count(userVocabState.id),
+    })
+    .from(userVocabState)
+    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
+    .where(and(eq(userVocabState.userId, userId), inArray(decks.id, deckIds)))
+    .groupBy(userVocabState.srsLevel);
+
+  for (const row of rows) {
+    counts[getSrsCategoryKey(row.srsLevel)] += Number(row.count);
+  }
+
+  return counts;
+}
 
 export async function getLessonProgressForDeck(
   deckId: number,

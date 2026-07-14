@@ -74,7 +74,7 @@ export default function FeedbackForm() {
         </Select.Popover>
       </Select>
 
-      <div className="space-y-2">
+      <div className="form-field">
         <Label className="text-sm text-default-600" htmlFor="message">
           Feedback
         </Label>
@@ -90,7 +90,7 @@ export default function FeedbackForm() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
+        <div className="form-field">
           <Label className="text-sm text-default-600" htmlFor="pagePath">
             Page or flow
           </Label>
@@ -103,7 +103,7 @@ export default function FeedbackForm() {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="form-field">
           <Label className="text-sm text-default-600" htmlFor="contactEmail">
             Contact email
           </Label>

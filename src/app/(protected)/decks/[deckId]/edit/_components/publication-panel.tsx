@@ -132,7 +132,7 @@ export default function PublicationPanel({
 
       <Card.Content className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex flex-1 flex-col gap-1">
+          <div className="form-field flex-1">
             <Label htmlFor={`change-summary-${deck.id}`}>What changed? (optional)</Label>
 
             <Input

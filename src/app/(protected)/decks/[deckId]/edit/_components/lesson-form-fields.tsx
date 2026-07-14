@@ -9,7 +9,7 @@ type Props = {
 
 export default function LessonFormFields({ id, defaultTitle, autoFocus = false }: Props) {
   return (
-    <div className="space-y-1.5">
+    <div className="form-field">
       <Label className="text-sm text-default-600" htmlFor={id}>
         Lesson title
       </Label>

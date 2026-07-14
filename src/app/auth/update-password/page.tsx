@@ -32,15 +32,17 @@ export default function UpdatePasswordPage() {
         </Card.Header>
         <Card.Content className="px-6 py-6">
           <form className="flex flex-col gap-5" onSubmit={submit}>
-            <Label htmlFor="password">New password</Label>
-            <Input
-              id="password"
-              type="password"
-              minLength={8}
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <div className="form-field">
+              <Label htmlFor="password">New password</Label>
+              <Input
+                id="password"
+                type="password"
+                minLength={8}
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+            </div>
             {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
             <Button type="submit" variant="primary" className="w-full" isPending={pending}>
               Update password

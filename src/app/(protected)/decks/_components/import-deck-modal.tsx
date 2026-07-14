@@ -81,7 +81,7 @@ export default function ImportDeckModal() {
                     Review the imported vocabulary before publishing or choosing sharing options.
                   </p>
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="form-field">
                   <Label htmlFor="csv-file">CSV file</Label>
                   <input
                     id="csv-file"

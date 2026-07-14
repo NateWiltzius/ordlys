@@ -15,7 +15,7 @@ import {
 } from '@/db/queries/deck.queries';
 import { changeDeckStatus } from '@/db/queries/deck-release.queries';
 import { CreateDeck, CreateDeckInput } from '@/types/deck.types';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { currentUserCanModerate, getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import {
   CONTENT_LIMITS,
@@ -30,6 +30,7 @@ import {
   getNewVocabCountsForDecks,
   getNextReviewBatch,
   getReviewForecastCounts,
+  getSrsCategoryCountsForDecks,
 } from '@/db/queries/review.queries';
 import { buildReviewForecast } from '@/lib/review-forecast';
 import {
@@ -42,17 +43,20 @@ import {
   listReleaseHistory,
 } from '@/db/queries/deck-release.queries';
 import { withExpectedError } from '@/lib/action-result';
+import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
   const activeDecks = await getUserActiveDecks(userId);
   const activeDeckIds = activeDecks.map(deck => deck.id);
-  const [deckStudyCounts, newVocabCounts, forecastCounts, nextReview] = await Promise.all([
-    getDeckCardStudyCounts(activeDeckIds, userId),
-    getNewVocabCountsForDecks(activeDeckIds, userId),
-    getReviewForecastCounts(userId, activeDeckIds),
-    getNextReviewBatch(userId, activeDeckIds),
-  ]);
+  const [deckStudyCounts, newVocabCounts, forecastCounts, nextReview, srsCategoryCounts] =
+    await Promise.all([
+      getDeckCardStudyCounts(activeDeckIds, userId),
+      getNewVocabCountsForDecks(activeDeckIds, userId),
+      getReviewForecastCounts(userId, activeDeckIds),
+      getNextReviewBatch(userId, activeDeckIds),
+      getSrsCategoryCountsForDecks(activeDeckIds, userId),
+    ]);
 
   const deckStats = Object.fromEntries(
     activeDeckIds.map(deckId => [
@@ -81,6 +85,7 @@ export async function getDashboardDataAction() {
     deckStats,
     reviewForecast: buildReviewForecast(forecastCounts),
     nextReview,
+    srsCategoryCounts,
   };
 }
 
@@ -206,6 +211,7 @@ export async function deleteDeckAction(id: number) {
     const deckId = parsePositiveInteger(id);
     if (!deckId) throw new Error('Invalid deck ID.');
     await changeDeckStatus(deckId, await getCurrentUserId(), 'deleted');
+    revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
     revalidatePath('/decks');
     revalidatePath('/dashboard');
   });

@@ -55,7 +55,7 @@ export default function DeleteAccountModal() {
                     want a copy.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="form-field">
                   <Label htmlFor="delete-account-confirmation">
                     Type <span className="font-semibold">DELETE</span> to confirm
                   </Label>

@@ -37,14 +37,16 @@ export default function ForgotPasswordPage() {
         </Card.Header>
         <Card.Content className="px-6 py-6">
           <form className="flex flex-col gap-4" onSubmit={submit}>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
+            <div className="form-field">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
             {message ? <StatusAlert status="success">{message}</StatusAlert> : null}
             {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
             <Button type="submit" variant="primary" className="w-full" isPending={pending}>

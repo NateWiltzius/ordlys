@@ -1,11 +1,12 @@
 import FeatureCard from '@/app/_components/feature-card';
 import PublicDeckCard from '@/components/public-deck-card';
 import ButtonLink from '@/components/shared/button-link';
-import { getPublicDeckSummaries } from '@/db/queries/public-deck.queries';
+import { getCachedPublicDeckSummaries } from '@/db/queries/public-deck.queries';
 import { absoluteUrl, OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import { Card, Chip } from '@heroui/react';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
 const title = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
 const description =
@@ -31,10 +32,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
-
-export default async function Home() {
-  const publicDecks = await getPublicDeckSummaries(3);
+export default function Home() {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -138,21 +136,52 @@ export default async function Home() {
           </ButtonLink>
         </div>
 
-        {publicDecks.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {publicDecks.map(deck => (
-              <PublicDeckCard key={deck.id} deck={deck} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-default-200 bg-default-50 px-6 py-8 text-center">
-            <h3 className="text-lg font-semibold">Public decks are coming soon</h3>
-            <p className="mt-1 text-default-500">
-              You can still create an account and start building your own vocabulary library.
-            </p>
-          </div>
-        )}
+        <Suspense fallback={<FeaturedPublicDecksLoading />}>
+          <FeaturedPublicDecks />
+        </Suspense>
       </section>
+    </div>
+  );
+}
+
+async function FeaturedPublicDecks() {
+  const publicDecks = await getCachedPublicDeckSummaries(3);
+
+  if (publicDecks.length === 0) {
+    return (
+      <div className="rounded-xl border border-default-200 bg-default-50 px-6 py-8 text-center">
+        <h3 className="text-lg font-semibold">Public decks are coming soon</h3>
+        <p className="mt-1 text-default-500">
+          You can still create an account and start building your own vocabulary library.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {publicDecks.map(deck => (
+        <PublicDeckCard key={deck.id} deck={deck} />
+      ))}
+    </div>
+  );
+}
+
+function FeaturedPublicDecksLoading() {
+  return (
+    <div
+      className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+      role="status"
+      aria-label="Loading public decks"
+      aria-busy="true"
+    >
+      <span className="sr-only">Loading public decks…</span>
+      {Array.from({ length: 3 }, (_, index) => (
+        <div
+          key={index}
+          className="h-52 animate-pulse rounded-xl border border-default-200 bg-default-100"
+        />
+      ))}
     </div>
   );
 }

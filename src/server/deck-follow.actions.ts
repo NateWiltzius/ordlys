@@ -2,9 +2,10 @@
 
 import { followDeck, unfollowDeck } from '@/db/queries/deck-release.queries';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { withExpectedError } from '@/lib/action-result';
+import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 
 export async function followDeckAction(deckId: number) {
   return withExpectedError(async () => {
@@ -14,6 +15,7 @@ export async function followDeckAction(deckId: number) {
     }
 
     await followDeck(parsedDeckId, await getCurrentUserId());
+    revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
     revalidatePath('/decks');
     revalidatePath(`/decks/${parsedDeckId}`);
     revalidatePath('/dashboard');
@@ -28,6 +30,7 @@ export async function unfollowDeckAction(deckId: number) {
     }
 
     await unfollowDeck(parsedDeckId, await getCurrentUserId());
+    revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
     revalidatePath('/decks');
     revalidatePath(`/decks/${parsedDeckId}`);
     revalidatePath('/dashboard');

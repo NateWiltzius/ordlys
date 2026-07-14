@@ -7,7 +7,33 @@
   --font-sans: 'font', sans-serif;
 }
 
+/*
+ * HeroUI's default dark field background matches its card and modal surfaces.
+ * Keep the component-native hover, focus, invalid, and disabled states while
+ * giving every Input, TextArea, and Select trigger a distinct field surface.
+ */
+@layer theme {
+  .dark,
+  [data-theme='dark'] {
+    --field-background: var(--surface-secondary);
+    --field-border: var(--border-secondary);
+    --field-border-width: 1px;
+  }
+}
+
 @layer components {
+  .form-field {
+    @apply flex flex-col gap-2;
+  }
+
+  .form-field__label-row {
+    @apply flex min-h-5 items-baseline justify-between gap-3;
+  }
+
+  .select {
+    @apply gap-2;
+  }
+
   .card--default,
   .card--secondary,
   .card--tertiary {

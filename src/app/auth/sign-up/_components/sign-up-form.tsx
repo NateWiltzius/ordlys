@@ -58,7 +58,7 @@ export function SignUpForm({ nextPath }: Props) {
       </Card.Header>
       <Card.Content className="px-6 py-6">
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-2">
+          <div className="form-field">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -73,7 +73,7 @@ export function SignUpForm({ nextPath }: Props) {
               className="w-full"
             />
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="form-field">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"

@@ -68,18 +68,15 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create deck</Modal.Heading>
               <p className="text-sm text-default-500">
-                Set up the basics now. You can change these details before or after publishing.
+                Give your deck a name. You can add cards and publishing details next.
               </p>
             </Modal.Header>
-            <form onSubmit={handleCreateDeck} className="mt-2 flex min-h-0 flex-1 flex-col">
-              <Modal.Body className="space-y-6">
+            <form onSubmit={handleCreateDeck} className="flex min-h-0 flex-1 flex-col">
+              <Modal.Body className="space-y-5">
                 <DeckFormFields idPrefix="create-deck" autoFocus />
-                <div className="rounded-lg border border-default-200 bg-default-50 p-3 text-sm">
-                  <p className="font-medium text-default-700">Starts private</p>
-                  <p className="mt-1 text-xs leading-5 text-default-500">
-                    Only you can access this deck until you publish and choose a sharing option.
-                  </p>
-                </div>
+                <p className="text-xs leading-5 text-default-500">
+                  New decks are private until you choose to publish them.
+                </p>
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
               <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">

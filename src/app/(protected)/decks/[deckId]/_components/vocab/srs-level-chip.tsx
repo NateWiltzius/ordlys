@@ -1,4 +1,5 @@
-import { DEFAULT_SRS_CONFIG, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
+import { getSrsCategoryKey, normalizeSrsLevel, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
+import { SRS_CATEGORY_STYLES } from '@/lib/srs/srs-styles';
 import { Chip } from '@heroui/react';
 
 type Props = {
@@ -14,17 +15,11 @@ export default function SrsLevelChip({ srsLevel }: Props) {
     );
   }
 
-  const normalizedLevel = Math.min(
-    DEFAULT_SRS_CONFIG.maxLevel,
-    Math.max(DEFAULT_SRS_CONFIG.initialLevel, srsLevel),
-  );
+  const normalizedLevel = normalizeSrsLevel(srsLevel);
+  const categoryKey = getSrsCategoryKey(normalizedLevel);
 
   return (
-    <Chip
-      size="sm"
-      variant="soft"
-      color={normalizedLevel >= 6 ? 'success' : normalizedLevel >= 3 ? 'warning' : 'default'}
-    >
+    <Chip size="sm" variant="soft" className={SRS_CATEGORY_STYLES[categoryKey].chip}>
       Level {normalizedLevel + 1} · {SRS_LEVEL_LABELS[normalizedLevel]}
     </Chip>
   );

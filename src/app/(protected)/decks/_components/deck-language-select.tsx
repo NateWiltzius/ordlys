@@ -25,7 +25,7 @@ export default function DeckLanguageSelect({
 
   return (
     <Select name={name} defaultValue={selectedValue} isDisabled={isDisabled}>
-      <Label>{label}</Label>
+      <Label className="text-sm text-default-600">{label}</Label>
       <Select.Trigger>
         <Select.Value />
         <Select.Indicator />

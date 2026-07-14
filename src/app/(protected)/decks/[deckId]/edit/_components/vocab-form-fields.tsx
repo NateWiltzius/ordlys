@@ -11,7 +11,7 @@ export default function VocabFormFields({ vocab }: Props) {
       <fieldset className="space-y-4">
         <legend className="mb-1 text-sm font-semibold text-default-900">Vocabulary</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="front">
               Front
             </Label>
@@ -25,7 +25,7 @@ export default function VocabFormFields({ vocab }: Props) {
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="back">
               Back
             </Label>
@@ -40,7 +40,7 @@ export default function VocabFormFields({ vocab }: Props) {
           </div>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="form-field">
           <Label className="text-sm text-default-600" htmlFor="reading">
             Reading
           </Label>
@@ -60,7 +60,7 @@ export default function VocabFormFields({ vocab }: Props) {
           Optional context shown with the prompt. Hints are not included when checking answers.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="frontToBackQuizHint">
               Front → back
             </Label>
@@ -74,7 +74,7 @@ export default function VocabFormFields({ vocab }: Props) {
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="backToFrontQuizHint">
               Back → front
             </Label>
@@ -98,7 +98,7 @@ export default function VocabFormFields({ vocab }: Props) {
           Add one extra accepted answer per line.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="frontAlternatives">
               Front alternatives
             </Label>
@@ -112,7 +112,7 @@ export default function VocabFormFields({ vocab }: Props) {
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="backAlternatives">
               Back alternatives
             </Label>
