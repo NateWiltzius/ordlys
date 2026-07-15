@@ -1,8 +1,6 @@
 export const LEARN_SESSION_SIZES = [3, 5, 10, 20] as const;
-export const REVIEW_SESSION_SIZES = [10, 25, 50] as const;
 
 export const DEFAULT_LEARN_SESSION_SIZE = 5;
-export const DEFAULT_REVIEW_SESSION_SIZE = 25;
 
 export function parseSessionSize(
   value: string | string[] | undefined,

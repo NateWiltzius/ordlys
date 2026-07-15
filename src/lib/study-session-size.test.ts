@@ -1,28 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_REVIEW_SESSION_SIZE,
+  DEFAULT_LEARN_SESSION_SIZE,
   getSessionSizeChoices,
+  LEARN_SESSION_SIZES,
   parseSessionSize,
-  REVIEW_SESSION_SIZES,
 } from './study-session-size';
 
 describe('study session size', () => {
   it('accepts a configured size', () => {
-    expect(parseSessionSize('10', REVIEW_SESSION_SIZES, DEFAULT_REVIEW_SESSION_SIZE)).toBe(10);
+    expect(parseSessionSize('10', LEARN_SESSION_SIZES, DEFAULT_LEARN_SESSION_SIZE)).toBe(10);
   });
 
   it('falls back when the requested size is unsupported', () => {
-    expect(parseSessionSize('999', REVIEW_SESSION_SIZES, DEFAULT_REVIEW_SESSION_SIZE)).toBe(
-      DEFAULT_REVIEW_SESSION_SIZE,
+    expect(parseSessionSize('999', LEARN_SESSION_SIZES, DEFAULT_LEARN_SESSION_SIZE)).toBe(
+      DEFAULT_LEARN_SESSION_SIZE,
     );
   });
 
   it('accepts all only when the session supports it', () => {
-    expect(parseSessionSize('all', REVIEW_SESSION_SIZES, DEFAULT_REVIEW_SESSION_SIZE, true)).toBe(
+    expect(parseSessionSize('all', LEARN_SESSION_SIZES, DEFAULT_LEARN_SESSION_SIZE, true)).toBe(
       'all',
     );
-    expect(parseSessionSize('all', REVIEW_SESSION_SIZES, DEFAULT_REVIEW_SESSION_SIZE)).toBe(
-      DEFAULT_REVIEW_SESSION_SIZE,
+    expect(parseSessionSize('all', LEARN_SESSION_SIZES, DEFAULT_LEARN_SESSION_SIZE)).toBe(
+      DEFAULT_LEARN_SESSION_SIZE,
     );
   });
 

@@ -22,12 +22,7 @@ import {
   recordReviewAttempt,
 } from '@/db/queries/review-attempt.queries';
 import type { QuizDirection, StudyMode } from '@/types/quiz.types';
-import {
-  DEFAULT_LEARN_SESSION_SIZE,
-  DEFAULT_REVIEW_SESSION_SIZE,
-  LEARN_SESSION_SIZES,
-  REVIEW_SESSION_SIZES,
-} from '@/lib/study-session-size';
+import { DEFAULT_LEARN_SESSION_SIZE, LEARN_SESSION_SIZES } from '@/lib/study-session-size';
 
 export async function getLessonProgressForDeckAction(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -58,34 +53,25 @@ export async function getLearnPageDataAction(
   return { learnItems, lessonProgress, availableCount };
 }
 
-export async function getReviewPageDataAction(
-  id: number,
-  requestedSize: number | 'all' = DEFAULT_REVIEW_SESSION_SIZE,
-) {
+export async function getReviewPageDataAction(id: number) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
   if (!(await getActiveReleaseId(deckId, userId))) return null;
-  const [allDueReviews, nextReview] = await Promise.all([
+  const [dueReviews, nextReview] = await Promise.all([
     getDueReviewsForDeck(deckId, userId),
     getNextReviewBatch(userId, [deckId]),
   ]);
-  const size = normalizeReviewSessionSize(requestedSize);
-  const dueReviews = size === 'all' ? allDueReviews : allDueReviews.slice(0, size);
-  return { dueReviews, totalDueReviews: allDueReviews.length, nextReview };
+  return { dueReviews, nextReview };
 }
 
-export async function getAllReviewsPageDataAction(
-  requestedSize: number | 'all' = DEFAULT_REVIEW_SESSION_SIZE,
-) {
+export async function getAllReviewsPageDataAction() {
   const userId = await getCurrentUserId();
-  const [allDueReviews, nextReview] = await Promise.all([
+  const [dueReviews, nextReview] = await Promise.all([
     getDueReviews(userId),
     getNextReviewBatch(userId),
   ]);
-  const size = normalizeReviewSessionSize(requestedSize);
-  const dueReviews = size === 'all' ? allDueReviews : allDueReviews.slice(0, size);
-  return { dueReviews, totalDueReviews: allDueReviews.length, nextReview };
+  return { dueReviews, nextReview };
 }
 
 export async function getPlacementPageDataAction(deckIdInput: number, lessonIdInput: number) {
@@ -155,11 +141,4 @@ export async function getRecentMistakesAction(limit = 25) {
 
 export async function getRecentMistakeCountAction() {
   return getRecentMistakeCount(await getCurrentUserId());
-}
-
-function normalizeReviewSessionSize(size: number | 'all') {
-  if (size === 'all') return size;
-  return REVIEW_SESSION_SIZES.includes(size as (typeof REVIEW_SESSION_SIZES)[number])
-    ? size
-    : DEFAULT_REVIEW_SESSION_SIZE;
 }

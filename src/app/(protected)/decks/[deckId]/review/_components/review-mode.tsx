@@ -9,24 +9,14 @@ import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
 import NextReviewText from '@/components/shared/next-review-text';
 import type { NextReviewBatch } from '@/types/review.types';
-import SessionSizePicker from '@/components/shared/session-size-picker';
-import { REVIEW_SESSION_SIZES } from '@/lib/study-session-size';
 
 type Props = {
   deckId: number;
   dueReviews: ReviewItem[];
-  totalDueReviews: number;
-  selectedSize: number | 'all';
   nextReview: NextReviewBatch | null;
 };
 
-export default function ReviewMode({
-  deckId,
-  dueReviews,
-  totalDueReviews,
-  selectedSize,
-  nextReview,
-}: Props) {
+export default function ReviewMode({ deckId, dueReviews, nextReview }: Props) {
   if (dueReviews.length === 0) {
     return (
       <StudySession>
@@ -50,14 +40,6 @@ export default function ReviewMode({
       <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.review.text}`}>
         Review due cards
       </h1>
-      <SessionSizePicker
-        baseHref={`/decks/${deckId}/review`}
-        selectedSize={selectedSize}
-        sizes={REVIEW_SESSION_SIZES}
-        totalCount={totalDueReviews}
-        noun="review"
-        allowAll
-      />
       <QuizMode
         quizItems={dueReviews}
         tone="review"
