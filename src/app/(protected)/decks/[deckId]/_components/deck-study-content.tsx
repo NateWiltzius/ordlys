@@ -76,7 +76,7 @@ export default async function DeckStudyContent({
               </Button>
             ) : isOwned && !deck.currentReleaseId && deck.status === 'active' ? (
               <ButtonLink
-                href={`/decks/${deck.id}/edit?section=publishing`}
+                href={`/decks/${deck.id}/edit#publishing`}
                 variant="secondary"
                 size="lg"
                 className="w-full"

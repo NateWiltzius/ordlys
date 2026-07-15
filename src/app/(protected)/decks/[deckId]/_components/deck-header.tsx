@@ -7,6 +7,7 @@ import DeckSafetyControls from './deck-safety-controls';
 import FollowReleaseControls from './follow-release-controls';
 import RestoreDeckButton from './restore-deck-button';
 import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
+import ButtonLink from '@/components/shared/button-link';
 
 type Props = {
   deck: Deck;
@@ -49,6 +50,12 @@ export default function DeckHeader({
       contentClassName="flex-col items-stretch gap-4"
       actions={
         <>
+          {isOwned && deck.status === 'active' ? (
+            <ButtonLink href={`/decks/${deck.id}/edit`} variant="secondary">
+              Manage deck
+            </ButtonLink>
+          ) : null}
+
           {isOwned && (deck.status === 'archived' || deck.status === 'deleted') ? (
             <RestoreDeckButton deckId={deck.id} />
           ) : null}

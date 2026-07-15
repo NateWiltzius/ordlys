@@ -13,15 +13,10 @@ type Props = {
   params: Promise<{
     deckId: string;
   }>;
-  searchParams: Promise<{
-    section?: string | string[];
-  }>;
 };
 
-export default async function Page({ params, searchParams }: Props) {
+export default async function Page({ params }: Props) {
   const { deckId } = await params;
-  const requestedSection = (await searchParams).section;
-  const activeSection = requestedSection === 'publishing' ? 'publishing' : 'lessons';
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
@@ -38,7 +33,6 @@ export default async function Page({ params, searchParams }: Props) {
       removedDraftItems={removedDraftItems}
       lessons={lessons}
       parsedDeckId={parsedDeckId}
-      activeSection={activeSection}
     />
   );
 }

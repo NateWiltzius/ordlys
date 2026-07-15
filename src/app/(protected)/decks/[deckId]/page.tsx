@@ -9,7 +9,6 @@ import { Suspense } from 'react';
 import { getDeckPageDataAction } from '@/server/deck.actions';
 import type { Metadata } from 'next';
 import DeckLoading from '@/app/(protected)/decks/[deckId]/loading';
-import DeckWorkspaceNavigation from '@/app/(protected)/decks/[deckId]/_components/deck-workspace-navigation';
 
 export const metadata: Metadata = {
   title: 'Deck',
@@ -66,12 +65,6 @@ async function DeckContent({ deckId }: DeckContentProps) {
         releaseChanges={releaseChanges}
         canModerate={canModerate}
         protectedFollowerCount={protectedFollowerCount}
-      />
-
-      <DeckWorkspaceNavigation
-        deckId={deck.id}
-        activeSection="overview"
-        showOwnerSections={isOwned && deck.status === 'active'}
       />
 
       <Suspense fallback={<StudyContentSkeleton />}>
