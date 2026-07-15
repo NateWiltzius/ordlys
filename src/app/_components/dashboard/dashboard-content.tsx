@@ -9,6 +9,7 @@ import DashboardReviewCard from '@/app/_components/dashboard/dashboard-review-ca
 import DashboardRecentMistakesCard from '@/app/_components/dashboard/dashboard-recent-mistakes-card';
 import { getRecentMistakeCountAction } from '@/server/review.actions';
 import DashboardSrsCard from '@/app/_components/dashboard/dashboard-srs-card';
+import DashboardLearningCard from '@/app/_components/dashboard/dashboard-learning-card';
 
 export default async function DashboardContent() {
   const [dashboardData, recentMistakeCount] = await Promise.all([
@@ -35,14 +36,22 @@ export default async function DashboardContent() {
         description="Start what is ready now and keep your learning moving."
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <DashboardReviewCard
           decks={activeDecks}
           deckStats={deckStats}
           reviewsDue={allDeckStats.reviewsDue}
         />
 
-        <DashboardRecentMistakesCard count={recentMistakeCount} />
+        <DashboardLearningCard
+          decks={activeDecks}
+          deckStats={deckStats}
+          newWordsAvailable={allDeckStats.newWordsAvailable}
+        />
+
+        <div className="h-full md:col-span-2 xl:col-span-1">
+          <DashboardRecentMistakesCard count={recentMistakeCount} />
+        </div>
       </div>
 
       <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} />

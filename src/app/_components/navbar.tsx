@@ -41,7 +41,7 @@ export default async function Navbar() {
           </Tooltip.Content>
         </Tooltip>
       </div>
-      <div className="hidden min-w-0 items-center gap-2 text-base sm:flex">
+      <div className="hidden min-w-0 items-center gap-2 text-base md:flex">
         {navigationItems.map(item => (
           <NavigationLink key={item.href} {...item} variant="desktop" />
         ))}

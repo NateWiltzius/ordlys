@@ -17,7 +17,7 @@ export default function MobileNavigation({ loggedIn }: Props) {
   const navigationItems = getNavigationItems(loggedIn);
 
   return (
-    <div className="flex items-center gap-1 sm:hidden">
+    <div className="flex items-center gap-1 md:hidden">
       <ThemeToggle />
       <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
         <Button
