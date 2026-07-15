@@ -5,6 +5,12 @@ import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import type { Metadata } from 'next';
 import PublicDeckBrowser from '@/app/public/decks/_components/public-deck-browser';
 import { Suspense } from 'react';
+import {
+  DeckDiscoveryControlsSkeleton,
+  PublicDeckCardSkeleton,
+  SkeletonBlock,
+  SkeletonLine,
+} from '@/components/shared/skeleton';
 
 const title = 'Public language-learning flashcard decks';
 const description =
@@ -85,13 +91,17 @@ function PublicDecksLoading() {
   return (
     <section className="space-y-4" role="status" aria-label="Loading public decks" aria-busy="true">
       <span className="sr-only">Loading public decks…</span>
-      <div className="h-16 w-full max-w-xl animate-pulse rounded-xl bg-default-100" />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-2">
+          <SkeletonLine className="h-6 w-40" />
+          <SkeletonLine className="h-4 w-full max-w-2xl" />
+        </div>
+        <SkeletonBlock className="h-8 w-36 rounded-lg" />
+      </div>
+      <DeckDiscoveryControlsSkeleton />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }, (_, index) => (
-          <div
-            key={index}
-            className="h-52 animate-pulse rounded-xl border border-default-200 bg-default-100"
-          />
+          <PublicDeckCardSkeleton key={index} />
         ))}
       </div>
     </section>

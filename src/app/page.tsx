@@ -7,6 +7,7 @@ import { Card, Chip } from '@heroui/react';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { PublicDeckCardSkeleton } from '@/components/shared/skeleton';
 
 const title = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
 const description =
@@ -177,10 +178,7 @@ function FeaturedPublicDecksLoading() {
     >
       <span className="sr-only">Loading public decks…</span>
       {Array.from({ length: 3 }, (_, index) => (
-        <div
-          key={index}
-          className="h-52 animate-pulse rounded-xl border border-default-200 bg-default-100"
-        />
+        <PublicDeckCardSkeleton key={index} />
       ))}
     </div>
   );

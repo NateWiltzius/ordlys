@@ -5,8 +5,9 @@ import EditLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/e
 import EditVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/edit-vocab-modal';
 import VocabTable from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-table';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
-import { SkeletonLine } from '@/components/shared/skeleton';
+import { SkeletonBlock, SkeletonLine } from '@/components/shared/skeleton';
 import StatusAlert from '@/components/shared/status-alert';
+import { getVocabGridColumns } from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-grid';
 import { moveItem } from '@/lib/order/move-item';
 import { deleteLessonAction } from '@/server/lesson.actions';
 import {
@@ -316,15 +317,31 @@ export default function LessonCard({
 }
 
 function VocabularyLoading() {
+  const desktopColumns = getVocabGridColumns(false, true);
+
   return (
-    <div className="space-y-3 rounded-xl border border-default-200 p-4" aria-hidden="true">
-      {Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className="grid gap-3 sm:grid-cols-3">
-          <SkeletonLine className="h-4 w-2/3" />
-          <SkeletonLine className="h-4 w-3/4" />
-          <SkeletonLine className="h-8 w-32 sm:ml-auto" />
-        </div>
-      ))}
+    <div className="overflow-hidden rounded-xl border border-default-200" aria-hidden="true">
+      <div
+        className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 sm:grid sm:items-center ${desktopColumns}`}
+      >
+        <SkeletonLine className="h-3 w-4" />
+        <SkeletonLine className="h-3 w-12" />
+        <SkeletonLine className="h-3 w-12" />
+        <SkeletonLine className="h-3 w-16 sm:ml-auto" />
+      </div>
+      <div className="divide-y divide-default-200">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div
+            key={index}
+            className={`grid gap-4 bg-background px-4 py-4 sm:items-center sm:py-3 ${desktopColumns}`}
+          >
+            <SkeletonLine className="hidden h-4 w-4 sm:block" />
+            <SkeletonLine className="h-4 w-2/3" />
+            <SkeletonLine className="h-4 w-3/4" />
+            <SkeletonBlock className="h-8 w-32 rounded-lg sm:ml-auto" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

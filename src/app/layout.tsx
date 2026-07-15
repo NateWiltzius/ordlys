@@ -105,13 +105,20 @@ function NavbarLoading() {
       aria-label="Loading navigation"
       aria-busy="true"
     >
-      <div className="h-8 w-20 animate-pulse rounded-md bg-default-200" />
-      <div className="hidden items-center gap-2 sm:flex">
-        <div className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
-        <div className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
-        <div className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
+      <div className="flex items-center gap-2">
+        <div className="h-8 w-20 animate-pulse rounded-md bg-default-200" />
+        <div className="h-5 w-10 animate-pulse rounded-full bg-default-200" />
       </div>
-      <div className="h-10 w-10 animate-pulse rounded-md bg-default-200 sm:hidden" />
+      <div className="hidden items-center gap-2 md:flex">
+        {Array.from({ length: 5 }, (_, index) => (
+          <div key={index} className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
+        ))}
+        <div className="size-8 animate-pulse rounded-md bg-default-200" />
+      </div>
+      <div className="flex items-center gap-1 md:hidden">
+        <div className="size-8 animate-pulse rounded-md bg-default-200" />
+        <div className="size-8 animate-pulse rounded-md bg-default-200" />
+      </div>
     </nav>
   );
 }

@@ -21,6 +21,16 @@ export default function AccountLoading() {
         </Card.Content>
       </Card>
       <Card>
+        <Card.Header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <SkeletonLine className="h-5 w-24" />
+            <SkeletonLine className="h-4 w-full max-w-2xl" />
+            <SkeletonLine className="h-4 w-4/5 max-w-xl" />
+          </div>
+          <SkeletonBlock className="h-10 w-40 shrink-0 rounded-lg" />
+        </Card.Header>
+      </Card>
+      <Card>
         <Card.Header>
           <div className="space-y-2">
             <SkeletonLine className="h-5 w-20" />

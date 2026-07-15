@@ -14,12 +14,14 @@ export default function EditDeckLoading() {
             <SkeletonLine className="h-5 w-20" />
             <SkeletonLine className="h-4 w-72 max-w-full" />
           </div>
-          <SkeletonLine className="h-4 w-16" />
+          <SkeletonLine className="h-4 w-32" />
         </Card.Header>
-        <Card.Content className="space-y-4">
-          {Array.from({ length: 2 }, (_, index) => (
-            <LessonEditorSkeleton key={index} />
-          ))}
+        <Card.Content>
+          <div className="divide-y divide-default-200">
+            {Array.from({ length: 2 }, (_, index) => (
+              <LessonEditorSkeleton key={index} />
+            ))}
+          </div>
         </Card.Content>
       </Card>
     </div>
@@ -44,20 +46,13 @@ function PublicationPanelSkeleton() {
           </div>
           <SkeletonBlock className="h-10 w-full rounded-lg sm:w-32" />
         </div>
-        <SkeletonLine className="h-px w-full rounded-none" />
-        <div className="grid gap-4 md:grid-cols-2">
-          {Array.from({ length: 2 }, (_, index) => (
-            <div key={index} className="space-y-2">
-              <SkeletonLine className="h-4 w-24" />
-              <SkeletonBlock className="h-10 w-full rounded-lg" />
-              <SkeletonLine className="h-4 w-4/5" />
-            </div>
-          ))}
+        <div className="space-y-2">
+          <SkeletonLine className="h-4 w-40" />
+          <SkeletonBlock className="h-10 w-full rounded-lg" />
+          <SkeletonLine className="h-4 w-4/5 max-w-2xl" />
         </div>
-        <SkeletonLine className="h-px w-full rounded-none" />
-        <div className="flex gap-2">
-          <SkeletonBlock className="h-10 w-28 rounded-lg" />
-          <SkeletonBlock className="h-10 w-28 rounded-lg" />
+        <div className="rounded-xl border border-default-200 bg-default-50/50 px-4 py-3">
+          <SkeletonLine className="h-5 w-56 max-w-full" />
         </div>
       </Card.Content>
     </Card>
@@ -66,20 +61,10 @@ function PublicationPanelSkeleton() {
 
 function LessonEditorSkeleton() {
   return (
-    <Card variant="secondary">
-      <Card.Header className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <SkeletonLine className="h-5 w-40" />
-          <SkeletonLine className="h-4 w-52" />
-        </div>
-        <div className="flex items-center gap-1">
-          <SkeletonBlock className="h-8 w-16 rounded-lg" />
-          <SkeletonBlock className="h-7 w-16 rounded-full" />
-          <SkeletonBlock className="size-8 rounded-lg" />
-          <SkeletonBlock className="size-8 rounded-lg" />
-          <SkeletonBlock className="h-8 w-24 rounded-lg" />
-        </div>
-      </Card.Header>
-    </Card>
+    <div className="flex items-center gap-4 py-3">
+      <SkeletonLine className="h-5 w-48 max-w-full flex-1" />
+      <SkeletonBlock className="h-7 w-20 shrink-0 rounded-full" />
+      <SkeletonBlock className="size-5 shrink-0 rounded-md" />
+    </div>
   );
 }

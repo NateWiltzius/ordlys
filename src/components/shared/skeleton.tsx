@@ -24,7 +24,7 @@ type PageHeaderSkeletonProps = {
   badgeCount?: number;
 };
 
-export function PageHeaderSkeleton({ actionCount = 1, badgeCount = 0 }: PageHeaderSkeletonProps) {
+export function PageHeaderSkeleton({ actionCount = 0, badgeCount = 0 }: PageHeaderSkeletonProps) {
   return (
     <Card className="w-full">
       <Card.Header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -158,29 +158,75 @@ export function SrsDistributionSkeleton() {
 
 const barHeights = ['18%', '42%', '24%', '68%', '34%', '12%', '56%', '28%'];
 
-export function DeckCardSkeleton() {
+export function DeckDiscoveryControlsSkeleton() {
+  return (
+    <div className="space-y-2">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
+        <div className="space-y-2">
+          <SkeletonLine className="h-4 w-24" />
+          <SkeletonBlock className="h-10 w-full rounded-lg" />
+        </div>
+        <div className="space-y-2">
+          <SkeletonLine className="h-4 w-16" />
+          <SkeletonBlock className="h-10 w-full rounded-lg" />
+        </div>
+      </div>
+      <SkeletonLine className="h-4 w-36" />
+    </div>
+  );
+}
+
+type DeckCardSkeletonProps = {
+  showMeta?: boolean;
+};
+
+export function DeckCardSkeleton({ showMeta = false }: DeckCardSkeletonProps) {
   return (
     <Card className="flex h-full w-full flex-col">
       <Card.Header className="flex items-start justify-between gap-3 pb-2">
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 flex-1 space-y-1">
           <SkeletonLine className="h-6 w-4/5" />
           <SkeletonLine className="h-4 w-full" />
           <SkeletonLine className="h-4 w-3/5" />
         </div>
         <SkeletonBlock className="h-7 w-16 shrink-0 rounded-full" />
       </Card.Header>
-      <Card.Content className="flex-1 py-2">
-        <div className="space-y-2 rounded-lg bg-default-100 px-3 py-2">
+      <div className="min-h-6 flex-1" />
+      <Card.Footer>
+        <div className="flex w-full flex-col gap-2">
+          {showMeta ? <SkeletonLine className="h-4 w-20" /> : null}
+          <div className="flex items-start gap-2">
+            <SkeletonBlock className="h-8 flex-1 rounded-lg" />
+            <SkeletonBlock className="h-8 w-20 rounded-lg" />
+            <SkeletonBlock className="h-8 w-9 rounded-lg" />
+          </div>
+        </div>
+      </Card.Footer>
+    </Card>
+  );
+}
+
+export function PublicDeckCardSkeleton() {
+  return (
+    <Card className="flex h-full flex-col">
+      <Card.Header className="flex-row items-start justify-between gap-3 pb-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <SkeletonLine className="h-6 w-4/5" />
           <SkeletonLine className="h-4 w-full" />
-          <SkeletonLine className="h-4 w-5/6" />
+          <SkeletonLine className="h-4 w-3/5" />
+        </div>
+        <SkeletonBlock className="h-7 w-16 shrink-0 rounded-full" />
+      </Card.Header>
+      <Card.Content className="flex-1 space-y-3">
+        <SkeletonLine className="h-4 w-36" />
+        <div className="flex gap-5">
+          <SkeletonLine className="h-4 w-16" />
+          <SkeletonLine className="h-4 w-16" />
+          <SkeletonLine className="h-4 w-20" />
         </div>
       </Card.Content>
-      <Card.Footer className="pt-2">
-        <div className="flex w-full items-start gap-2">
-          <SkeletonBlock className="h-8 flex-1 rounded-lg" />
-          <SkeletonBlock className="h-8 w-16 rounded-lg" />
-          <SkeletonBlock className="h-8 w-9 rounded-lg" />
-        </div>
+      <Card.Footer>
+        <SkeletonBlock className="h-10 w-full rounded-lg" />
       </Card.Footer>
     </Card>
   );
@@ -194,7 +240,7 @@ export function DashboardDeckListSkeleton() {
           <SkeletonLine className="h-5 w-28" />
           <SkeletonLine className="h-4 w-80 max-w-full" />
         </div>
-        <SkeletonLine className="h-4 w-14" />
+        <SkeletonBlock className="h-8 w-24 rounded-lg" />
       </Card.Header>
       <Card.Content>
         <div className="-mx-6 divide-y divide-default-200">
