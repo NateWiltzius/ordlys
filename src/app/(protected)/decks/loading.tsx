@@ -2,8 +2,8 @@ import { DeckCardSkeleton, PageHeaderSkeleton, SkeletonBlock } from '@/component
 
 export default function DecksLoading() {
   return (
-    <div className="space-y-6" role="status" aria-label="Loading decks" aria-busy="true">
-      <span className="sr-only">Loading decks…</span>
+    <div className="space-y-6" role="status" aria-label="Loading library" aria-busy="true">
+      <span className="sr-only">Loading library…</span>
       <PageHeaderSkeleton actionCount={2} />
       <div className="w-full">
         <div className="grid w-full grid-cols-2 gap-2">

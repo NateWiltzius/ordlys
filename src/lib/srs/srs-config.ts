@@ -62,11 +62,12 @@ export const DEFAULT_SRS_CONFIG = {
 
 export const LESSON_PROGRESSION_CONFIG = {
   // SRS levels are stored zero-based but shown to learners one-based.
-  unlockSrsLevel: 2,
-  unlockDisplayLevel: 3,
+  // Reaching Strong is the point at which a word counts as learned.
+  learnedSrsLevel: 3,
+  learnedDisplayLevel: 4,
   unlockRatio: 0.8,
 } as const;
 
 export const PLACEMENT_TEST_CONFIG = {
-  passedSrsLevel: LESSON_PROGRESSION_CONFIG.unlockSrsLevel,
+  passedSrsLevel: LESSON_PROGRESSION_CONFIG.learnedSrsLevel,
 } as const;

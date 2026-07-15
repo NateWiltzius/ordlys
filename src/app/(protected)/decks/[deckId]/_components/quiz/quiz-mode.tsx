@@ -99,7 +99,7 @@ export default function QuizMode({
     <Button
       variant="tertiary"
       size="sm"
-      aria-label="Exit quiz and go to dashboard"
+      aria-label="Exit quiz and return to Today"
       className="fixed right-4 top-4 z-50 size-10 rounded-full border border-default-200 bg-background/95 p-0 shadow-md backdrop-blur"
       onPress={() => window.location.assign('/dashboard')}
     >
@@ -276,7 +276,7 @@ export default function QuizMode({
           <Card>
             <Card.Header>
               <Card.Title>Saving progress</Card.Title>
-              <Card.Description>Returning to your deck.</Card.Description>
+              <Card.Description>Finishing your session.</Card.Description>
             </Card.Header>
             <Card.Content>
               <ProgressBar isIndeterminate aria-label="Saving quiz progress">

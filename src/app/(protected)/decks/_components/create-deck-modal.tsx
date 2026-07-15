@@ -14,7 +14,7 @@ type CreateDeckModalProps = {
   triggerLabel?: string;
 };
 
-export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: CreateDeckModalProps) {
+export default function CreateDeckModal({ triggerLabel = 'Create deck' }: CreateDeckModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export default function CreateDeckModal({ triggerLabel = 'Create Deck' }: Create
       }
       form.reset();
       modalState.close();
-      router.refresh();
+      router.push(`/decks/${result}/edit`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not create the deck.');
     } finally {

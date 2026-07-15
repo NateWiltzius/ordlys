@@ -89,15 +89,25 @@ export async function getDashboardDataAction() {
   };
 }
 
-export async function getDecksPageDataAction() {
+export async function getLibraryPageDataAction() {
   const userId = await getCurrentUserId();
-  const [ownedDecks, publicDecks, learningDecks, restorableDecks] = await Promise.all([
+  const [ownedDecks, learningDecks, restorableDecks] = await Promise.all([
     getDecksByOwnerId(userId),
-    getPublicDecks(userId),
     getUserFollowedDecks(userId),
     getRestorableDecksByOwnerId(userId),
   ]);
-  return { ownedDecks, publicDecks, learningDecks, restorableDecks };
+  return { ownedDecks, learningDecks, restorableDecks };
+}
+
+export async function getDiscoverPageDataAction() {
+  const userId = await getCurrentUserId();
+  const [ownedDecks, publicDecks, learningDecks] = await Promise.all([
+    getDecksByOwnerId(userId),
+    getPublicDecks(userId),
+    getUserFollowedDecks(userId),
+  ]);
+  const libraryDeckIds = [...new Set([...ownedDecks, ...learningDecks].map(deck => deck.id))];
+  return { publicDecks, libraryDeckIds };
 }
 
 export async function getDeckPageDataAction(id: number) {
@@ -184,8 +194,9 @@ export async function createDeckAction(deck: CreateDeckInput) {
       ownerId: userId,
     };
 
-    await createDeck(deckWithOwner);
+    const deckId = await createDeck(deckWithOwner);
     revalidatePath('/decks');
+    return deckId;
   });
 }
 
@@ -203,6 +214,7 @@ export async function updateDeckAction(id: number, input: Omit<CreateDeckInput, 
     revalidatePath('/decks');
     revalidatePath(`/decks/${deckId}`);
     revalidatePath(`/decks/${deckId}/edit`);
+    revalidatePath('/discover');
   });
 }
 
@@ -214,5 +226,6 @@ export async function deleteDeckAction(id: number) {
     revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
     revalidatePath('/decks');
     revalidatePath('/dashboard');
+    revalidatePath('/discover');
   });
 }

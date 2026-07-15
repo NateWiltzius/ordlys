@@ -10,22 +10,24 @@ export type DeckProgressSummary = {
   currentLessonNumber: number;
   nextLesson: LessonProgress | null;
   allCardsIntroduced: boolean;
-  masteryComplete: boolean;
+  lessonMilestonesComplete: boolean;
 };
 
 export function summarizeDeckProgress(lessonProgress: LessonProgress[]): DeckProgressSummary {
   const lessons = lessonProgress.filter(lesson => lesson.totalWords > 0);
   const totalCards = lessons.reduce((total, lesson) => total + lesson.totalWords, 0);
   const introducedCards = lessons.reduce(
-    (total, lesson) => total + Math.min(lesson.learnedWords, lesson.totalWords),
+    (total, lesson) => total + Math.min(lesson.introducedWords, lesson.totalWords),
     0,
   );
-  const coveredLessons = lessons.filter(lesson => lesson.learnedWords >= lesson.totalWords).length;
+  const coveredLessons = lessons.filter(
+    lesson => lesson.introducedWords >= lesson.totalWords,
+  ).length;
   const currentLesson =
     lessons.find(
       lesson =>
         lesson.isUnlocked &&
-        (lesson.learnedWords < lesson.totalWords || lesson.masteredWords < lesson.requiredWords),
+        (lesson.introducedWords < lesson.totalWords || lesson.learnedWords < lesson.requiredWords),
     ) ??
     lessons.findLast(lesson => lesson.isUnlocked) ??
     null;
@@ -43,7 +45,7 @@ export function summarizeDeckProgress(lessonProgress: LessonProgress[]): DeckPro
     currentLessonNumber: currentLessonIndex + 1,
     nextLesson: lessons[currentLessonIndex + 1] ?? null,
     allCardsIntroduced: totalCards > 0 && introducedCards >= totalCards,
-    masteryComplete:
-      lessons.length > 0 && lessons.every(lesson => lesson.masteredWords >= lesson.requiredWords),
+    lessonMilestonesComplete:
+      lessons.length > 0 && lessons.every(lesson => lesson.learnedWords >= lesson.requiredWords),
   };
 }

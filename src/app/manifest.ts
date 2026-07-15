@@ -15,8 +15,9 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['education', 'productivity'],
     lang: 'en',
     shortcuts: [
-      { name: 'Dashboard', short_name: 'Dashboard', url: '/dashboard' },
-      { name: 'Decks', short_name: 'Decks', url: '/decks' },
+      { name: 'Today', short_name: 'Today', url: '/dashboard' },
+      { name: 'Library', short_name: 'Library', url: '/decks' },
+      { name: 'Discover', short_name: 'Discover', url: '/discover' },
     ],
     icons: [
       {

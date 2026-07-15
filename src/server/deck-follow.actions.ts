@@ -17,6 +17,7 @@ export async function followDeckAction(deckId: number) {
     await followDeck(parsedDeckId, await getCurrentUserId());
     revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
     revalidatePath('/decks');
+    revalidatePath('/discover');
     revalidatePath(`/decks/${parsedDeckId}`);
     revalidatePath('/dashboard');
   });
@@ -32,6 +33,7 @@ export async function unfollowDeckAction(deckId: number) {
     await unfollowDeck(parsedDeckId, await getCurrentUserId());
     revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
     revalidatePath('/decks');
+    revalidatePath('/discover');
     revalidatePath(`/decks/${parsedDeckId}`);
     revalidatePath('/dashboard');
   });

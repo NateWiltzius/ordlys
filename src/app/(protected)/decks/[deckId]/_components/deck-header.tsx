@@ -1,4 +1,3 @@
-import ButtonLink from '@/components/shared/button-link';
 import PageHeader from '@/components/shared/layout/page-header';
 import type { getDeckFollowState, inspectReleaseChanges } from '@/db/queries/deck-release.queries';
 import type { DeckRelease } from '@/types/deck-release.types';
@@ -50,12 +49,6 @@ export default function DeckHeader({
       contentClassName="flex-col items-stretch gap-4"
       actions={
         <>
-          {isOwned && deck.status === 'active' ? (
-            <ButtonLink href={`/decks/${deck.id}/edit`} variant="secondary">
-              Edit deck
-            </ButtonLink>
-          ) : null}
-
           {isOwned && (deck.status === 'archived' || deck.status === 'deleted') ? (
             <RestoreDeckButton deckId={deck.id} />
           ) : null}

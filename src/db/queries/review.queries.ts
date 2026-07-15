@@ -80,10 +80,10 @@ export async function getLessonProgressForDeck(
       lessonId: lessons.id,
       lessonTitle: lessonRevisions.title,
       totalWords: count(vocabs.id),
-      learnedWords: count(userVocabState.id),
-      masteredWords: sql<number>`
+      introducedWords: count(userVocabState.id),
+      learnedWords: sql<number>`
         count(${userVocabState.id}) filter (
-          where ${userVocabState.srsLevel} >= ${LESSON_PROGRESSION_CONFIG.unlockSrsLevel}
+          where ${userVocabState.srsLevel} >= ${LESSON_PROGRESSION_CONFIG.learnedSrsLevel}
         )
       `,
     })
@@ -201,10 +201,10 @@ export async function getNewVocabCountsForDecks(
       deckId: lessons.deckId,
       lessonId: lessons.id,
       totalWords: count(vocabs.id),
-      learnedWords: count(userVocabState.id),
-      masteredWords: sql<number>`
+      introducedWords: count(userVocabState.id),
+      learnedWords: sql<number>`
         count(${userVocabState.id}) filter (
-          where ${userVocabState.srsLevel} >= ${LESSON_PROGRESSION_CONFIG.unlockSrsLevel}
+          where ${userVocabState.srsLevel} >= ${LESSON_PROGRESSION_CONFIG.learnedSrsLevel}
         )
       `,
     })
@@ -242,8 +242,8 @@ export async function getNewVocabCountsForDecks(
       lessonId: row.lessonId,
       lessonTitle: '',
       totalWords: Number(row.totalWords),
+      introducedWords: Number(row.introducedWords),
       learnedWords: Number(row.learnedWords),
-      masteredWords: Number(row.masteredWords),
     });
     progressRowsByDeck.set(row.deckId, progressRows);
   }

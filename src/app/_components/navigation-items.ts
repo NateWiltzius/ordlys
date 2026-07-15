@@ -17,8 +17,9 @@ export function navigationItemClassName(variant: 'desktop' | 'mobile', isActive 
 }
 
 const authenticatedItems: NavigationItem[] = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/decks', label: 'Decks' },
+  { href: '/dashboard', label: 'Today' },
+  { href: '/decks', label: 'Library' },
+  { href: '/discover', label: 'Discover' },
   { href: '/account', label: 'Account' },
 ];
 

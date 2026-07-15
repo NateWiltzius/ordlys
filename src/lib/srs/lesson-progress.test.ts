@@ -9,10 +9,10 @@ import {
 function lesson(
   lessonId: number,
   totalWords: number,
+  introducedWords: number,
   learnedWords: number,
-  masteredWords: number,
 ): LessonProgressRow {
-  return { lessonId, lessonTitle: `Lesson ${lessonId}`, totalWords, learnedWords, masteredWords };
+  return { lessonId, lessonTitle: `Lesson ${lessonId}`, totalWords, introducedWords, learnedWords };
 }
 
 describe('buildLessonProgress', () => {
@@ -23,7 +23,7 @@ describe('buildLessonProgress', () => {
     expect(progress[1]).toMatchObject({ isUnlocked: true, canTakePlacementTest: true });
   });
 
-  it('keeps the next lesson locked when the preceding released-card total is not mastered', () => {
+  it('keeps the next lesson locked when too few preceding cards have reached Strong', () => {
     const progress = buildLessonProgress([lesson(1, 10, 10, 7), lesson(2, 10, 0, 0)]);
 
     expect(progress[1]).toMatchObject({ isUnlocked: false, canTakePlacementTest: false });

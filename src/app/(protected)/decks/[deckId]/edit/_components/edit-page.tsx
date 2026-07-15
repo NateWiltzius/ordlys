@@ -5,7 +5,6 @@ import CreateLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components
 import PageHeader from '@/components/shared/layout/page-header';
 import { EditLessonSummary } from '@/types/lesson.types';
 import { Accordion, Card } from '@heroui/react';
-import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
 import { moveLessonAction } from '@/server/lesson.actions';
 import { moveItem } from '@/lib/order/move-item';
@@ -21,6 +20,9 @@ import type { RemovedDraftItem } from '@/db/queries/deck-release.queries';
 import RemovedDraftItems from './removed-draft-items';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import DeckWorkspaceNavigation, {
+  type DeckWorkspaceSection,
+} from '@/app/(protected)/decks/[deckId]/_components/deck-workspace-navigation';
 
 type Props = {
   lessons: EditLessonSummary[];
@@ -30,6 +32,7 @@ type Props = {
   hasUnpublishedChanges: boolean;
   provenance: DeckProvenance | null;
   removedDraftItems: RemovedDraftItem[];
+  activeSection: Exclude<DeckWorkspaceSection, 'overview'>;
 };
 
 export default function EditPage({
@@ -40,6 +43,7 @@ export default function EditPage({
   hasUnpublishedChanges,
   provenance,
   removedDraftItems,
+  activeSection,
 }: Props) {
   const router = useRouter();
   const [orderedLessons, setOrderedLessons] = useState(lessons);
@@ -100,76 +104,83 @@ export default function EditPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Editing ${deck.title}`}
+        title={deck.title}
         description={
           deck.sourceReleaseId
-            ? 'This is your independent editable copy. Your changes stay here, and updates from the original author will not be applied.'
-            : 'Organize lessons and vocabulary for this deck.'
+            ? 'Manage your independent copy, its lessons, and publishing settings.'
+            : 'Manage this deck’s lessons and publishing settings.'
         }
         actions={
           <div className="flex flex-wrap gap-2">
-            <ButtonLink href={`/decks/${parsedDeckId}`} variant="secondary">
-              Back to deck
-            </ButtonLink>
-            <CreateLessonModal deckId={parsedDeckId} />
+            {activeSection === 'lessons' ? <CreateLessonModal deckId={parsedDeckId} /> : null}
             <EditDeckModal deck={deck} />
           </div>
         }
       />
 
-      <PublicationPanel
-        deck={deck}
-        releases={releases}
-        hasUnpublishedChanges={hasUnpublishedChanges}
-        provenance={provenance}
+      <DeckWorkspaceNavigation
+        deckId={parsedDeckId}
+        activeSection={activeSection}
+        showOwnerSections
       />
 
-      <RemovedDraftItems items={removedDraftItems} />
+      {activeSection === 'publishing' ? (
+        <PublicationPanel
+          deck={deck}
+          releases={releases}
+          hasUnpublishedChanges={hasUnpublishedChanges}
+          provenance={provenance}
+        />
+      ) : null}
+
+      {activeSection === 'lessons' ? <RemovedDraftItems items={removedDraftItems} /> : null}
 
       {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
 
-      <Card>
-        <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <Card.Title>Lessons</Card.Title>
-            <Card.Description>Group vocabulary into focused study sections.</Card.Description>
-          </div>
+      {activeSection === 'lessons' ? (
+        <Card>
+          <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <Card.Title>Lessons</Card.Title>
+              <Card.Description>Group vocabulary into focused study sections.</Card.Description>
+            </div>
 
-          <p className="text-sm text-default-500">
-            {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
-            {totalCardCount} {totalCardCount === 1 ? 'card' : 'cards'}
-          </p>
-        </Card.Header>
+            <p className="text-sm text-default-500">
+              {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
+              {totalCardCount} {totalCardCount === 1 ? 'card' : 'cards'}
+            </p>
+          </Card.Header>
 
-        <Card.Content>
-          {orderedLessons.length === 0 ? (
-            <EmptyState
-              title="No lessons yet"
-              description="Create your first lesson to start adding vocabulary."
-              action={<CreateLessonModal deckId={parsedDeckId} />}
-            />
-          ) : (
-            <Accordion
-              expandedKeys={expandedLessonKeys}
-              onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}
-            >
-              {orderedLessons.map((lesson, index) => (
-                <LessonCard
-                  key={lesson.id}
-                  deckId={parsedDeckId}
-                  lesson={lesson}
-                  canMoveUp={index > 0}
-                  canMoveDown={index < orderedLessons.length - 1}
-                  isLessonOrderPending={movingLessonId !== null}
-                  onMoveLesson={handleMoveLesson}
-                  isExpanded={expandedLessonKeys.has(String(lesson.id))}
-                  onCardCountChange={handleLessonCardCountChange}
-                />
-              ))}
-            </Accordion>
-          )}
-        </Card.Content>
-      </Card>
+          <Card.Content>
+            {orderedLessons.length === 0 ? (
+              <EmptyState
+                title="No lessons yet"
+                description="Create your first lesson to start adding vocabulary."
+                action={<CreateLessonModal deckId={parsedDeckId} />}
+              />
+            ) : (
+              <Accordion
+                expandedKeys={expandedLessonKeys}
+                onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}
+              >
+                {orderedLessons.map((lesson, index) => (
+                  <LessonCard
+                    key={lesson.id}
+                    deckId={parsedDeckId}
+                    lesson={lesson}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < orderedLessons.length - 1}
+                    isLessonOrderPending={movingLessonId !== null}
+                    onMoveLesson={handleMoveLesson}
+                    isExpanded={expandedLessonKeys.has(String(lesson.id))}
+                    onCardCountChange={handleLessonCardCountChange}
+                  />
+                ))}
+              </Accordion>
+            )}
+          </Card.Content>
+        </Card>
+      ) : null}
     </div>
   );
 }

@@ -17,17 +17,22 @@ export default async function DashboardContent() {
   ]);
   const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview, srsCategoryCounts } =
     dashboardData;
+  const deckShortcuts = [...activeDecks]
+    .sort((first, second) => {
+      const firstStats = deckStats[first.id];
+      const secondStats = deckStats[second.id];
+      const reviewDifference = (secondStats?.reviewsDue ?? 0) - (firstStats?.reviewsDue ?? 0);
+
+      if (reviewDifference !== 0) return reviewDifference;
+      return (secondStats?.newWordsAvailable ?? 0) - (firstStats?.newWordsAvailable ?? 0);
+    })
+    .slice(0, 3);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Dashboard"
-        description="Track your active decks, due reviews, and learning progress."
-        actions={
-          <ButtonLink href="/decks" variant="secondary">
-            Browse decks
-          </ButtonLink>
-        }
+        title="Today"
+        description="Start what is ready now and keep your learning moving."
       />
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -47,27 +52,29 @@ export default async function DashboardContent() {
       <Card>
         <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="card__title">Active decks</h2>
+            <h2 className="card__title">Deck shortcuts</h2>
             <Card.Description>
-              Continue learning or review due cards from each deck.
+              Your most relevant decks based on reviews and new words available.
             </Card.Description>
           </div>
 
-          <p className="text-sm text-default-500">
-            {activeDecks.length} {activeDecks.length === 1 ? 'deck' : 'decks'}
-          </p>
+          {activeDecks.length > 0 ? (
+            <ButtonLink href="/decks" variant="tertiary" size="sm">
+              View library
+            </ButtonLink>
+          ) : null}
         </Card.Header>
 
         <Card.Content>
           {activeDecks.length === 0 ? (
             <EmptyState
               title="No active decks yet"
-              description="Browse public decks or create your own to start learning."
-              action={<ButtonLink href="/decks">Browse decks</ButtonLink>}
+              description="Discover a public deck or create your own to start learning."
+              action={<ButtonLink href="/decks">Open library</ButtonLink>}
             />
           ) : (
             <div className="-mx-6 divide-y divide-default-200">
-              {activeDecks.map(deck => (
+              {deckShortcuts.map(deck => (
                 <DashboardDeckRow
                   key={deck.id}
                   deck={deck}

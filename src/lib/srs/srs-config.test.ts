@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getSrsCategoryKey, normalizeSrsLevel } from './srs-config';
+import {
+  getSrsCategoryKey,
+  LESSON_PROGRESSION_CONFIG,
+  normalizeSrsLevel,
+  PLACEMENT_TEST_CONFIG,
+} from './srs-config';
 
 describe('getSrsCategoryKey', () => {
   it.each([
@@ -23,5 +28,17 @@ describe('getSrsCategoryKey', () => {
     expect(normalizeSrsLevel(-1)).toBe(0);
     expect(normalizeSrsLevel(4.9)).toBe(4);
     expect(normalizeSrsLevel(99)).toBe(8);
+  });
+});
+
+describe('lesson learning boundary', () => {
+  it('starts learned words at the first Strong level', () => {
+    expect(LESSON_PROGRESSION_CONFIG.learnedSrsLevel).toBe(3);
+    expect(LESSON_PROGRESSION_CONFIG.learnedDisplayLevel).toBe(4);
+    expect(getSrsCategoryKey(LESSON_PROGRESSION_CONFIG.learnedSrsLevel)).toBe('strong');
+  });
+
+  it('places passed words at the same learned boundary', () => {
+    expect(PLACEMENT_TEST_CONFIG.passedSrsLevel).toBe(LESSON_PROGRESSION_CONFIG.learnedSrsLevel);
   });
 });

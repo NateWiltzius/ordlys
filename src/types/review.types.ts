@@ -29,8 +29,8 @@ export type LessonProgress = {
   lessonId: number;
   lessonTitle: string;
   totalWords: number;
+  introducedWords: number;
   learnedWords: number;
-  masteredWords: number;
   requiredWords: number;
   isUnlocked: boolean;
   canTakePlacementTest: boolean;

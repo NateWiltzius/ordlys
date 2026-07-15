@@ -4,8 +4,8 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Dashboard',
-  description: 'Track your active decks, due reviews, and learning progress.',
+  title: 'Today',
+  description: 'See what is ready to study and keep your learning moving.',
 };
 
 export default function DashboardPage() {

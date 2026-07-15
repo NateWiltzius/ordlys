@@ -227,7 +227,7 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
                 size="sm"
                 onPress={() => router.push(`/decks/${deck.id}/edit`)}
               >
-                Edit
+                Manage
               </Button>
             ) : null}
 

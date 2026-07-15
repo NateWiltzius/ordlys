@@ -37,7 +37,7 @@ export default function LearnPage({
       : [];
     const previousLesson = previousLessons.findLast(lesson => lesson.totalWords > 0);
     const remainingRequired = previousLesson
-      ? Math.max(0, previousLesson.requiredWords - previousLesson.masteredWords)
+      ? Math.max(0, previousLesson.requiredWords - previousLesson.learnedWords)
       : 0;
 
     return (
@@ -45,11 +45,11 @@ export default function LearnPage({
         <Card>
           <Card.Header>
             <Card.Title>
-              {nextLockedLesson ? 'Keep reviewing to unlock more words' : 'All words learned'}
+              {nextLockedLesson ? 'Keep reviewing to unlock more words' : 'All words introduced'}
             </Card.Title>
             <Card.Description>
               {nextLockedLesson && previousLesson
-                ? `${remainingRequired} more ${remainingRequired === 1 ? 'word needs' : 'words need'} to reach SRS level ${LESSON_PROGRESSION_CONFIG.unlockDisplayLevel} in ${previousLesson.lessonTitle}.`
+                ? `${remainingRequired} more ${remainingRequired === 1 ? 'word needs' : 'words need'} to reach SRS level ${LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} in ${previousLesson.lessonTitle}.`
                 : 'You have added every word in this deck to your review queue.'}
             </Card.Description>
           </Card.Header>

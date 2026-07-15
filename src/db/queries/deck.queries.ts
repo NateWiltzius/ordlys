@@ -23,7 +23,7 @@ import { assertAuthoringCapacity } from '@/lib/authoring-quota';
 import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
 
 export const createDeck = async (deck: CreateDeck) => {
-  await db.transaction(async tx => {
+  return await db.transaction(async tx => {
     await lockAuthoringAccount(tx, deck.ownerId);
     assertAuthoringCapacity(await getAuthoringUsage(tx, deck.ownerId), { activeDecks: 1 });
     const [created] = await tx
@@ -43,6 +43,7 @@ export const createDeck = async (deck: CreateDeck) => {
       actorId: deck.ownerId,
       eventType: 'deck.created',
     });
+    return created.id;
   });
 };
 

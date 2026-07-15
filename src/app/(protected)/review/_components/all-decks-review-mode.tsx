@@ -25,7 +25,7 @@ export default function AllDecksReviewMode({ dueReviews, nextReview }: Props) {
             </Card.Description>
           </Card.Header>
           <Card.Footer>
-            <ButtonLink href="/dashboard">Back to dashboard</ButtonLink>
+            <ButtonLink href="/dashboard">Back to Today</ButtonLink>
           </Card.Footer>
         </Card>
       </StudySession>

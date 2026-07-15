@@ -34,6 +34,7 @@ function deckId(value: number) {
 function refresh(id: number) {
   revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
   revalidatePath('/decks');
+  revalidatePath('/discover');
   revalidatePath('/dashboard');
   revalidatePath(`/decks/${id}`);
   revalidatePath(`/decks/${id}/edit`);

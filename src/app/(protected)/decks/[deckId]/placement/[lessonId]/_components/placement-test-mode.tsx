@@ -19,10 +19,10 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
         <Card.Header>
           <Card.Title>Placement test: {placementItems[0].lessonTitle}</Card.Title>
           <Card.Description>
-            Pass each word in both directions without a mistake to place it directly at the lesson
-            unlock threshold (SRS level {PLACEMENT_TEST_CONFIG.passedSrsLevel + 1}). Missed words
-            remain Not started and will appear in the normal learning queue. Existing progress will
-            not be reduced.
+            Pass each word in both directions without a mistake to place it at the beginning of
+            Strong (SRS level {PLACEMENT_TEST_CONFIG.passedSrsLevel + 1}), where it counts as
+            learned. Missed words remain Not started and will appear in the normal learning queue.
+            Existing progress will not be reduced.
           </Card.Description>
         </Card.Header>
       </Card>

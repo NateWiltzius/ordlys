@@ -5,18 +5,23 @@ import { getEditDeckPageDataAction } from '@/server/deck.actions';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Edit deck',
-  description: 'Edit deck details, lessons, and vocabulary.',
+  title: 'Manage deck',
+  description: 'Manage deck lessons, vocabulary, and publishing.',
 };
 
 type Props = {
   params: Promise<{
     deckId: string;
   }>;
+  searchParams: Promise<{
+    section?: string | string[];
+  }>;
 };
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { deckId } = await params;
+  const requestedSection = (await searchParams).section;
+  const activeSection = requestedSection === 'publishing' ? 'publishing' : 'lessons';
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
@@ -33,6 +38,7 @@ export default async function Page({ params }: Props) {
       removedDraftItems={removedDraftItems}
       lessons={lessons}
       parsedDeckId={parsedDeckId}
+      activeSection={activeSection}
     />
   );
 }

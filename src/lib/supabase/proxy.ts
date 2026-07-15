@@ -1,8 +1,7 @@
 import { getSupabasePublicConfig } from '@/config/supabase';
+import { isProtectedAppPath } from '@/lib/protected-routes';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-
-const PROTECTED_PREFIXES = ['/account', '/dashboard', '/decks', '/feedback'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -21,10 +20,7 @@ export async function updateSession(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getClaims();
-  const isProtectedPath = PROTECTED_PREFIXES.some(
-    prefix =>
-      request.nextUrl.pathname === prefix || request.nextUrl.pathname.startsWith(`${prefix}/`),
-  );
+  const isProtectedPath = isProtectedAppPath(request.nextUrl.pathname);
   if (data?.claims || !isProtectedPath) return response;
 
   const urlToSignIn = request.nextUrl.clone();

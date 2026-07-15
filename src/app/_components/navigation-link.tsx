@@ -13,7 +13,12 @@ type Props = {
 
 export default function NavigationLink({ href, label, variant, onNavigate }: Props) {
   const pathname = usePathname();
-  const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`));
+  const isTodayRoute =
+    href === '/dashboard' &&
+    (pathname === '/dashboard' || pathname === '/review' || pathname.startsWith('/practice/'));
+  const isActive =
+    isTodayRoute ||
+    (href !== '/dashboard' && (pathname === href || pathname.startsWith(`${href}/`)));
 
   return (
     <Link

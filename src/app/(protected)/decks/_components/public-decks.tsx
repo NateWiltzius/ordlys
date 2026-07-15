@@ -28,8 +28,8 @@ export default function PublicDecks({ decks, libraryDeckIds }: Props) {
   if (!discoverableDecks.length) {
     return (
       <EmptyState
-        title="Nothing to discover yet"
-        description="Public decks from other learners will appear here."
+        title="No new decks to discover"
+        description="Public decks you have not added to your library will appear here."
       />
     );
   }

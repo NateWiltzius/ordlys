@@ -14,8 +14,8 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
   if (progress.lessons.length === 0) return null;
 
   const currentLesson = progress.currentLesson;
-  const remainingMasteryWords = currentLesson
-    ? Math.max(0, currentLesson.requiredWords - currentLesson.masteredWords)
+  const remainingLearnedWords = currentLesson
+    ? Math.max(0, currentLesson.requiredWords - currentLesson.learnedWords)
     : 0;
 
   return (
@@ -24,12 +24,12 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
         <div className="flex min-w-0 items-start gap-3">
           <span
             className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
-              progress.masteryComplete
+              progress.lessonMilestonesComplete
                 ? 'bg-success/10 text-success'
                 : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
             }`}
           >
-            {progress.masteryComplete ? (
+            {progress.lessonMilestonesComplete ? (
               <TrophyIcon className="size-6" aria-hidden="true" />
             ) : (
               <MapIcon className="size-6" aria-hidden="true" />
@@ -38,7 +38,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
           <div className="min-w-0">
             <Card.Title>Deck journey</Card.Title>
             <Card.Description>
-              {progress.masteryComplete
+              {progress.lessonMilestonesComplete
                 ? 'Every lesson milestone is complete.'
                 : progress.allCardsIntroduced
                   ? 'Every card is in your review queue. Keep strengthening your recall.'
@@ -82,9 +82,9 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
         <div className="overflow-x-auto px-1 pt-1 pb-4">
           <ol className="flex min-w-max items-center" aria-label="Lesson journey">
             {progress.lessons.map((lesson, index) => {
-              const isCovered = lesson.learnedWords >= lesson.totalWords;
+              const isCovered = lesson.introducedWords >= lesson.totalWords;
               const isCurrent = lesson.lessonId === currentLesson?.lessonId;
-              const isActive = isCurrent && !progress.masteryComplete;
+              const isActive = isCurrent && !progress.lessonMilestonesComplete;
 
               return (
                 <li key={lesson.lessonId} className="flex items-center" title={lesson.lessonTitle}>
@@ -124,24 +124,25 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
           </ol>
         </div>
 
-        {currentLesson && !progress.masteryComplete ? (
+        {currentLesson && !progress.lessonMilestonesComplete ? (
           <div className="space-y-2 rounded-xl border border-default-200 bg-default-50/70 p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="font-medium text-default-800">{currentLesson.lessonTitle}</p>
                 <p className="text-sm text-default-500">
                   Lesson {progress.currentLessonNumber} of {progress.lessons.length} ·{' '}
-                  {currentLesson.learnedWords} of {currentLesson.totalWords} cards introduced
+                  {currentLesson.introducedWords} of {currentLesson.totalWords} cards introduced
                 </p>
               </div>
               <p className="text-sm font-medium text-default-700">
-                {currentLesson.masteredWords} / {currentLesson.requiredWords} at level{' '}
-                {LESSON_PROGRESSION_CONFIG.unlockDisplayLevel}
+                {currentLesson.learnedWords} {currentLesson.learnedWords === 1 ? 'card' : 'cards'}{' '}
+                at level {LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} &middot;{' '}
+                {currentLesson.requiredWords} required
               </p>
             </div>
             <ProgressBar
-              aria-label={`Mastery progress toward unlocking ${progress.nextLesson?.lessonTitle ?? 'deck completion'}`}
-              value={currentLesson.masteredWords}
+              aria-label={`Learning progress toward unlocking ${progress.nextLesson?.lessonTitle ?? 'deck completion'}`}
+              value={currentLesson.learnedWords}
               maxValue={currentLesson.requiredWords}
               color="success"
               size="sm"
@@ -151,13 +152,13 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
               </ProgressBar.Track>
             </ProgressBar>
             <p className="text-sm text-default-600">
-              {remainingMasteryWords === 0
+              {remainingLearnedWords === 0
                 ? progress.nextLesson
                   ? `${progress.nextLesson.lessonTitle} unlocked`
                   : 'Final lesson milestone reached'
-                : `${remainingMasteryWords} more ${
-                    remainingMasteryWords === 1 ? 'card' : 'cards'
-                  } at level ${LESSON_PROGRESSION_CONFIG.unlockDisplayLevel} to ${
+                : `${remainingLearnedWords} more ${
+                    remainingLearnedWords === 1 ? 'card' : 'cards'
+                  } at level ${LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} to ${
                     progress.nextLesson ? 'unlock the next lesson' : 'complete the final milestone'
                   }`}
             </p>
