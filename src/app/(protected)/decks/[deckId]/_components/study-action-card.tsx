@@ -31,6 +31,11 @@ const TONE_CARD_STYLES: Record<ActionTone, { gradient: string; hover: string; fo
     hover: 'group-hover:border-success/50',
     focus: 'focus-visible:ring-success',
   },
+  practice: {
+    gradient: 'from-violet-500/15 via-violet-500/5 to-transparent',
+    hover: 'group-hover:border-violet-500/50',
+    focus: 'focus-visible:ring-violet-500',
+  },
   neutral: {
     gradient: 'from-primary/10 via-primary/5 to-transparent',
     hover: 'group-hover:border-primary/40',

@@ -15,7 +15,7 @@ export default function DashboardRecentMistakesCard({ count }: Props) {
       countLabel={`recent ${count === 1 ? 'word' : 'words'} to revisit`}
       actionLabel="Start practice"
       icon={ArrowPathRoundedSquareIcon}
-      tone="neutral"
+      tone="practice"
       href={count > 0 ? '/practice/recent-mistakes' : undefined}
       isDisabled={count === 0}
       unavailableAction={

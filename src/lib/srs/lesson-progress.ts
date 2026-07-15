@@ -36,3 +36,17 @@ export function buildLessonProgress(rows: LessonProgressRow[]): LessonProgress[]
     };
   });
 }
+
+export function getUnlockedLessonIdsWithNewVocab(progress: LessonProgress[]): number[] {
+  return progress
+    .filter(lesson => lesson.isUnlocked && lesson.learnedWords < lesson.totalWords)
+    .map(lesson => lesson.lessonId);
+}
+
+export function getUnlockedNewVocabCount(progress: LessonProgress[]): number {
+  return progress.reduce(
+    (count, lesson) =>
+      lesson.isUnlocked ? count + Math.max(0, lesson.totalWords - lesson.learnedWords) : count,
+    0,
+  );
+}

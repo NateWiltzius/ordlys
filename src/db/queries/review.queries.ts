@@ -26,7 +26,11 @@ import {
   viewDeckAccess,
 } from '@/db/queries/deck-access';
 import { getReviewForecastEnd } from '@/lib/review-forecast';
-import { buildLessonProgress } from '@/lib/srs/lesson-progress';
+import {
+  buildLessonProgress,
+  getUnlockedLessonIdsWithNewVocab,
+  getUnlockedNewVocabCount,
+} from '@/lib/srs/lesson-progress';
 import {
   vocabRevisionExtendedSelection,
   vocabRevisionQuizSelection,
@@ -114,9 +118,10 @@ export async function getLessonProgressForDeck(
 }
 
 export async function getNewVocabsForDeck(deckId: number, userId: string, limit = 5) {
-  const nextLesson = await getNextUnlockedLessonWithNewVocab(deckId, userId);
+  const lessonProgress = await getLessonProgressForDeck(deckId, userId);
+  const unlockedLessonIds = getUnlockedLessonIdsWithNewVocab(lessonProgress);
 
-  if (!nextLesson) {
+  if (unlockedLessonIds.length === 0) {
     return [];
   }
 
@@ -151,7 +156,7 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
       and(
         eq(decks.id, deckId),
         studyDeckAccess(userId),
-        eq(lessons.id, nextLesson.lessonId),
+        inArray(lessons.id, unlockedLessonIds),
         isNull(userVocabState.id),
       ),
     )
@@ -160,8 +165,9 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
 }
 
 export async function getNewVocabCountForDeck(deckId: number, userId: string): Promise<number> {
-  const nextLesson = await getNextUnlockedLessonWithNewVocab(deckId, userId);
-  if (!nextLesson) return 0;
+  const lessonProgress = await getLessonProgressForDeck(deckId, userId);
+  const unlockedLessonIds = getUnlockedLessonIdsWithNewVocab(lessonProgress);
+  if (unlockedLessonIds.length === 0) return 0;
 
   const [result] = await db
     .select({ count: count(vocabs.id) })
@@ -179,7 +185,7 @@ export async function getNewVocabCountForDeck(deckId: number, userId: string): P
       userVocabState,
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
     )
-    .where(and(eq(vocabs.lessonId, nextLesson.lessonId), isNull(userVocabState.id)));
+    .where(and(inArray(vocabs.lessonId, unlockedLessonIds), isNull(userVocabState.id)));
 
   return Number(result?.count ?? 0);
 }
@@ -228,23 +234,22 @@ export async function getNewVocabCountsForDecks(
     .orderBy(lessons.deckId, lessons.orderIndex, lessons.id);
 
   const counts: Record<number, number> = Object.fromEntries(deckIds.map(deckId => [deckId, 0]));
-  const previousLessonPassed: Record<number, boolean> = {};
+  const progressRowsByDeck = new Map<number, Parameters<typeof buildLessonProgress>[0]>();
 
   for (const row of rows) {
-    const totalWords = Number(row.totalWords);
-    const learnedWords = Number(row.learnedWords);
-    const masteredWords = Number(row.masteredWords);
-    const previousPassed = previousLessonPassed[row.deckId] ?? true;
-    const isUnlocked = totalWords === 0 || previousPassed;
+    const progressRows = progressRowsByDeck.get(row.deckId) ?? [];
+    progressRows.push({
+      lessonId: row.lessonId,
+      lessonTitle: '',
+      totalWords: Number(row.totalWords),
+      learnedWords: Number(row.learnedWords),
+      masteredWords: Number(row.masteredWords),
+    });
+    progressRowsByDeck.set(row.deckId, progressRows);
+  }
 
-    if (isUnlocked && totalWords > learnedWords && counts[row.deckId] === 0) {
-      counts[row.deckId] = totalWords - learnedWords;
-    }
-
-    if (totalWords > 0) {
-      const requiredWords = Math.ceil(totalWords * LESSON_PROGRESSION_CONFIG.unlockRatio);
-      previousLessonPassed[row.deckId] = isUnlocked && masteredWords >= requiredWords;
-    }
+  for (const [deckId, progressRows] of progressRowsByDeck) {
+    counts[deckId] = getUnlockedNewVocabCount(buildLessonProgress(progressRows));
   }
 
   return counts;
@@ -360,37 +365,6 @@ export async function getNextReviewBatch(
     .limit(1);
 
   return nextBatch ? { hour: nextBatch.hour, count: Number(nextBatch.count) } : null;
-}
-
-async function getNextUnlockedLessonWithNewVocab(deckId: number, userId: string) {
-  const lessonProgress = await getLessonProgressForDeck(deckId, userId);
-  const unlockedLessonIds = lessonProgress
-    .filter(lesson => lesson.isUnlocked && lesson.totalWords > 0)
-    .map(lesson => lesson.lessonId);
-
-  if (unlockedLessonIds.length === 0) return undefined;
-
-  const [nextLesson] = await db
-    .select({ lessonId: lessons.id })
-    .from(lessons)
-    .innerJoin(vocabs, eq(vocabs.lessonId, lessons.id))
-    .innerJoin(decks, eq(decks.id, lessons.deckId))
-    .innerJoin(
-      releaseVocabs,
-      and(
-        eq(releaseVocabs.vocabId, vocabs.id),
-        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
-      ),
-    )
-    .leftJoin(
-      userVocabState,
-      and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
-    )
-    .where(and(inArray(lessons.id, unlockedLessonIds), isNull(userVocabState.id)))
-    .orderBy(lessons.orderIndex, lessons.id)
-    .limit(1);
-
-  return nextLesson;
 }
 
 export async function getDueReviews(userId: string, deckId?: number) {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildLessonProgress, type LessonProgressRow } from './lesson-progress';
+import {
+  buildLessonProgress,
+  getUnlockedLessonIdsWithNewVocab,
+  getUnlockedNewVocabCount,
+  type LessonProgressRow,
+} from './lesson-progress';
 
 function lesson(
   lessonId: number,
@@ -32,5 +37,16 @@ describe('buildLessonProgress', () => {
     ]);
 
     expect(progress.map(item => item.isUnlocked)).toEqual([true, true, true]);
+  });
+
+  it('makes unseen words from every unlocked lesson available', () => {
+    const progress = buildLessonProgress([
+      lesson(1, 10, 8, 8),
+      lesson(2, 10, 0, 0),
+      lesson(3, 10, 0, 0),
+    ]);
+
+    expect(getUnlockedLessonIdsWithNewVocab(progress)).toEqual([1, 2]);
+    expect(getUnlockedNewVocabCount(progress)).toBe(12);
   });
 });
