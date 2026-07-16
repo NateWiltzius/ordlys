@@ -22,10 +22,18 @@ describe('deck library', () => {
     ]);
   });
 
-  it('shows a restorable deck only once when its follow is frozen', () => {
+  it('shows a followed restorable deck once while preserving its follow state', () => {
     const restorableDeck = deck(51);
 
     expect(buildDeckLibrary([], [restorableDeck], [restorableDeck])).toEqual([
+      { ...restorableDeck, relationship: 'restorable', isFollowing: true },
+    ]);
+  });
+
+  it('does not mark an unfollowed restorable deck as followed', () => {
+    const restorableDeck = deck(52);
+
+    expect(buildDeckLibrary([], [], [restorableDeck])).toEqual([
       { ...restorableDeck, relationship: 'restorable', isFollowing: false },
     ]);
   });

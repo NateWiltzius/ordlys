@@ -28,7 +28,7 @@ export function buildDeckLibrary<T extends DeckLibrarySource>(
     ...restorableDecks.map(deck => ({
       ...deck,
       relationship: 'restorable' as const,
-      isFollowing: false,
+      isFollowing: followedDeckIds.has(deck.id),
     })),
   ];
 }
