@@ -62,6 +62,7 @@ export default function ReviewMode({
         />
       ) : null}
       <QuizMode
+        key={selectedSize}
         quizItems={dueReviews}
         tone="review"
         studyMode="review"

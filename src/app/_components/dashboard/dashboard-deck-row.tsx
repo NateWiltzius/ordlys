@@ -65,7 +65,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
           ) : null}
           {!hasReviewsDue && !hasNewWords ? (
             <ButtonLink href={`/decks/${deck.id}`} size="sm" variant="secondary">
-              View deck
+              Open deck
             </ButtonLink>
           ) : null}
         </div>

@@ -67,6 +67,7 @@ export default function DeckHeader({
             retentionUntil={deck.retentionUntil}
             isOwned={isOwned}
             isFollowing={isFollowing}
+            canFollow={!isFollowing && deck.status === 'active' && deck.currentReleaseId !== null}
             canModerate={canModerate}
             protectedFollowerCount={protectedFollowerCount}
           />

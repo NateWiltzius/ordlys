@@ -1,8 +1,10 @@
 'use client';
 
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Button, Modal, useOverlayState } from '@heroui/react';
 import { ReactNode } from 'react';
+
+type ConfirmationTone = 'neutral' | 'warning' | 'danger';
 
 type Props = {
   isOpen: boolean;
@@ -10,6 +12,7 @@ type Props = {
   title: string;
   description: ReactNode;
   confirmLabel: string;
+  tone?: ConfirmationTone;
   isPending?: boolean;
   onConfirm: () => void | Promise<void>;
 };
@@ -20,10 +23,22 @@ export default function ConfirmationDialog({
   title,
   description,
   confirmLabel,
+  tone = 'danger',
   isPending = false,
   onConfirm,
 }: Props) {
   const state = useOverlayState({ isOpen, onOpenChange });
+  const iconClassName = {
+    neutral: 'bg-primary/10 text-primary',
+    warning: 'bg-warning/10 text-warning',
+    danger: 'bg-danger/10 text-danger',
+  }[tone];
+  const confirmVariant = {
+    neutral: 'primary',
+    warning: 'secondary',
+    danger: 'danger',
+  }[tone] as 'primary' | 'secondary' | 'danger';
+  const Icon = tone === 'neutral' ? InformationCircleIcon : ExclamationTriangleIcon;
 
   return (
     <Modal.Backdrop
@@ -33,10 +48,10 @@ export default function ConfirmationDialog({
       isKeyboardDismissDisabled={isPending}
     >
       <Modal.Container>
-        <Modal.Dialog role="alertdialog">
+        <Modal.Dialog role={tone === 'danger' ? 'alertdialog' : 'dialog'}>
           <Modal.Header>
-            <Modal.Icon className="bg-danger/10 text-danger">
-              <ExclamationTriangleIcon className="size-5" aria-hidden="true" />
+            <Modal.Icon className={iconClassName}>
+              <Icon className="size-5" aria-hidden="true" />
             </Modal.Icon>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>
@@ -53,7 +68,7 @@ export default function ConfirmationDialog({
               Cancel
             </Button>
             <Button
-              variant="danger"
+              variant={confirmVariant}
               className="w-full sm:w-auto"
               isPending={isPending}
               onPress={() => void onConfirm()}

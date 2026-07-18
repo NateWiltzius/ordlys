@@ -76,7 +76,7 @@ export default function LearnPage({
         />
       ) : null}
       {mode === 'learn' ? (
-        <LearnMode learnItems={learnItems} onStartQuiz={() => setMode('quiz')} />
+        <LearnMode key={selectedSize} learnItems={learnItems} onStartQuiz={() => setMode('quiz')} />
       ) : (
         <QuizMode
           quizItems={learnItems}

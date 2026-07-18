@@ -7,12 +7,20 @@ import {
   reportDeckAction,
   restrictedHardDeleteDeckAction,
 } from '@/server/deck-release.actions';
-import { unfollowDeckAction } from '@/server/deck-follow.actions';
+import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actions';
 import type { Deck } from '@/types/deck.types';
 import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
-import { Button, Input, Label, Modal, Popover, TextArea, useOverlayState } from '@heroui/react';
+import {
+  Button,
+  Input,
+  Label,
+  ListBox,
+  Modal,
+  Popover,
+  TextArea,
+  useOverlayState,
+} from '@heroui/react';
 import { EllipsisHorizontalIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState, useTransition } from 'react';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
@@ -28,6 +36,7 @@ export default function DeckSafetyControls({
   retentionUntil,
   isOwned,
   isFollowing,
+  canFollow,
   canModerate,
   protectedFollowerCount,
 }: {
@@ -37,6 +46,7 @@ export default function DeckSafetyControls({
   retentionUntil: Deck['retentionUntil'];
   isOwned: boolean;
   isFollowing: boolean;
+  canFollow: boolean;
   canModerate: boolean;
   protectedFollowerCount: number | null;
 }) {
@@ -96,43 +106,50 @@ export default function DeckSafetyControls({
       <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <Button
           variant="tertiary"
+          isIconOnly
           aria-label={`More actions for ${deckTitle}`}
           aria-expanded={isMenuOpen}
         >
-          More
           <EllipsisHorizontalIcon className="size-5" aria-hidden="true" />
         </Button>
         <Popover.Content placement="bottom end">
-          <Popover.Dialog aria-label={`Actions for ${deckTitle}`} className="w-56 p-2">
-            <div className="flex flex-col gap-1">
+          <Popover.Dialog className="w-56 p-1">
+            <ListBox aria-label={`Actions for ${deckTitle}`} selectionMode="none">
               {isOwned ? (
-                <Link
+                <ListBox.Item
+                  id="export"
                   href={`/decks/${deckId}/export`}
                   download={`${deckTitle}.csv`}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-default-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  onAction={() => setIsMenuOpen(false)}
                 >
                   Export CSV
-                </Link>
+                </ListBox.Item>
               ) : null}
               {isFollowing ? (
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  className="w-full justify-start"
+                <ListBox.Item
+                  id="unfollow"
                   isDisabled={pending}
-                  onPress={() => confirm('unfollow')}
+                  onAction={() => confirm('unfollow')}
                 >
-                  Unfollow
-                </Button>
+                  Unfollow deck
+                </ListBox.Item>
+              ) : canFollow ? (
+                <ListBox.Item
+                  id="follow"
+                  isDisabled={pending}
+                  onAction={() => {
+                    setIsMenuOpen(false);
+                    run(() => followDeckAction(deckId), 'Deck followed.');
+                  }}
+                >
+                  Follow deck
+                </ListBox.Item>
               ) : null}
               {!isOwned ? (
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  className="w-full justify-start"
+                <ListBox.Item
+                  id="report"
                   isDisabled={pending}
-                  onPress={() => {
+                  onAction={() => {
                     setIsMenuOpen(false);
                     setReportReason('');
                     setReportDetails('');
@@ -140,63 +157,59 @@ export default function DeckSafetyControls({
                   }}
                 >
                   Report
-                </Button>
+                </ListBox.Item>
               ) : null}
               {isFollowing ? (
-                <Button
-                  size="sm"
-                  variant="danger-soft"
-                  className="w-full justify-start"
+                <ListBox.Item
+                  id="delete-progress"
+                  variant="danger"
+                  className="text-danger"
                   isDisabled={pending}
-                  onPress={() => confirm('delete-progress')}
+                  onAction={() => confirm('delete-progress')}
                 >
                   Delete progress
-                </Button>
+                </ListBox.Item>
               ) : null}
               {canModerate && status !== 'moderation_removed' ? (
                 <>
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    className="w-full justify-start"
+                  <ListBox.Item
+                    id="mark-under-review"
                     isDisabled={pending}
-                    onPress={() => {
+                    onAction={() => {
                       setIsMenuOpen(false);
                       run(() => moderationReviewDeckAction(deckId), 'Deck marked under review.');
                     }}
                   >
                     Mark under review
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger-soft"
-                    className="w-full justify-start"
+                  </ListBox.Item>
+                  <ListBox.Item
+                    id="moderate-removal"
+                    variant="danger"
+                    className="text-danger"
                     isDisabled={pending}
-                    onPress={() => confirm('moderate-removal')}
+                    onAction={() => confirm('moderate-removal')}
                   >
                     Moderate removal
-                  </Button>
+                  </ListBox.Item>
                 </>
               ) : null}
               {isOwned && status === 'deleted' ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="danger-soft"
-                    className="w-full justify-start"
-                    isDisabled={pending || !hardDeleteEligible}
-                    onPress={() => confirm('hard-delete')}
-                  >
-                    Finalize deletion
-                  </Button>
-                  {!hardDeleteEligible && retentionUntil ? (
-                    <span className="px-3 pb-1 text-xs text-default-500">
-                      Available after {retentionUntil.toLocaleDateString()}.
-                    </span>
-                  ) : null}
-                </>
+                <ListBox.Item
+                  id="finalize-deletion"
+                  variant="danger"
+                  className="text-danger"
+                  isDisabled={pending || !hardDeleteEligible}
+                  onAction={() => confirm('hard-delete')}
+                >
+                  Finalize deletion
+                </ListBox.Item>
               ) : null}
-            </div>
+            </ListBox>
+            {isOwned && status === 'deleted' && !hardDeleteEligible && retentionUntil ? (
+              <p className="px-2 pb-2 text-xs text-default-500">
+                Available after {retentionUntil.toLocaleDateString()}.
+              </p>
+            ) : null}
           </Popover.Dialog>
         </Popover.Content>
       </Popover>
@@ -237,6 +250,7 @@ export default function DeckSafetyControls({
                 ? 'Remove deck'
                 : 'Finalize deletion'
         }
+        tone={confirmation === 'unfollow' ? 'warning' : 'danger'}
         isPending={pending}
         onConfirm={() => {
           const action = confirmation;

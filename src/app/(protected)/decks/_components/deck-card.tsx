@@ -188,7 +188,7 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
                   variant="secondary"
                   onPress={() => router.push(`/decks/${deck.id}`)}
                 >
-                  Details
+                  Open deck
                 </Button>
               </>
             ) : relationship !== 'discover' || following ? (
@@ -227,7 +227,7 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
                 size="sm"
                 onPress={() => router.push(`/decks/${deck.id}/edit`)}
               >
-                Manage
+                Manage deck
               </Button>
             ) : null}
 
@@ -249,22 +249,18 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
                       onAction={handleMenuAction}
                     >
                       {following ? <ListBox.Item id="review">Review</ListBox.Item> : null}
-                      {following ? (
-                        <ListBox.Item id="unfollow" variant="danger">
-                          Unfollow
-                        </ListBox.Item>
-                      ) : null}
+                      {following ? <ListBox.Item id="unfollow">Unfollow deck</ListBox.Item> : null}
                       {(relationship === 'owned' || relationship === 'copy') &&
                       !following &&
                       deck.currentReleaseId ? (
-                        <ListBox.Item id="follow">Follow to learn</ListBox.Item>
+                        <ListBox.Item id="follow">Follow deck</ListBox.Item>
                       ) : null}
                       {relationship === 'discover' && !following ? (
                         <ListBox.Item id="view">Preview deck</ListBox.Item>
                       ) : null}
                       {relationship === 'owned' || relationship === 'copy' ? (
-                        <ListBox.Item id="delete" variant="danger">
-                          Delete
+                        <ListBox.Item id="delete" variant="danger" className="text-danger">
+                          Delete deck
                         </ListBox.Item>
                       ) : null}
                     </ListBox>
@@ -300,6 +296,9 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
             : confirmation === 'unfollow'
               ? 'Unfollow deck'
               : 'Delete deck'
+        }
+        tone={
+          confirmation === 'copy' ? 'neutral' : confirmation === 'unfollow' ? 'warning' : 'danger'
         }
         isPending={pending !== null}
         onConfirm={async () => {

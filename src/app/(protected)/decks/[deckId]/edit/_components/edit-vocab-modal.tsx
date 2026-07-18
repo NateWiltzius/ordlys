@@ -4,7 +4,7 @@ import VocabFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/v
 import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
 import { replaceVocabAction, updateVocabAction } from '@/server/vocab.actions';
 import { Vocab } from '@/types/vocab.types';
-import { Button, Modal, useOverlayState } from '@heroui/react';
+import { Button, Checkbox, Label, Modal, useOverlayState } from '@heroui/react';
 import { FormEvent, useEffect, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
@@ -83,21 +83,34 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
           <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
             <Modal.Body className="space-y-6">
               {vocab ? <VocabFormFields key={vocab.id} vocab={vocab} /> : null}
-              <label className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm">
-                <input
-                  type="checkbox"
-                  checked={replaceIdentity}
-                  onChange={event => setReplaceIdentity(event.target.checked)}
-                  className="mt-1"
-                />
-                <span>
-                  Replace logical identity because the meaning changed. Existing learner progress
-                  will not carry to the replacement.
-                </span>
-              </label>
+              <Checkbox
+                isSelected={replaceIdentity}
+                onChange={setReplaceIdentity}
+                isDisabled={isSubmitting}
+                className="rounded-lg bg-warning/10 p-3"
+              >
+                <Checkbox.Content className="items-start">
+                  <Checkbox.Control className="mt-0.5">
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Label className="text-sm font-normal">
+                    Replace logical identity because the meaning changed. Existing learner progress
+                    will not carry to the replacement.
+                  </Label>
+                </Checkbox.Content>
+              </Checkbox>
               {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
             </Modal.Body>
-            <Modal.Footer>
+            <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="tertiary"
+                className="w-full sm:w-auto"
+                isDisabled={isSubmitting}
+                onPress={modalState.close}
+              >
+                Cancel
+              </Button>
               <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
                 {replaceIdentity ? 'Replace vocabulary' : 'Save changes'}
               </Button>

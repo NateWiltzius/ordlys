@@ -36,8 +36,13 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
   return (
     <div className="w-full space-y-4">
       <div className="space-y-2">
-        <div className="flex items-start justify-between gap-3 text-sm">
-          <span className="min-w-0 break-words text-default-500">{currentItem.lessonTitle}</span>
+        <div className="flex h-10 items-start justify-between gap-3 text-sm">
+          <span
+            className="line-clamp-2 min-w-0 break-words text-default-500"
+            title={currentItem.lessonTitle}
+          >
+            {currentItem.lessonTitle}
+          </span>
           <span className="shrink-0 font-medium">
             {currentIndex + 1} / {learnItems.length}
           </span>
@@ -49,12 +54,12 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
         </ProgressBar>
       </div>
 
-      <Card>
-        <Card.Header>
+      <Card className="h-[clamp(28rem,65dvh,34rem)]">
+        <Card.Header className="shrink-0">
           <Card.Title render={props => <h2 {...props} />}>New vocabulary</Card.Title>
           <Card.Description>Review the word and its meaning before the quiz.</Card.Description>
         </Card.Header>
-        <Card.Content className="space-y-4">
+        <Card.Content className="min-h-0 space-y-4 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
           <WordSide
             label="Word"
             language={frontLanguage}
@@ -93,7 +98,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
             </section>
           ) : null}
         </Card.Content>
-        <Card.Footer className="grid grid-cols-2 gap-3">
+        <Card.Footer className="grid shrink-0 grid-cols-2 gap-3">
           <Button
             variant="secondary"
             className="w-full"

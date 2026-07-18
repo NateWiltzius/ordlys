@@ -98,7 +98,16 @@ export default function CreateVocabModal({
                 <VocabFormFields />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer>
+              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  className="w-full sm:w-auto"
+                  isDisabled={isSubmitting}
+                  onPress={modalState.close}
+                >
+                  Cancel
+                </Button>
                 <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
                   Create vocabulary
                 </Button>

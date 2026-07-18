@@ -56,6 +56,7 @@ export default function AllDecksReviewMode({
         />
       ) : null}
       <QuizMode
+        key={selectedSize}
         quizItems={dueReviews}
         tone="review"
         studyMode="review"
