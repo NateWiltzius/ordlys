@@ -46,6 +46,7 @@ export default function DeckDiscoveryControls({
         </div>
 
         <Select
+          aria-label="Order by"
           value={sort}
           variant="secondary"
           fullWidth

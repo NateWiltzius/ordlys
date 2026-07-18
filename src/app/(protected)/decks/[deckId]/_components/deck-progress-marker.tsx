@@ -4,6 +4,7 @@ import { summarizeDeckProgress } from '@/lib/deck-progress';
 import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { LessonProgress } from '@/types/review.types';
+import SemanticCardTitle from '@/components/shared/semantic-card-title';
 
 type Props = {
   lessonProgress: LessonProgress[];
@@ -36,7 +37,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
             )}
           </span>
           <div className="min-w-0">
-            <Card.Title>Deck journey</Card.Title>
+            <SemanticCardTitle level={2}>Deck journey</SemanticCardTitle>
             <Card.Description>
               {progress.lessonMilestonesComplete
                 ? 'Every lesson milestone is complete.'

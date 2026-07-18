@@ -3,7 +3,6 @@ export const PROTECTED_APP_PREFIXES = [
   '/dashboard',
   '/decks',
   '/discover',
-  '/feedback',
   '/practice',
   '/review',
 ] as const;

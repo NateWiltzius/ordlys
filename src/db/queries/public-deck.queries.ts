@@ -8,7 +8,7 @@ import {
   releaseVocabs,
   vocabRevisions,
 } from '@/db/schema';
-import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 
@@ -24,6 +24,7 @@ const publicDeckSummarySelection = {
   rootDeckId: decks.rootDeckId,
   sourceDeckId: decks.sourceDeckId,
   sourceReleaseId: decks.sourceReleaseId,
+  visibility: decks.visibility,
   lessonCount: sql<number>`(
     select count(*)::int
     from ${releaseLessons}
@@ -54,12 +55,19 @@ const sharedDeckPredicate = and(
   isNull(decks.deletedAt),
 );
 
-export async function getPublicDeckSummaries(limit?: number) {
+export async function getPublicDeckSummaries(limit?: number, languages?: readonly string[]) {
+  const languagePredicate =
+    languages && languages.length > 0
+      ? or(
+          inArray(decks.frontLanguage, [...languages]),
+          inArray(decks.backLanguage, [...languages]),
+        )
+      : undefined;
   const query = db
     .select(publicDeckSummarySelection)
     .from(decks)
     .innerJoin(deckReleases, eq(deckReleases.id, decks.currentReleaseId))
-    .where(publicDeckPredicate)
+    .where(and(publicDeckPredicate, languagePredicate))
     .orderBy(desc(decks.updatedAt), asc(decks.id));
 
   if (limit === undefined) return query;
@@ -69,7 +77,7 @@ export async function getPublicDeckSummaries(limit?: number) {
 }
 
 export const getCachedPublicDeckSummaries = unstable_cache(
-  async (limit?: number) => getPublicDeckSummaries(limit),
+  async (limit?: number, languages?: readonly string[]) => getPublicDeckSummaries(limit, languages),
   ['public-deck-summaries'],
   { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
 );
@@ -182,8 +190,26 @@ export async function getPublicDeckPageData(deckId: number) {
   };
 }
 
+export const getCachedPublicDeckSummaryById = unstable_cache(
+  async (deckId: number) => getPublicDeckSummaryById(deckId),
+  ['public-deck-summary'],
+  { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
+);
+
+export const getCachedPublicDeckPageData = unstable_cache(
+  async (deckId: number) => getPublicDeckPageData(deckId),
+  ['public-deck-page'],
+  { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
+);
+
 export async function getPublicDeckSitemapEntries() {
   return db.select({ id: decks.id }).from(decks).where(publicDeckPredicate).orderBy(asc(decks.id));
 }
+
+export const getCachedPublicDeckSitemapEntries = unstable_cache(
+  getPublicDeckSitemapEntries,
+  ['public-deck-sitemap'],
+  { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
+);
 
 export type PublicDeckSummary = NonNullable<Awaited<ReturnType<typeof getPublicDeckSummaryById>>>;

@@ -356,6 +356,7 @@ export const reviewAttempts = pgTable(
     direction: quizDirectionEnum().notNull(),
     isCorrect: boolean('is_correct').notNull(),
     wasOverridden: boolean('was_overridden').default(false).notNull(),
+    idempotencyKey: varchar('idempotency_key', { length: 128 }),
     attemptedAt: timestamp('attempted_at').defaultNow().notNull(),
   },
   table => [
@@ -366,6 +367,7 @@ export const reviewAttempts = pgTable(
       table.attemptedAt,
     ),
     index('review_attempts_vocab_id_idx').on(table.vocabId),
+    unique('review_attempts_user_idempotency_key_unique').on(table.userId, table.idempotencyKey),
   ],
 );
 
@@ -380,5 +382,8 @@ export const feedback = pgTable(
     contactEmail: varchar('contact_email', { length: 320 }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  table => [index('feedback_created_at_idx').on(table.createdAt)],
+  table => [
+    index('feedback_created_at_idx').on(table.createdAt),
+    index('feedback_user_id_idx').on(table.userId),
+  ],
 );

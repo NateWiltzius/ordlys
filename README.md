@@ -25,6 +25,15 @@ For production, set `NEXT_PUBLIC_SITE_URL` in Vercel to the canonical custom-dom
 example, `https://www.example.com`). Ordlys uses it for canonical links, social previews,
 `robots.txt`, and `sitemap.xml`.
 
+## Release checklist
+
+1. Apply every SQL file in `supabase/migrations` in order.
+2. Configure the production operator name and public contact email from `.env.example`. Feedback is
+   stored directly in the database.
+3. In Supabase Auth, set the production Site URL and allowed redirect URLs. Decide whether sign-up
+   requires email confirmation and configure custom SMTP before enabling password resets or
+   confirmation mail for external users.
+
 ## Commands
 
 ```bash

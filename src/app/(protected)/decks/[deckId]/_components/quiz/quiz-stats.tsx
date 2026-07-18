@@ -28,7 +28,7 @@ export default function QuizStats({ progressStats, attemptStats, tone }: Props) 
 
       <Card className="hidden sm:block">
         <Card.Header>
-          <Card.Title>Study progress</Card.Title>
+          <Card.Title render={props => <h2 {...props} />}>Study progress</Card.Title>
           <Card.Description>
             {progressStats.completedCards} of {progressStats.totalCards} cards completed
           </Card.Description>

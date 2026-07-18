@@ -133,7 +133,7 @@ export default function EditPage({
       <Card>
         <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <Card.Title>Lessons</Card.Title>
+            <Card.Title render={props => <h2 {...props} />}>Lessons</Card.Title>
             <Card.Description>Group vocabulary into focused study sections.</Card.Description>
           </div>
 

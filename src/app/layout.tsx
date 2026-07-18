@@ -1,16 +1,18 @@
 import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import { fontSans } from '@/config/font';
-import { PropsWithChildren, Suspense } from 'react';
+import { PropsWithChildren } from 'react';
 import Navbar from '@/app/_components/navbar';
 import Link from 'next/link';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { OPEN_GRAPH_IMAGE, SITE_URL, TWITTER_IMAGE } from '@/lib/site';
+import AuthSessionProvider from '@/components/providers/auth-session-provider';
 
 const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
 const siteDescription =
   'Build vocabulary decks, learn with active recall, and review words at the right time with Ordlys spaced repetition flashcards.';
+const enableVercelTelemetry = process.env.NODE_ENV === 'production';
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
@@ -72,53 +74,39 @@ export default function RootLayout({ children }: PropsWithChildren) {
       <body
         className={`flex min-h-screen flex-col bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
       >
-        <Suspense fallback={<NavbarLoading />}>
+        <AuthSessionProvider>
+          <a
+            href="#main-content"
+            className="skip-link sr-only fixed top-3 left-3 z-[100] rounded-lg bg-background px-4 py-2 font-medium text-foreground shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Skip to main content
+          </a>
           <Navbar />
-        </Suspense>
-        <Analytics />
-        <SpeedInsights />
-        <main className="flex-1">{children}</main>
-        <footer
-          data-app-footer
-          className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500"
-        >
-          <Link href="/feedback" className="rounded-sm hover:text-primary hover:underline">
-            Feedback
-          </Link>
-          <Link href="/privacy" className="rounded-sm hover:text-primary hover:underline">
-            Privacy
-          </Link>
-          <Link href="/terms" className="rounded-sm hover:text-primary hover:underline">
-            Terms
-          </Link>
-        </footer>
+          {enableVercelTelemetry ? (
+            <>
+              <Analytics />
+              <SpeedInsights />
+            </>
+          ) : null}
+          <main id="main-content" className="flex-1" tabIndex={-1}>
+            {children}
+          </main>
+          <footer
+            data-app-footer
+            className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500"
+          >
+            <Link href="/feedback" className="rounded-sm hover:text-primary hover:underline">
+              Feedback
+            </Link>
+            <Link href="/privacy" className="rounded-sm hover:text-primary hover:underline">
+              Privacy
+            </Link>
+            <Link href="/terms" className="rounded-sm hover:text-primary hover:underline">
+              Terms
+            </Link>
+          </footer>
+        </AuthSessionProvider>
       </body>
     </html>
-  );
-}
-
-function NavbarLoading() {
-  return (
-    <nav
-      data-app-navigation
-      className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
-      aria-label="Loading navigation"
-      aria-busy="true"
-    >
-      <div className="flex items-center gap-2">
-        <div className="h-8 w-20 animate-pulse rounded-md bg-default-200" />
-        <div className="h-5 w-10 animate-pulse rounded-full bg-default-200" />
-      </div>
-      <div className="hidden items-center gap-2 md:flex">
-        {Array.from({ length: 5 }, (_, index) => (
-          <div key={index} className="h-9 w-20 animate-pulse rounded-md bg-default-200" />
-        ))}
-        <div className="size-8 animate-pulse rounded-md bg-default-200" />
-      </div>
-      <div className="flex items-center gap-1 md:hidden">
-        <div className="size-8 animate-pulse rounded-md bg-default-200" />
-        <div className="size-8 animate-pulse rounded-md bg-default-200" />
-      </div>
-    </nav>
   );
 }

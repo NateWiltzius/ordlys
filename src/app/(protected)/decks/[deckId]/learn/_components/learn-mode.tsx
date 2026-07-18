@@ -51,7 +51,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
 
       <Card>
         <Card.Header>
-          <Card.Title>New vocabulary</Card.Title>
+          <Card.Title render={props => <h2 {...props} />}>New vocabulary</Card.Title>
           <Card.Description>Review the word and its meaning before the quiz.</Card.Description>
         </Card.Header>
         <Card.Content className="space-y-4">

@@ -10,8 +10,11 @@ const MINIMUM_SCROLL_BUFFER = 80;
 export function useKeepAboveKeyboard(
   inputRef: RefObject<HTMLInputElement | null>,
   contextRef: RefObject<HTMLElement | null>,
+  enabled = true,
 ) {
   useEffect(() => {
+    if (!enabled) return;
+
     const viewport = window.visualViewport;
     const context = contextRef.current;
     const input = inputRef.current;
@@ -21,11 +24,11 @@ export function useKeepAboveKeyboard(
     const updatePosition = () => {
       window.clearTimeout(settleTimer);
       settleTimer = window.setTimeout(() => {
-        const keyboardOpen = document.activeElement === input;
         const keyboardInset = Math.max(
           0,
           window.innerHeight - viewport.height - viewport.offsetTop,
         );
+        const keyboardOpen = document.activeElement === input && keyboardInset > 0;
         context.dataset.keyboardOpen = String(keyboardOpen);
         context.style.marginBottom = keyboardOpen
           ? `${Math.max(keyboardInset + 16, MINIMUM_SCROLL_BUFFER)}px`
@@ -81,5 +84,5 @@ export function useKeepAboveKeyboard(
       context.style.marginBottom = '';
       delete context.dataset.keyboardOpen;
     };
-  }, [contextRef, inputRef]);
+  }, [contextRef, enabled, inputRef]);
 }

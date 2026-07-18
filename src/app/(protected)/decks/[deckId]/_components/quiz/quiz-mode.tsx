@@ -1,5 +1,7 @@
-import QuizAnswerForm from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-answer-form';
-import QuizFeedbackPanel from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-feedback-panel';
+'use client';
+
+import QuizAnswerForm from '@/components/quiz/quiz-answer-form';
+import QuizFeedbackPanel from '@/components/quiz/quiz-feedback-panel';
 import QuizStats from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-stats';
 import { normalizeAnswer } from '@/lib/quiz/normalize';
 import {
@@ -16,34 +18,38 @@ import {
   QuizAttemptStats,
   QuizProgressStats,
   QuizSourceItem,
+  SaveQuizAttemptInput,
   StudyMode,
 } from '@/types/quiz.types';
-import { SrsTransition } from '@/types/review.types';
 import { Button, Card, ProgressBar } from '@heroui/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StudyTone } from '@/lib/study-colors';
 import { HomeIcon } from '@heroicons/react/24/outline';
 import StatusAlert from '@/components/shared/status-alert';
-import { recordReviewAttemptAction } from '@/server/review.actions';
+import { saveQuizAttemptAction } from '@/server/review.actions';
+import {
+  readPendingQuizAttempts,
+  writePendingQuizAttempts,
+} from '@/lib/quiz/pending-quiz-attempts';
 
 type Props = {
   quizItems: QuizSourceItem[];
-  onVocabComplete: (vocabId: number, wasCorrect: boolean) => Promise<SrsTransition>;
   completionHref: string;
   tone?: StudyTone;
   allowAnswerOverride?: boolean;
   studyMode: StudyMode;
   recordAttempts?: boolean;
+  onSessionStart?: () => void;
 };
 
 export default function QuizMode({
   quizItems,
-  onVocabComplete,
   completionHref,
   tone = 'neutral',
   allowAnswerOverride = true,
   studyMode,
   recordAttempts = true,
+  onSessionStart,
 }: Props) {
   // A server action can reconcile this route with fresh due-card data (for example when an
   // auth cookie is refreshed). Keep the cards that started this session so that reconciliation
@@ -63,8 +69,59 @@ export default function QuizMode({
   const [feedback, setFeedback] = useState<QuizFeedback | null>(null);
   const [pendingSaveCount, setPendingSaveCount] = useState(0);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const continueHandledRef = useRef(false);
+  const attemptKeyRef = useRef<string | null>(null);
+  const pendingSaveCountRef = useRef(0);
+  const pendingAttemptsRef = useRef<Map<string, SaveQuizAttemptInput>>(new Map());
+  const failedAttemptKeysRef = useRef<Set<string>>(new Set());
+  const inFlightAttemptKeysRef = useRef<Set<string>>(new Set());
+
+  const saveAttempt = useCallback((attempt: SaveQuizAttemptInput) => {
+    pendingAttemptsRef.current.set(attempt.idempotencyKey, attempt);
+    writePendingQuizAttempts(pendingAttemptsRef.current.values());
+    if (inFlightAttemptKeysRef.current.has(attempt.idempotencyKey)) return;
+
+    inFlightAttemptKeysRef.current.add(attempt.idempotencyKey);
+    pendingSaveCountRef.current += 1;
+    setPendingSaveCount(count => count + 1);
+
+    void saveQuizAttemptAction(attempt)
+      .then(() => {
+        pendingAttemptsRef.current.delete(attempt.idempotencyKey);
+        failedAttemptKeysRef.current.delete(attempt.idempotencyKey);
+        writePendingQuizAttempts(pendingAttemptsRef.current.values());
+        if (failedAttemptKeysRef.current.size === 0) {
+          setSaveError(null);
+        }
+        if (pendingAttemptsRef.current.size === 0) {
+          setSaveNotice(null);
+        }
+      })
+      .catch(() => {
+        failedAttemptKeysRef.current.add(attempt.idempotencyKey);
+        setSaveError(
+          'Some answers have not been saved yet. They are stored in this tab and can be retried.',
+        );
+      })
+      .finally(() => {
+        inFlightAttemptKeysRef.current.delete(attempt.idempotencyKey);
+        pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
+        setPendingSaveCount(count => Math.max(0, count - 1));
+      });
+  }, []);
+
+  const retryFailedSaves = useCallback(() => {
+    const attempts = Array.from(pendingAttemptsRef.current.values());
+    failedAttemptKeysRef.current.clear();
+    setSaveError(null);
+    setSaveNotice('Retrying saved answers…');
+
+    for (const attempt of attempts) {
+      saveAttempt(attempt);
+    }
+  }, [saveAttempt]);
 
   useEffect(() => {
     document.documentElement.dataset.quizActive = 'true';
@@ -86,10 +143,52 @@ export default function QuizMode({
       incorrectAttempts: 0,
     });
     setFeedback(null);
+    pendingSaveCountRef.current = 0;
+    pendingAttemptsRef.current.clear();
+    failedAttemptKeysRef.current.clear();
+    inFlightAttemptKeysRef.current.clear();
     setPendingSaveCount(0);
     setSaveError(null);
+    setSaveNotice(null);
     continueHandledRef.current = false;
-  }, [sessionQuizItems]);
+    attemptKeyRef.current = null;
+
+    const recoveredAttempts = readPendingQuizAttempts();
+    if (recoveredAttempts.length > 0) {
+      setSaveNotice(
+        `Retrying ${recoveredAttempts.length} unsaved ${
+          recoveredAttempts.length === 1 ? 'answer' : 'answers'
+        } from this tab.`,
+      );
+      for (const attempt of recoveredAttempts) {
+        saveAttempt(attempt);
+      }
+    }
+  }, [saveAttempt, sessionQuizItems]);
+
+  useEffect(() => {
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      if (pendingAttemptsRef.current.size === 0) return;
+
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, []);
+
+  const exitQuiz = useCallback(() => {
+    if (
+      pendingAttemptsRef.current.size > 0 &&
+      !window.confirm(
+        'Some answers are still waiting to save. Leave now? Ordlys will retry them when you next open a quiz in this tab.',
+      )
+    ) {
+      return;
+    }
+    window.location.assign('/dashboard');
+  }, []);
 
   const currentQuizItem = quizQueue?.[0];
   const currentSourceItem = currentQuizItem
@@ -101,7 +200,7 @@ export default function QuizMode({
       size="sm"
       aria-label="Exit quiz and return to Today"
       className="fixed right-4 top-4 z-50 size-10 rounded-full border border-default-200 bg-background/95 p-0 shadow-md backdrop-blur"
-      onPress={() => window.location.assign('/dashboard')}
+      onPress={exitQuiz}
     >
       <HomeIcon className="size-5" aria-hidden="true" />
     </Button>
@@ -134,15 +233,17 @@ export default function QuizMode({
   }, [sessionQuizItems.length, quizProgress, attemptStats]);
 
   useEffect(() => {
-    if (quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0) {
+    if (quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0 && !saveError) {
       window.location.replace(completionHref);
     }
-  }, [completionHref, pendingSaveCount, quizQueue]);
+  }, [completionHref, pendingSaveCount, quizQueue, saveError]);
 
   const handleAnswerSubmit = () => {
-    if (!currentQuizItem) return;
+    if (!currentQuizItem || answer.trim().length === 0) return;
 
+    onSessionStart?.();
     continueHandledRef.current = false;
+    attemptKeyRef.current = crypto.randomUUID();
     setFeedback({
       quizItem: currentQuizItem,
       submittedAnswer: answer,
@@ -157,69 +258,56 @@ export default function QuizMode({
     continueHandledRef.current = true;
 
     const { quizItem } = feedback;
-    const isCorrect = feedback.isCorrect || acceptAnyway;
+    const isAccepted = feedback.isCorrect || acceptAnyway;
+    const currentProgress = quizProgress[quizItem.cardId];
+    const nextProgressForCard: QuizProgressItem = {
+      ...currentProgress,
+      btfPassed: isAccepted && quizItem.direction === 'btf' ? true : currentProgress.btfPassed,
+      ftbPassed: isAccepted && quizItem.direction === 'ftb' ? true : currentProgress.ftbPassed,
+    };
+    const wasAlreadyFullyPassed = currentProgress.btfPassed && currentProgress.ftbPassed;
+    const isNowFullyPassed = nextProgressForCard.btfPassed && nextProgressForCard.ftbPassed;
+    const completesCard = isAccepted && isNowFullyPassed && !wasAlreadyFullyPassed;
+    const cardWasCorrect = !failedCardIds.has(quizItem.cardId) && feedback.isCorrect;
 
     if (recordAttempts) {
-      setPendingSaveCount(count => count + 1);
-      void recordReviewAttemptAction(
-        quizItem.cardId,
-        studyMode,
-        quizItem.direction,
-        isCorrect,
-        acceptAnyway,
-      )
-        .catch(() => {
-          setSaveError('Could not save this answer to your review history.');
-        })
-        .finally(() => {
-          setPendingSaveCount(count => Math.max(0, count - 1));
-        });
+      saveAttempt({
+        vocabId: quizItem.cardId,
+        mode: studyMode,
+        direction: quizItem.direction,
+        isCorrect: feedback.isCorrect,
+        wasOverridden: acceptAnyway,
+        completesCard,
+        cardWasCorrect,
+        idempotencyKey: attemptKeyRef.current ?? crypto.randomUUID(),
+      });
     }
+
+    attemptKeyRef.current = null;
 
     setAttemptStats(prev => ({
       totalAttempts: prev.totalAttempts + 1,
-      correctAttempts: prev.correctAttempts + Number(isCorrect),
-      incorrectAttempts: prev.incorrectAttempts + Number(!isCorrect),
+      correctAttempts: prev.correctAttempts + Number(feedback.isCorrect),
+      incorrectAttempts: prev.incorrectAttempts + Number(!feedback.isCorrect),
     }));
 
-    if (isCorrect) {
-      const currentProgress = quizProgress[quizItem.cardId];
-
-      const nextProgressForCard: QuizProgressItem = {
-        ...currentProgress,
-        btfPassed: quizItem.direction === 'btf' ? true : currentProgress.btfPassed,
-        ftbPassed: quizItem.direction === 'ftb' ? true : currentProgress.ftbPassed,
-      };
-
+    if (isAccepted) {
       const nextQuizProgress: QuizProgress = {
         ...quizProgress,
         [quizItem.cardId]: nextProgressForCard,
       };
 
-      const wasAlreadyFullyPassed = currentProgress.btfPassed && currentProgress.ftbPassed;
-      const isNowFullyPassed = nextProgressForCard.btfPassed && nextProgressForCard.ftbPassed;
-
       setQuizProgress(nextQuizProgress);
       setQuizQueue(prev => prev?.slice(1) ?? []);
 
-      if (isNowFullyPassed && !wasAlreadyFullyPassed) {
-        const completedVocab = sessionQuizItems.find(item => item.id === quizItem.cardId);
-        const vocabLabel = completedVocab?.front ?? quizItem.prompt;
-
-        setPendingSaveCount(count => count + 1);
-        void onVocabComplete(quizItem.cardId, !failedCardIds.has(quizItem.cardId))
-          .catch(() => {
-            setSaveError(`Could not save progress for ${vocabLabel}.`);
-          })
-          .finally(() => {
-            setPendingSaveCount(count => Math.max(0, count - 1));
-          });
-
+      if (completesCard) {
         setFailedCardIds(prev => {
           const next = new Set(prev);
           next.delete(quizItem.cardId);
           return next;
         });
+      } else if (!feedback.isCorrect) {
+        setFailedCardIds(prev => new Set(prev).add(quizItem.cardId));
       }
     } else {
       setFailedCardIds(prev => {
@@ -246,7 +334,7 @@ export default function QuizMode({
         <div className="w-full">
           <Card>
             <Card.Header>
-              <Card.Title>Preparing quiz</Card.Title>
+              <Card.Title render={props => <h2 {...props} />}>Preparing quiz</Card.Title>
               <Card.Description>Building your study queue.</Card.Description>
             </Card.Header>
             <Card.Content>
@@ -267,24 +355,42 @@ export default function QuizMode({
   }
 
   if (!currentQuizItem) {
-    if (pendingSaveCount === 0) return null;
-
     return (
       <>
         {exitQuizButton}
         <div className="w-full">
           <Card>
             <Card.Header>
-              <Card.Title>Saving progress</Card.Title>
-              <Card.Description>Finishing your session.</Card.Description>
+              <Card.Title render={props => <h2 {...props} />}>
+                {saveError ? 'Progress needs attention' : 'Saving progress'}
+              </Card.Title>
+              <Card.Description>
+                {saveError
+                  ? 'Your unsaved answers are stored in this tab so you can retry now or leave safely.'
+                  : 'Finishing your session.'}
+              </Card.Description>
             </Card.Header>
-            <Card.Content>
-              <ProgressBar isIndeterminate aria-label="Saving quiz progress">
-                <ProgressBar.Track>
-                  <ProgressBar.Fill />
-                </ProgressBar.Track>
-              </ProgressBar>
+            <Card.Content className="space-y-4">
+              {saveError ? (
+                <StatusAlert status="danger">{saveError}</StatusAlert>
+              ) : (
+                <ProgressBar isIndeterminate aria-label="Saving quiz progress">
+                  <ProgressBar.Track>
+                    <ProgressBar.Fill />
+                  </ProgressBar.Track>
+                </ProgressBar>
+              )}
             </Card.Content>
+            {saveError ? (
+              <Card.Footer className="flex flex-wrap gap-2">
+                <Button variant="primary" onPress={retryFailedSaves}>
+                  Retry saving
+                </Button>
+                <Button variant="tertiary" onPress={exitQuiz}>
+                  Leave for now
+                </Button>
+              </Card.Footer>
+            ) : null}
           </Card>
         </div>
       </>
@@ -314,9 +420,13 @@ export default function QuizMode({
 
         {saveError ? (
           <StatusAlert status="danger" title="Progress not saved">
-            {saveError}
+            <span>{saveError}</span>{' '}
+            <Button size="sm" variant="secondary" onPress={retryFailedSaves}>
+              Retry now
+            </Button>
           </StatusAlert>
         ) : null}
+        {!saveError && saveNotice ? <StatusAlert status="warning">{saveNotice}</StatusAlert> : null}
 
         {feedback ? (
           <QuizFeedbackPanel

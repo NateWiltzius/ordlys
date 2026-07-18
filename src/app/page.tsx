@@ -1,17 +1,16 @@
-import FeatureCard from '@/app/_components/feature-card';
-import PublicDeckCard from '@/components/public-deck-card';
+import FeaturedPublicDecks from '@/app/_components/featured-public-decks';
+import FeaturedPublicDecksLoading from '@/app/_components/featured-public-decks-loading';
 import ButtonLink from '@/components/shared/button-link';
-import { getCachedPublicDeckSummaries } from '@/db/queries/public-deck.queries';
+import HomepageQuizPreview from '@/app/_components/homepage-quiz-preview';
 import { absoluteUrl, OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
-import { Card, Chip } from '@heroui/react';
-import { STUDY_TONE_STYLES } from '@/lib/study-colors';
+import { Chip } from '@heroui/react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Suspense } from 'react';
-import { PublicDeckCardSkeleton } from '@/components/shared/skeleton';
 
-const title = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
+const title = 'Ordlys – Norwegian Vocabulary and Language Flashcard Decks';
 const description =
-  'Build vocabulary decks, learn with active recall, and review words at the right time with Ordlys spaced repetition flashcards.';
+  'Start with ready-made Norwegian decks from A1 to C2 and the full course vocabulary collection, or create and share spaced-repetition decks for any language.';
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -55,85 +54,49 @@ export default function Home() {
       <section className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           <Chip size="sm" variant="soft" color="success">
-            Smart flashcards for language learning
+            Norwegian-first, built for any language
           </Chip>
 
           <div className="space-y-3">
             <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-              Learn words today. Review them before you forget.
+              Learn Norwegian vocabulary. Remember it when you need it.
             </h1>
             <p className="max-w-2xl text-lg text-default-500">
-              Ordlys helps you build vocabulary decks, study new words, and review them at the right
-              time so they actually stick.
+              Start with ready-made Norwegian decks from A1 to C2 and a vocabulary collection
+              covering the full Duolingo Norwegian course, or create and share spaced-repetition
+              decks for any language.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/auth/sign-up" size="lg">
-              Start learning
+              Start learning Norwegian
             </ButtonLink>
             <ButtonLink href="/public/decks" variant="secondary" size="lg">
-              Browse public decks
+              Browse shared decks
             </ButtonLink>
           </div>
         </div>
 
-        <Card variant="secondary" className="w-full">
-          <Card.Header>
-            <h2 className="card__title">Today&apos;s study plan</h2>
-            <Card.Description>A simple queue for learning and review.</Card.Description>
-          </Card.Header>
-
-          <Card.Content className="space-y-3">
-            <div className={`rounded-lg border px-4 py-3 ${STUDY_TONE_STYLES.learning.surface}`}>
-              <p className="text-sm text-default-500">Ready to learn</p>
-              <p className={`text-2xl font-semibold ${STUDY_TONE_STYLES.learning.text}`}>12</p>
-            </div>
-
-            <div className={`rounded-lg border px-4 py-3 ${STUDY_TONE_STYLES.review.surface}`}>
-              <p className="text-sm text-default-500">Reviews due</p>
-              <p className={`text-2xl font-semibold ${STUDY_TONE_STYLES.review.text}`}>28</p>
-            </div>
-
-            <div className="rounded-lg bg-default-100 px-4 py-3">
-              <p className="text-sm text-default-500">Active deck</p>
-              <p className="font-medium">Norwegian A1 Vocabulary</p>
-            </div>
-          </Card.Content>
-        </Card>
-      </section>
-
-      <section className="mt-10 grid gap-4 md:grid-cols-3">
-        <FeatureCard
-          title="Create decks"
-          description="Organize vocabulary by topic, lesson, exam, textbook, or whatever you are learning."
-        />
-        <FeatureCard
-          title="Study both directions"
-          description="Practice recognizing words and producing answers so your knowledge is actually usable."
-        />
-        <FeatureCard
-          title="Review on schedule"
-          description="Ordlys keeps track of what is due so you can focus on the next useful session."
-        />
+        <HomepageQuizPreview />
       </section>
 
       <section aria-labelledby="public-decks-heading" className="mt-16 space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-              Try before you sign up
+              Built to be shared
             </p>
             <h2 id="public-decks-heading" className="mt-2 text-3xl font-semibold tracking-tight">
-              Preview public vocabulary decks
+              Explore Norwegian decks from the community
             </h2>
             <p className="mt-2 text-default-500">
-              Browse lesson outlines and sample words without an account. Sign up only when you want
-              to study a deck and save your progress.
+              Preview lessons and sample words without an account. Follow a deck to study it, or
+              create and share a collection that other learners can use.
             </p>
           </div>
           <ButtonLink href="/public/decks" variant="secondary">
-            Browse public decks
+            Explore Norwegian decks
           </ButtonLink>
         </div>
 
@@ -141,45 +104,49 @@ export default function Home() {
           <FeaturedPublicDecks />
         </Suspense>
       </section>
-    </div>
-  );
-}
 
-async function FeaturedPublicDecks() {
-  const publicDecks = await getCachedPublicDeckSummaries(3);
+      <section aria-labelledby="how-it-works-heading" className="mt-16 border-y border-default-200">
+        <div className="py-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+            A simple study rhythm
+          </p>
+          <h2 id="how-it-works-heading" className="mt-2 text-2xl font-semibold tracking-tight">
+            Choose, study, review
+          </h2>
+        </div>
 
-  if (publicDecks.length === 0) {
-    return (
-      <div className="rounded-xl border border-default-200 bg-default-50 px-6 py-8 text-center">
-        <h3 className="text-lg font-semibold">Public decks are coming soon</h3>
-        <p className="mt-1 text-default-500">
-          You can still create an account and start building your own vocabulary library.
-        </p>
-      </div>
-    );
-  }
+        <ol className="grid border-t border-default-200 md:grid-cols-3">
+          <li className="py-7 pr-6 md:py-8">
+            <p className="text-sm font-semibold text-primary">01</p>
+            <h3 className="mt-2 text-lg font-semibold">Choose or create a deck</h3>
+            <p className="mt-2 text-sm leading-6 text-default-500">
+              Start with Norwegian, follow a shared collection, or build something for any language.
+            </p>
+          </li>
+          <li className="border-t border-default-200 py-7 md:border-t-0 md:border-l md:px-6 md:py-8">
+            <p className="text-sm font-semibold text-primary">02</p>
+            <h3 className="mt-2 text-lg font-semibold">Study both directions</h3>
+            <p className="mt-2 text-sm leading-6 text-default-500">
+              Practise recognizing words and producing the answer yourself.
+            </p>
+          </li>
+          <li className="border-t border-default-200 py-7 md:border-t-0 md:border-l md:py-8 md:pl-6">
+            <p className="text-sm font-semibold text-primary">03</p>
+            <h3 className="mt-2 text-lg font-semibold">Review when it matters</h3>
+            <p className="mt-2 text-sm leading-6 text-default-500">
+              Ordlys schedules each card and brings it back when it is worth reviewing.
+            </p>
+          </li>
+        </ol>
+      </section>
 
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {publicDecks.map(deck => (
-        <PublicDeckCard key={deck.id} deck={deck} />
-      ))}
-    </div>
-  );
-}
-
-function FeaturedPublicDecksLoading() {
-  return (
-    <div
-      className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-      role="status"
-      aria-label="Loading public decks"
-      aria-busy="true"
-    >
-      <span className="sr-only">Loading public decks…</span>
-      {Array.from({ length: 3 }, (_, index) => (
-        <PublicDeckCardSkeleton key={index} />
-      ))}
+      <aside className="mx-auto mt-12 max-w-2xl text-center text-sm leading-6 text-default-500">
+        Ordlys is an independent project, shaped by feedback from language learners.{' '}
+        <Link href="/feedback" className="font-medium text-primary underline">
+          Share your feedback
+        </Link>
+        .
+      </aside>
     </div>
   );
 }

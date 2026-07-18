@@ -1,7 +1,10 @@
 import ButtonLink from '@/components/shared/button-link';
 import PageShell from '@/components/shared/layout/page-shell';
-import { getPublicDeckPageData, getPublicDeckSummaryById } from '@/db/queries/public-deck.queries';
-import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
+import {
+  getCachedPublicDeckPageData,
+  getCachedPublicDeckSitemapEntries,
+  getCachedPublicDeckSummaryById,
+} from '@/db/queries/public-deck.queries';
 import { formatLanguagePair } from '@/lib/languages';
 import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
@@ -10,18 +13,24 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import DeckBadge from '@/components/shared/deck-badge';
+import PublicDeckActions from '@/app/public/decks/[deckId]/_components/public-deck-actions';
 
 type Props = {
   params: Promise<{ deckId: string }>;
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const decks = await getCachedPublicDeckSitemapEntries();
+  return decks.map(deck => ({ deckId: String(deck.id) }));
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const deckId = parsePositiveInteger((await params).deckId);
   if (!deckId) return missingDeckMetadata;
 
-  const deck = await getPublicDeckSummaryById(deckId);
+  const deck = await getCachedPublicDeckSummaryById(deckId);
   if (!deck) return missingDeckMetadata;
 
   const description = deckDescription(deck);
@@ -45,6 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: [TWITTER_IMAGE],
     },
+    robots: deck.visibility === 'public' ? undefined : { index: false, follow: false },
   };
 }
 
@@ -52,14 +62,10 @@ export default async function PublicDeckPage({ params }: Props) {
   const deckId = parsePositiveInteger((await params).deckId);
   if (!deckId) notFound();
 
-  const [deck, userId] = await Promise.all([
-    getPublicDeckPageData(deckId),
-    getCurrentUserIdOrNull(),
-  ]);
+  const deck = await getCachedPublicDeckPageData(deckId);
   if (!deck) notFound();
 
   const appDeckPath = `/decks/${deck.id}`;
-  const nextQuery = encodeURIComponent(appDeckPath);
   const languagePair = formatLanguagePair(deck.frontLanguage, deck.backLanguage);
 
   return (
@@ -93,24 +99,7 @@ export default async function PublicDeckPage({ params }: Props) {
           </div>
 
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:min-w-56">
-            {userId ? (
-              <ButtonLink href={appDeckPath} size="lg" className="w-full">
-                Open in Ordlys
-              </ButtonLink>
-            ) : (
-              <>
-                <ButtonLink href={`/auth/sign-up?next=${nextQuery}`} size="lg" className="w-full">
-                  Create account to study
-                </ButtonLink>
-                <ButtonLink
-                  href={`/auth/sign-in?next=${nextQuery}`}
-                  variant="secondary"
-                  className="w-full"
-                >
-                  Sign in
-                </ButtonLink>
-              </>
-            )}
+            <PublicDeckActions appDeckPath={appDeckPath} placement="header" />
           </div>
         </Card.Header>
 
@@ -191,7 +180,7 @@ export default async function PublicDeckPage({ params }: Props) {
               <tbody className="divide-y divide-default-200">
                 {deck.vocabularyPreview.map(word => (
                   <tr key={word.id}>
-                    <td className="px-4 py-3 font-medium">
+                    <td className="px-4 py-3 font-medium" lang={deck.frontLanguage ?? undefined}>
                       {word.front}
                       {word.reading ? (
                         <span className="ml-2 text-sm font-normal text-default-500">
@@ -199,7 +188,9 @@ export default async function PublicDeckPage({ params }: Props) {
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3">{word.back}</td>
+                    <td className="px-4 py-3" lang={deck.backLanguage ?? undefined}>
+                      {word.back}
+                    </td>
                     <td className="hidden px-4 py-3 text-sm text-default-500 sm:table-cell">
                       {word.lessonTitle}
                     </td>
@@ -236,18 +227,7 @@ export default async function PublicDeckPage({ params }: Props) {
         </section>
       ) : null}
 
-      {!userId ? (
-        <section className="rounded-xl border border-primary/20 bg-primary/5 px-6 py-8 text-center">
-          <h2 className="text-2xl font-semibold">Ready to learn this deck?</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-default-600">
-            Create an account to follow the deck, start learning, and keep your review schedule and
-            progress in sync.
-          </p>
-          <ButtonLink href={`/auth/sign-up?next=${nextQuery}`} size="lg" className="mt-5">
-            Create account to study
-          </ButtonLink>
-        </section>
-      ) : null}
+      <PublicDeckActions appDeckPath={appDeckPath} placement="footer" />
     </PageShell>
   );
 }

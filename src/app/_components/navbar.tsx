@@ -1,30 +1,43 @@
+'use client';
+
 import Link from 'next/link';
-import { signOutAction } from '@/server/auth.actions';
-import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import ThemeToggle from '@/app/_components/theme-toggle';
 import MobileNavigation from '@/app/_components/mobile-navigation';
-import { getNavigationItems, navigationItemClassName } from '@/app/_components/navigation-items';
+import { getNavigationItems } from '@/app/_components/navigation-items';
 import NavigationLink from '@/app/_components/navigation-link';
-import { Tooltip } from '@heroui/react';
+import { Button, Tooltip } from '@heroui/react';
+import { useAuthSessionState } from '@/hooks/use-auth-session-state';
+import SignOutControl from '@/app/_components/sign-out-control';
 
-export default async function Navbar() {
-  const loggedIn = Boolean(await getCurrentUserIdOrNull());
-  const navigationItems = getNavigationItems(loggedIn);
+export default function Navbar() {
+  const loggedIn = useAuthSessionState();
+  const authResolved = loggedIn !== null;
+  const navigationItems = authResolved ? getNavigationItems(loggedIn) : [];
   const homeHref = loggedIn ? '/dashboard' : '/';
 
   return (
     <nav
       data-app-navigation
+      aria-label="Main navigation"
+      aria-busy={!authResolved}
       className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
     >
       <div className="flex shrink-0 items-center gap-2">
-        <Link href={homeHref} className="text-2xl font-semibold">
-          Ordlys
-        </Link>
+        {authResolved ? (
+          <Link href={homeHref} className="text-2xl font-semibold">
+            Ordlys
+          </Link>
+        ) : (
+          <span className="text-2xl font-semibold">Ordlys</span>
+        )}
         <Tooltip delay={300} closeDelay={100}>
-          <Tooltip.Trigger className="cursor-help rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+          <Button
+            type="button"
+            variant="tertiary"
+            className="h-auto min-w-0 cursor-help rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-primary"
+          >
             Beta
-          </Tooltip.Trigger>
+          </Button>
           <Tooltip.Content
             placement="bottom start"
             showArrow
@@ -42,22 +55,26 @@ export default async function Navbar() {
         </Tooltip>
       </div>
       <div className="hidden min-w-0 items-center gap-2 text-base md:flex">
-        {navigationItems.map(item => (
-          <NavigationLink key={item.href} {...item} variant="desktop" />
-        ))}
-        {loggedIn && (
-          <form action={signOutAction} className="inline-flex">
-            <button
-              type="submit"
-              className={`${navigationItemClassName('desktop')} bg-transparent hover:cursor-pointer`}
-            >
-              Sign out
-            </button>
-          </form>
+        {authResolved ? (
+          <>
+            {navigationItems.map(item => (
+              <NavigationLink key={item.href} {...item} variant="desktop" />
+            ))}
+            {loggedIn ? <SignOutControl variant="desktop" /> : null}
+          </>
+        ) : (
+          <div className="h-9 w-44 animate-pulse rounded-lg bg-default-200" aria-hidden="true" />
         )}
         <ThemeToggle />
       </div>
-      <MobileNavigation loggedIn={loggedIn} />
+      {authResolved ? (
+        <MobileNavigation loggedIn={loggedIn} />
+      ) : (
+        <div className="flex items-center gap-1 md:hidden" aria-hidden="true">
+          <ThemeToggle />
+          <div className="size-8 animate-pulse rounded-lg bg-default-200" />
+        </div>
+      )}
     </nav>
   );
 }

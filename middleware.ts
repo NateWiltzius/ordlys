@@ -7,9 +7,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match application pages except Next.js assets, SEO metadata routes, and images.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/account/:path*',
+    '/dashboard/:path*',
+    '/decks/:path*',
+    '/discover/:path*',
+    '/practice/:path*',
+    '/review/:path*',
   ],
 };

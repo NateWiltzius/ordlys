@@ -1,3 +1,5 @@
+'use client';
+
 import { Button, Card, Input } from '@heroui/react';
 import { FormEvent, useRef } from 'react';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
@@ -13,6 +15,8 @@ type Props = {
   frontLanguage: string | null;
   backLanguage: string | null;
   tone: StudyTone;
+  autoFocus?: boolean;
+  keepAboveKeyboard?: boolean;
   onAnswerChange: (answer: string) => void;
   onSubmit: () => void;
 };
@@ -25,6 +29,8 @@ export default function QuizAnswerForm({
   frontLanguage,
   backLanguage,
   tone,
+  autoFocus = true,
+  keepAboveKeyboard = true,
   onAnswerChange,
   onSubmit,
 }: Props) {
@@ -32,15 +38,22 @@ export default function QuizAnswerForm({
   const answerCardRef = useRef<HTMLDivElement>(null);
   const shownSide = direction === 'btf' ? 'back' : 'front';
   const answerSide = direction === 'btf' ? 'front' : 'back';
-  const shownLanguage = getLanguageName(direction === 'btf' ? backLanguage : frontLanguage);
-  const answerLanguage = getLanguageName(direction === 'btf' ? frontLanguage : backLanguage);
+  const shownLanguageCode = direction === 'btf' ? backLanguage : frontLanguage;
+  const answerLanguageCode = direction === 'btf' ? frontLanguage : backLanguage;
+  const shownLanguage = getLanguageName(shownLanguageCode);
+  const answerLanguage = getLanguageName(answerLanguageCode);
   const shownLabel = sideLabel(shownLanguage, shownSide);
   const answerLabel = sideLabel(answerLanguage, answerSide);
   const answerInstruction = answerLanguage ? `Type in ${answerLanguage}` : `Type the ${answerSide}`;
-  useKeepAboveKeyboard(answerInputRef, answerCardRef);
+  const hasAnswer = answer.trim().length > 0;
+  useKeepAboveKeyboard(answerInputRef, answerCardRef, keepAboveKeyboard);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!hasAnswer) {
+      answerInputRef.current?.focus();
+      return;
+    }
     onSubmit();
   };
 
@@ -71,7 +84,10 @@ export default function QuizAnswerForm({
                 <strong className="font-bold">{answerLabel}</strong>
               </p>
             </div>
-            <p className="quiz-answer-prompt break-words px-4 py-6 text-center text-2xl font-semibold">
+            <p
+              className="quiz-answer-prompt break-words px-4 py-6 text-center text-2xl font-semibold"
+              lang={shownLanguageCode ?? undefined}
+            >
               {prompt}
             </p>
             {hint ? (
@@ -89,8 +105,11 @@ export default function QuizAnswerForm({
               value={answer}
               onChange={e => onAnswerChange(e.target.value)}
               placeholder="Your answer"
-              autoFocus
+              autoFocus={autoFocus}
+              required
               fullWidth
+              lang={answerLanguageCode ?? undefined}
+              autoComplete="off"
             />
           </div>
         </Card.Content>
@@ -99,6 +118,7 @@ export default function QuizAnswerForm({
           <Button
             type="submit"
             variant="primary"
+            isDisabled={!hasAnswer}
             className={`mt-4 w-full sm:w-auto ${STUDY_TONE_STYLES[tone].button}`}
           >
             Submit answer

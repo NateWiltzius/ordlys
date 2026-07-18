@@ -54,9 +54,7 @@ export default function FeedbackForm() {
   return (
     <form className="flex max-w-2xl flex-col gap-5" onSubmit={handleSubmit}>
       <Select name="category" defaultValue="bug">
-        <Label className="text-sm text-default-600" htmlFor="category">
-          Type
-        </Label>
+        <Label className="text-sm text-default-600">Type</Label>
         <Select.Trigger>
           <span className="sr-only">Feedback type</span>
           <Select.Value />
@@ -120,7 +118,7 @@ export default function FeedbackForm() {
 
       {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
       {success ? (
-        <StatusAlert status="success">Thanks, your feedback was saved.</StatusAlert>
+        <StatusAlert status="success">Thanks - I’ve got your feedback.</StatusAlert>
       ) : null}
 
       <div>

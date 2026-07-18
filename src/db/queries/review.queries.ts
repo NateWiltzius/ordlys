@@ -7,6 +7,7 @@ import {
   lessons,
   releaseLessons,
   releaseVocabs,
+  reviewAttempts,
   vocabs,
   userVocabState,
   vocabRevisions,
@@ -35,6 +36,7 @@ import {
   vocabRevisionExtendedSelection,
   vocabRevisionQuizSelection,
 } from '@/db/queries/vocab-content';
+import type { SaveQuizAttemptInput } from '@/types/quiz.types';
 
 export async function getSrsCategoryCountsForDecks(
   deckIds: number[],
@@ -367,7 +369,7 @@ export async function getNextReviewBatch(
   return nextBatch ? { hour: nextBatch.hour, count: Number(nextBatch.count) } : null;
 }
 
-export async function getDueReviews(userId: string, deckId?: number) {
+export async function getDueReviews(userId: string, deckId?: number, limit = 25) {
   return db
     .select({
       id: vocabs.id,
@@ -378,6 +380,7 @@ export async function getDueReviews(userId: string, deckId?: number) {
       srsLevel: userVocabState.srsLevel,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
+      availableCount: sql<number>`count(*) over()`,
     })
     .from(userVocabState)
     .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
@@ -400,11 +403,12 @@ export async function getDueReviews(userId: string, deckId?: number) {
         lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
       ),
     )
-    .orderBy(userVocabState.dueAt);
+    .orderBy(userVocabState.dueAt)
+    .limit(Math.min(100, Math.max(1, Math.trunc(limit))));
 }
 
-export async function getDueReviewsForDeck(deckId: number, userId: string) {
-  return getDueReviews(userId, deckId);
+export async function getDueReviewsForDeck(deckId: number, userId: string, limit = 25) {
+  return getDueReviews(userId, deckId, limit);
 }
 
 export async function getPlacementTestVocabs(deckId: number, lessonId: number, userId: string) {
@@ -448,9 +452,16 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
     .orderBy(vocabs.orderIndex, vocabs.id);
 }
 
-export async function startVocab(vocabId: number, userId: string): Promise<SrsTransition> {
+/**
+ * Persists a directional answer and, when that answer completes the card,
+ * applies the SRS transition in the same transaction. The client can safely
+ * retry the same idempotency key after an interrupted request.
+ */
+export async function saveQuizAttempt(
+  userId: string,
+  input: SaveQuizAttemptInput,
+): Promise<{ saved: boolean; transition: SrsTransition | null }> {
   const now = new Date();
-  const initialSrsState = getInitialSrsState(now);
 
   return db.transaction(async tx => {
     const [vocabAccess] = await tx
@@ -459,140 +470,143 @@ export async function startVocab(vocabId: number, userId: string): Promise<SrsTr
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
       .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
-      .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
-      .for('update', { of: vocabs })
+      .where(and(eq(vocabs.id, input.vocabId), studyDeckAccess(userId)))
       .limit(1);
 
-    if (!vocabAccess) throw new Error('Vocab not found or access denied');
+    // A deck can be removed or unfollowed while a quiz is open. That makes the
+    // queued attempt obsolete rather than retryable forever.
+    if (!vocabAccess) return { saved: false, transition: null };
 
-    const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
-    const lessonIsUnlocked = lessonProgress.some(
-      lesson => lesson.lessonId === vocabAccess.lessonId && lesson.isUnlocked,
-    );
-    if (!lessonIsUnlocked) {
-      throw new Error('Complete more reviews in the previous lesson before starting this word');
-    }
-
-    await tx
-      .insert(userVocabState)
+    const insertedAttempt = await tx
+      .insert(reviewAttempts)
       .values({
         userId,
-        vocabId,
-        dueAt: initialSrsState.dueAt,
-        srsLevel: initialSrsState.srsLevel,
+        vocabId: input.vocabId,
+        mode: input.mode,
+        direction: input.direction,
+        isCorrect: input.isCorrect,
+        wasOverridden: input.wasOverridden,
+        idempotencyKey: input.idempotencyKey,
+        attemptedAt: now,
       })
-      .onConflictDoNothing({
-        target: [userVocabState.userId, userVocabState.vocabId],
+      .onConflictDoNothing()
+      .returning({ id: reviewAttempts.id });
+
+    if (insertedAttempt.length === 0) return { saved: false, transition: null };
+    if (!input.completesCard) return { saved: true, transition: null };
+
+    if (input.mode === 'learn') {
+      const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
+      const lessonIsUnlocked = lessonProgress.some(
+        lesson => lesson.lessonId === vocabAccess.lessonId && lesson.isUnlocked,
+      );
+      if (!lessonIsUnlocked) {
+        return { saved: true, transition: null };
+      }
+
+      const initialState = getInitialSrsState(now);
+      const insertedState = await tx
+        .insert(userVocabState)
+        .values({
+          userId,
+          vocabId: input.vocabId,
+          dueAt: initialState.dueAt,
+          srsLevel: initialState.srsLevel,
+        })
+        .onConflictDoNothing({ target: [userVocabState.userId, userVocabState.vocabId] })
+        .returning({ id: userVocabState.id });
+
+      return {
+        saved: true,
+        transition: insertedState.length
+          ? { previousLevel: null, nextLevel: initialState.srsLevel }
+          : null,
+      };
+    }
+
+    if (input.mode === 'review') {
+      const [state] = await tx
+        .select({ srsLevel: userVocabState.srsLevel })
+        .from(userVocabState)
+        .where(
+          and(
+            eq(userVocabState.vocabId, input.vocabId),
+            eq(userVocabState.userId, userId),
+            lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
+          ),
+        )
+        .for('update')
+        .limit(1);
+      // Another tab or an earlier retry may already have advanced this card.
+      // The directional attempt is still valid history, but the SRS transition
+      // must not be applied twice.
+      if (!state) return { saved: true, transition: null };
+
+      const nextState = getNextSrsState({
+        currentSrsLevel: state.srsLevel,
+        wasCorrect: input.cardWasCorrect,
+        now,
       });
+      await tx
+        .update(userVocabState)
+        .set({ srsLevel: nextState.srsLevel, dueAt: nextState.dueAt, updatedAt: now })
+        .where(and(eq(userVocabState.vocabId, input.vocabId), eq(userVocabState.userId, userId)));
 
-    return { previousLevel: null, nextLevel: initialSrsState.srsLevel };
-  });
-}
-
-export async function reviewVocab(
-  vocabId: number,
-  userId: string,
-  wasCorrect: boolean,
-): Promise<SrsTransition> {
-  const now = new Date();
-
-  return db.transaction(async tx => {
-    const [state] = await tx
-      .select({ srsLevel: userVocabState.srsLevel })
-      .from(userVocabState)
-      .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
-      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-      .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
-      .where(
-        and(
-          eq(userVocabState.vocabId, vocabId),
-          eq(userVocabState.userId, userId),
-          studyDeckAccess(userId),
-          lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
-        ),
-      )
-      .for('update', { of: userVocabState })
-      .limit(1);
-    if (!state) throw new Error('User vocab state not found or access denied');
-
-    const nextSrsState = getNextSrsState({
-      currentSrsLevel: state.srsLevel,
-      wasCorrect,
-      now,
-    });
-    await tx
-      .update(userVocabState)
-      .set({ srsLevel: nextSrsState.srsLevel, dueAt: nextSrsState.dueAt, updatedAt: now })
-      .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)));
-
-    return { previousLevel: state.srsLevel, nextLevel: nextSrsState.srsLevel };
-  });
-}
-
-export async function placeVocab(
-  vocabId: number,
-  userId: string,
-  wasCorrect: boolean,
-): Promise<SrsTransition> {
-  const now = new Date();
-  const targetState = getSrsStateForLevel(PLACEMENT_TEST_CONFIG.passedSrsLevel, now);
-
-  return db.transaction(async tx => {
-    const [vocabAccess] = await tx
-      .select({ id: vocabs.id, deckId: decks.id, lessonId: lessons.id })
-      .from(vocabs)
-      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
-      .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
-      .where(and(eq(vocabs.id, vocabId), studyDeckAccess(userId)))
-      .for('update', { of: vocabs })
-      .limit(1);
-    if (!vocabAccess) throw new Error('Vocab not found or access denied');
+      return {
+        saved: true,
+        transition: { previousLevel: state.srsLevel, nextLevel: nextState.srsLevel },
+      };
+    }
 
     const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
     const placementLesson = lessonProgress.find(lesson => lesson.lessonId === vocabAccess.lessonId);
     if (!placementLesson?.canTakePlacementTest) {
-      throw new Error(
-        'Reach the required SRS level in the previous lesson before taking this test',
-      );
+      return { saved: true, transition: null };
     }
 
     const [existingState] = await tx
       .select({ srsLevel: userVocabState.srsLevel })
       .from(userVocabState)
-      .where(and(eq(userVocabState.vocabId, vocabId), eq(userVocabState.userId, userId)))
+      .where(and(eq(userVocabState.vocabId, input.vocabId), eq(userVocabState.userId, userId)))
       .for('update')
       .limit(1);
 
-    if (!wasCorrect) {
-      return existingState
-        ? { previousLevel: existingState.srsLevel, nextLevel: existingState.srsLevel }
-        : { previousLevel: null, nextLevel: null };
+    if (!input.cardWasCorrect) {
+      return {
+        saved: true,
+        transition: existingState
+          ? { previousLevel: existingState.srsLevel, nextLevel: existingState.srsLevel }
+          : { previousLevel: null, nextLevel: null },
+      };
     }
 
-    if (existingState && existingState.srsLevel >= targetState.srsLevel) {
-      return { previousLevel: existingState.srsLevel, nextLevel: existingState.srsLevel };
-    }
-
-    await tx
-      .insert(userVocabState)
-      .values({
-        userId,
-        vocabId,
-        srsLevel: targetState.srsLevel,
-        dueAt: targetState.dueAt,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [userVocabState.userId, userVocabState.vocabId],
-        set: {
+    const targetState = getSrsStateForLevel(PLACEMENT_TEST_CONFIG.passedSrsLevel, now);
+    if (!existingState || existingState.srsLevel < targetState.srsLevel) {
+      await tx
+        .insert(userVocabState)
+        .values({
+          userId,
+          vocabId: input.vocabId,
           srsLevel: targetState.srsLevel,
           dueAt: targetState.dueAt,
           updatedAt: now,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [userVocabState.userId, userVocabState.vocabId],
+          set: {
+            srsLevel: targetState.srsLevel,
+            dueAt: targetState.dueAt,
+            updatedAt: now,
+          },
+        });
+    }
 
-    return { previousLevel: existingState?.srsLevel ?? null, nextLevel: targetState.srsLevel };
+    return {
+      saved: true,
+      transition: {
+        previousLevel: existingState?.srsLevel ?? null,
+        nextLevel: Math.max(existingState?.srsLevel ?? 0, targetState.srsLevel),
+      },
+    };
   });
 }

@@ -115,7 +115,7 @@ export default function PublicationPanel({
     <Card>
       <Card.Header className="flex-col items-start gap-2 sm:flex-row sm:justify-between">
         <div>
-          <Card.Title>Publishing</Card.Title>
+          <Card.Title render={props => <h2 {...props} />}>Publishing</Card.Title>
           <Card.Description>
             Publish changes when you are ready to share them. Your edits stay private until then.
           </Card.Description>
@@ -172,6 +172,7 @@ export default function PublicationPanel({
         ) : null}
 
         <Select
+          aria-label="Who can find this deck?"
           value={deck.visibility}
           isDisabled={pending || !current}
           variant="secondary"
@@ -243,6 +244,7 @@ export default function PublicationPanel({
             ) : null}
 
             <Select
+              aria-label="Can other learners copy this deck?"
               value={deck.copyPolicy}
               isDisabled={pending}
               variant="secondary"

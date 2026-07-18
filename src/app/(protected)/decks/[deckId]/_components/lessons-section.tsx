@@ -19,7 +19,7 @@ export default function LessonsSection({ children, lessonCount }: Props) {
         onExpandedChange={keys => setExpandedKeys(new Set(keys))}
       >
         <Accordion.Item id="lessons">
-          <Accordion.Heading>
+          <Accordion.Heading level={2}>
             <Accordion.Trigger>
               <span className="flex min-w-0 flex-1 items-center justify-between gap-4 pr-2 text-left">
                 <span>

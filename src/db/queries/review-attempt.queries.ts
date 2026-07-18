@@ -10,38 +10,12 @@ import {
 } from '@/db/schema';
 import { activeReleaseIdExpression, studyDeckAccess } from '@/db/queries/deck-access';
 import { vocabRevisionQuizSelection } from '@/db/queries/vocab-content';
-import type { QuizDirection, StudyMode } from '@/types/quiz.types';
 import { and, countDistinct, desc, eq, gte, inArray, max } from 'drizzle-orm';
 
 const RECENT_MISTAKE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function recentMistakeCutoff() {
   return new Date(Date.now() - RECENT_MISTAKE_WINDOW_MS);
-}
-
-export async function recordReviewAttempt(input: {
-  userId: string;
-  vocabId: number;
-  mode: StudyMode;
-  direction: QuizDirection;
-  isCorrect: boolean;
-  wasOverridden: boolean;
-}) {
-  const [accessibleVocab] = await db
-    .select({ id: vocabs.id })
-    .from(vocabs)
-    .innerJoin(lessons, eq(lessons.id, vocabs.lessonId))
-    .innerJoin(decks, eq(decks.id, lessons.deckId))
-    .leftJoin(
-      deckFollows,
-      and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, input.userId)),
-    )
-    .where(and(eq(vocabs.id, input.vocabId), studyDeckAccess(input.userId)))
-    .limit(1);
-
-  if (!accessibleVocab) throw new Error('Vocabulary item not found or access denied.');
-
-  await db.insert(reviewAttempts).values(input);
 }
 
 export async function getRecentMistakeVocabs(userId: string, limit = 25) {

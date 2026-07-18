@@ -1,6 +1,5 @@
 'use server';
 
-import { SrsTransition } from '@/types/review.types';
 import {
   getDueReviewsForDeck,
   getDueReviews,
@@ -9,20 +8,19 @@ import {
   getNewVocabCountForDeck,
   getNewVocabsForDeck,
   getPlacementTestVocabs,
-  placeVocab,
-  reviewVocab,
-  startVocab,
+  saveQuizAttempt,
 } from '@/db/queries/review.queries';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { getActiveReleaseId } from '@/db/queries/deck-access';
+import { getRecentMistakeCount, getRecentMistakeVocabs } from '@/db/queries/review-attempt.queries';
+import type { SaveQuizAttemptInput } from '@/types/quiz.types';
 import {
-  getRecentMistakeCount,
-  getRecentMistakeVocabs,
-  recordReviewAttempt,
-} from '@/db/queries/review-attempt.queries';
-import type { QuizDirection, StudyMode } from '@/types/quiz.types';
-import { DEFAULT_LEARN_SESSION_SIZE, LEARN_SESSION_SIZES } from '@/lib/study-session-size';
+  DEFAULT_LEARN_SESSION_SIZE,
+  DEFAULT_REVIEW_SESSION_SIZE,
+  LEARN_SESSION_SIZES,
+  REVIEW_SESSION_SIZES,
+} from '@/lib/study-session-size';
 
 export async function getLessonProgressForDeckAction(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -53,25 +51,38 @@ export async function getLearnPageDataAction(
   return { learnItems, lessonProgress, availableCount };
 }
 
-export async function getReviewPageDataAction(id: number) {
+export async function getReviewPageDataAction(
+  id: number,
+  requestedLimit = DEFAULT_REVIEW_SESSION_SIZE,
+) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
+  const limit = REVIEW_SESSION_SIZES.includes(
+    requestedLimit as (typeof REVIEW_SESSION_SIZES)[number],
+  )
+    ? requestedLimit
+    : DEFAULT_REVIEW_SESSION_SIZE;
   if (!(await getActiveReleaseId(deckId, userId))) return null;
   const [dueReviews, nextReview] = await Promise.all([
-    getDueReviewsForDeck(deckId, userId),
+    getDueReviewsForDeck(deckId, userId, limit),
     getNextReviewBatch(userId, [deckId]),
   ]);
-  return { dueReviews, nextReview };
+  return { dueReviews, nextReview, availableCount: Number(dueReviews[0]?.availableCount ?? 0) };
 }
 
-export async function getAllReviewsPageDataAction() {
+export async function getAllReviewsPageDataAction(requestedLimit = DEFAULT_REVIEW_SESSION_SIZE) {
   const userId = await getCurrentUserId();
+  const limit = REVIEW_SESSION_SIZES.includes(
+    requestedLimit as (typeof REVIEW_SESSION_SIZES)[number],
+  )
+    ? requestedLimit
+    : DEFAULT_REVIEW_SESSION_SIZE;
   const [dueReviews, nextReview] = await Promise.all([
-    getDueReviews(userId),
+    getDueReviews(userId, undefined, limit),
     getNextReviewBatch(userId),
   ]);
-  return { dueReviews, nextReview };
+  return { dueReviews, nextReview, availableCount: Number(dueReviews[0]?.availableCount ?? 0) };
 }
 
 export async function getPlacementPageDataAction(deckIdInput: number, lessonIdInput: number) {
@@ -83,55 +94,24 @@ export async function getPlacementPageDataAction(deckIdInput: number, lessonIdIn
   return getPlacementTestVocabs(deckId, lessonId, userId);
 }
 
-export async function startVocabAction(vocabId: number): Promise<SrsTransition> {
-  const parsedVocabId = parsePositiveInteger(vocabId);
+export async function saveQuizAttemptAction(input: SaveQuizAttemptInput) {
+  const parsedVocabId = parsePositiveInteger(input.vocabId);
   if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
-  return startVocab(parsedVocabId, await getCurrentUserId());
-}
-
-export async function reviewVocabAction(
-  vocabId: number,
-  wasCorrect: boolean,
-): Promise<SrsTransition> {
-  const parsedVocabId = parsePositiveInteger(vocabId);
-  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
-  if (typeof wasCorrect !== 'boolean') throw new Error('Invalid review result.');
-  return reviewVocab(parsedVocabId, await getCurrentUserId(), wasCorrect);
-}
-
-export async function placeVocabAction(
-  vocabId: number,
-  wasCorrect: boolean,
-): Promise<SrsTransition> {
-  const parsedVocabId = parsePositiveInteger(vocabId);
-  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
-  if (typeof wasCorrect !== 'boolean') throw new Error('Invalid placement result.');
-  return placeVocab(parsedVocabId, await getCurrentUserId(), wasCorrect);
-}
-
-export async function recordReviewAttemptAction(
-  vocabId: number,
-  mode: StudyMode,
-  direction: QuizDirection,
-  isCorrect: boolean,
-  wasOverridden: boolean,
-) {
-  const parsedVocabId = parsePositiveInteger(vocabId);
-  if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
-  if (!['learn', 'review', 'placement'].includes(mode)) throw new Error('Invalid study mode.');
-  if (!['btf', 'ftb'].includes(direction)) throw new Error('Invalid quiz direction.');
-  if (typeof isCorrect !== 'boolean' || typeof wasOverridden !== 'boolean') {
+  if (!['learn', 'review', 'placement'].includes(input.mode)) {
+    throw new Error('Invalid study mode.');
+  }
+  if (!['btf', 'ftb'].includes(input.direction)) throw new Error('Invalid quiz direction.');
+  if (
+    typeof input.isCorrect !== 'boolean' ||
+    typeof input.wasOverridden !== 'boolean' ||
+    typeof input.completesCard !== 'boolean' ||
+    typeof input.cardWasCorrect !== 'boolean' ||
+    !/^[a-zA-Z0-9_-]{16,128}$/.test(input.idempotencyKey)
+  ) {
     throw new Error('Invalid review attempt.');
   }
 
-  await recordReviewAttempt({
-    userId: await getCurrentUserId(),
-    vocabId: parsedVocabId,
-    mode,
-    direction,
-    isCorrect,
-    wasOverridden,
-  });
+  return saveQuizAttempt(await getCurrentUserId(), { ...input, vocabId: parsedVocabId });
 }
 
 export async function getRecentMistakesAction(limit = 25) {

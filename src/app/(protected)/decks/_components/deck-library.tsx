@@ -1,14 +1,12 @@
 'use client';
 
-import { DeckCard } from '@/app/(protected)/decks/_components/deck-card';
 import CreateDeckModal from '@/app/(protected)/decks/_components/create-deck-modal';
-import DeckDiscoveryControls from '@/components/deck-discovery-controls';
+import LibraryDeckCollection from '@/app/(protected)/decks/_components/library-deck-collection';
 import EmptyState from '@/components/shared/empty-state';
 import type { LibraryDeck } from '@/db/queries/deck.queries';
-import { filterAndSortDecks, type DeckDiscoverySort } from '@/lib/deck-discovery';
-import { buildDeckLibrary, type DeckLibraryItem } from '@/lib/deck-library';
-import { Button, Tabs } from '@heroui/react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { buildDeckLibrary } from '@/lib/deck-library';
+import { Tabs } from '@heroui/react';
+import { useMemo } from 'react';
 import ButtonLink from '@/components/shared/button-link';
 
 type Props = {
@@ -59,6 +57,7 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
       <Tabs.Panel className="pt-4" id="learning">
         <LibraryDeckCollection
           idPrefix="learning-decks"
+          heading="Learning decks"
           decks={learningDecks}
           emptyTitle="No decks in learning"
           emptyDescription="Discover a public deck or follow one of your own published decks."
@@ -68,6 +67,7 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
       <Tabs.Panel className="pt-4" id="created">
         <LibraryDeckCollection
           idPrefix="created-decks"
+          heading="Your decks"
           decks={createdDecks}
           emptyTitle="No decks of your own yet"
           emptyDescription="Create or import a deck, or copy a public deck to edit independently."
@@ -82,66 +82,5 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
         />
       </Tabs.Panel>
     </Tabs>
-  );
-}
-
-type CollectionProps = {
-  idPrefix: string;
-  decks: DeckLibraryItem<LibraryDeck>[];
-  emptyTitle: string;
-  emptyDescription: string;
-  emptyAction: ReactNode;
-};
-
-function LibraryDeckCollection({
-  idPrefix,
-  decks,
-  emptyTitle,
-  emptyDescription,
-  emptyAction,
-}: CollectionProps) {
-  const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<DeckDiscoverySort>('name');
-  const visibleDecks = useMemo(() => filterAndSortDecks(decks, query, sort), [decks, query, sort]);
-
-  if (!decks.length) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />;
-  }
-
-  return (
-    <div className="space-y-4">
-      <DeckDiscoveryControls
-        idPrefix={idPrefix}
-        query={query}
-        sort={sort}
-        visibleCount={visibleDecks.length}
-        totalCount={decks.length}
-        onQueryChange={setQuery}
-        onSortChange={setSort}
-      />
-
-      {visibleDecks.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleDecks.map(deck => (
-            <DeckCard
-              key={deck.id}
-              deck={deck}
-              relationship={deck.relationship}
-              isFollowing={deck.isFollowing}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          title="No decks match your search"
-          description="Try another name or clear the search to browse this section."
-          action={
-            <Button variant="secondary" onPress={() => setQuery('')}>
-              Clear search
-            </Button>
-          }
-        />
-      )}
-    </div>
   );
 }

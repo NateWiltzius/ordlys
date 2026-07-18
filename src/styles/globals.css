@@ -3,6 +3,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.skip-link:focus,
+.skip-link:focus-visible {
+  clip: auto;
+  clip-path: none;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  white-space: normal;
+}
+
 @theme {
   --font-sans: 'font', sans-serif;
 }
@@ -78,5 +89,16 @@ html[data-quiz-active='true'] [data-app-footer] {
 
   .quiz-answer-card[data-keyboard-open='true'] .quiz-answer-footer {
     padding-top: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

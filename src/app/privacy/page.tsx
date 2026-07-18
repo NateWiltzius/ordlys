@@ -7,9 +7,16 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
+  const operatorName = process.env.NEXT_PUBLIC_OPERATOR_NAME?.trim() || 'the Ordlys site owner';
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+
   return (
     <article className="prose mx-auto max-w-3xl px-6 py-12">
       <h1 className="text-3xl font-semibold">Privacy notice</h1>
+      <p className="mt-4">
+        Ordlys is operated by {operatorName}, who is responsible for the personal data described in
+        this notice.
+      </p>
       <p className="mt-4">
         Ordlys stores your email address for authentication and your decks, followed decks,
         vocabulary, and learning history to provide study and review features. If you submit
@@ -40,10 +47,22 @@ export default function PrivacyPage() {
       </p>
       <p className="mt-2">
         You can download your account data from the account page and export any deck you own as a
-        reusable CSV file from its deck page. Contact us through the in-app feedback form if you
-        have a privacy or data request.
+        reusable CSV file from its deck page. For a privacy or data request, use the public{' '}
+        <a href="/feedback" className="text-primary underline">
+          contact page
+        </a>
+        {contactEmail ? (
+          <>
+            {' '}
+            or email{' '}
+            <a href={`mailto:${contactEmail}`} className="text-primary underline">
+              {contactEmail}
+            </a>
+          </>
+        ) : null}
+        .
       </p>
-      <p className="mt-8 text-sm text-default-500">Effective July 13, 2026.</p>
+      <p className="mt-8 text-sm text-default-500">Effective July 17, 2026.</p>
     </article>
   );
 }

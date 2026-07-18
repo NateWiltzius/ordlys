@@ -1,7 +1,9 @@
+'use client';
+
 import { QuizFeedback } from '@/types/quiz.types';
 import { Button, Card, Chip } from '@heroui/react';
 import { useEffect } from 'react';
-import AnswerRow from '@/app/(protected)/decks/[deckId]/_components/quiz/answer-row';
+import AnswerRow from '@/components/quiz/answer-row';
 import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
@@ -12,6 +14,7 @@ type Props = {
   wordCompletion?: WordCompletion;
   onContinue: () => void;
   onAcceptAnyway?: () => void;
+  keyboardShortcutEnabled?: boolean;
 };
 
 export default function QuizFeedbackPanel({
@@ -19,6 +22,7 @@ export default function QuizFeedbackPanel({
   wordCompletion,
   onContinue,
   onAcceptAnyway,
+  keyboardShortcutEnabled = true,
 }: Props) {
   const styles = feedback.isCorrect ? QUIZ_FEEDBACK_STYLES.correct : QUIZ_FEEDBACK_STYLES.incorrect;
   const completionStyles =
@@ -28,6 +32,8 @@ export default function QuizFeedbackPanel({
       ? 'border-danger/60 bg-danger/25'
       : 'border-success/60 bg-success/25';
   useEffect(() => {
+    if (!keyboardShortcutEnabled) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Enter' || event.repeat || event.isComposing) {
         return;
@@ -40,13 +46,13 @@ export default function QuizFeedbackPanel({
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onContinue]);
+  }, [keyboardShortcutEnabled, onContinue]);
 
   return (
     <Card className={`border ${styles.surface}`}>
       <Card.Header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Card.Title className={styles.text}>
+          <Card.Title render={props => <h2 {...props} />} className={styles.text}>
             {feedback.isCorrect ? 'Correct' : 'Not quite'}
           </Card.Title>
           <Card.Description>
@@ -80,7 +86,7 @@ export default function QuizFeedbackPanel({
             )}
             <div>
               <p className={`font-semibold ${completionStyles.text}`}>
-                {wordCompletion === 'clean' ? 'Word complete' : 'Word complete — keep practicing'}
+                {wordCompletion === 'clean' ? 'Word complete' : 'Word complete - keep practicing'}
               </p>
               <p className="text-sm text-foreground/80">
                 {wordCompletion === 'clean'

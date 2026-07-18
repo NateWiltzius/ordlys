@@ -1,5 +1,3 @@
-'use client';
-
 import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mode';
 import StudySession from '@/components/shared/layout/study-session';
 import type { QuizSourceItem } from '@/types/quiz.types';
@@ -16,7 +14,6 @@ export default function RecentMistakesMode({ quizItems }: Props) {
         studyMode="review"
         recordAttempts={false}
         completionHref="/dashboard"
-        onVocabComplete={async () => ({ previousLevel: null, nextLevel: null })}
       />
     </StudySession>
   );

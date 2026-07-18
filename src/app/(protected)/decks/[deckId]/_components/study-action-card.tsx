@@ -3,6 +3,7 @@ import { buttonVariants, Card } from '@heroui/react';
 import Link from 'next/link';
 import { ComponentType, ReactNode, SVGProps } from 'react';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
+import SemanticCardTitle from '@/components/shared/semantic-card-title';
 
 type ActionTone = StudyTone;
 
@@ -76,7 +77,9 @@ export default function StudyActionCard({
           <Icon className="size-6" aria-hidden="true" />
         </span>
         <div>
-          <Card.Title className="text-lg">{title}</Card.Title>
+          <SemanticCardTitle level={2} className="text-lg">
+            {title}
+          </SemanticCardTitle>
           <Card.Description>{description}</Card.Description>
         </div>
       </Card.Header>

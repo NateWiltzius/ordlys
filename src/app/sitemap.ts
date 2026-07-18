@@ -1,11 +1,11 @@
-import { getPublicDeckSitemapEntries } from '@/db/queries/public-deck.queries';
+import { getCachedPublicDeckSitemapEntries } from '@/db/queries/public-deck.queries';
 import { absoluteUrl } from '@/lib/site';
 import type { MetadataRoute } from 'next';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const publicDecks = await getPublicDeckSitemapEntries();
+  const publicDecks = await getCachedPublicDeckSitemapEntries();
 
   return [
     {

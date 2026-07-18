@@ -2,6 +2,17 @@ export type QuizDirection = 'btf' | 'ftb';
 
 export type StudyMode = 'learn' | 'review' | 'placement';
 
+export type SaveQuizAttemptInput = {
+  vocabId: number;
+  mode: StudyMode;
+  direction: QuizDirection;
+  isCorrect: boolean;
+  wasOverridden: boolean;
+  completesCard: boolean;
+  cardWasCorrect: boolean;
+  idempotencyKey: string;
+};
+
 export type QuizSourceItem = {
   id: number;
   front: string;

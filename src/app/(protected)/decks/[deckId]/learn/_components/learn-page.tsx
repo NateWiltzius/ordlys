@@ -2,7 +2,6 @@
 
 import LearnMode from '@/app/(protected)/decks/[deckId]/learn/_components/learn-mode';
 import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mode';
-import { startVocabAction } from '@/server/review.actions';
 import { LearnItem, LessonProgress } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import { useState } from 'react';
@@ -44,7 +43,7 @@ export default function LearnPage({
       <StudySession>
         <Card>
           <Card.Header>
-            <Card.Title>
+            <Card.Title render={props => <h1 {...props} />}>
               {nextLockedLesson ? 'Keep reviewing to unlock more words' : 'All words introduced'}
             </Card.Title>
             <Card.Description>
@@ -84,9 +83,6 @@ export default function LearnPage({
           tone="learning"
           studyMode="learn"
           completionHref={`/decks/${deckId}`}
-          onVocabComplete={async vocabId => {
-            return await startVocabAction(vocabId);
-          }}
         />
       )}
     </StudySession>

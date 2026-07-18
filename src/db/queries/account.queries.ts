@@ -3,6 +3,7 @@ import {
   deckAuditEvents,
   deckFollows,
   deckReports,
+  deckReleases,
   decks,
   feedback,
   lessonRevisions,
@@ -126,6 +127,19 @@ export async function deleteAccountData(
       .update(deckAuditEvents)
       .set({ actorId: null })
       .where(eq(deckAuditEvents.actorId, userId));
+    await tx
+      .update(deckReleases)
+      .set({ creatorId: ANONYMOUS_OWNER_ID })
+      .where(eq(deckReleases.creatorId, userId));
+    await tx
+      .update(lessonRevisions)
+      .set({ creatorId: ANONYMOUS_OWNER_ID })
+      .where(eq(lessonRevisions.creatorId, userId));
+    await tx
+      .update(vocabRevisions)
+      .set({ creatorId: ANONYMOUS_OWNER_ID })
+      .where(eq(vocabRevisions.creatorId, userId));
+    await tx.delete(feedback).where(eq(feedback.userId, userId));
     await tx.delete(deckReports).where(eq(deckReports.reporterId, userId));
     await tx.delete(reviewAttempts).where(eq(reviewAttempts.userId, userId));
     await tx.delete(userVocabState).where(eq(userVocabState.userId, userId));

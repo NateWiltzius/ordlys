@@ -4,22 +4,33 @@ import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mod
 import ButtonLink from '@/components/shared/button-link';
 import StudySession from '@/components/shared/layout/study-session';
 import NextReviewText from '@/components/shared/next-review-text';
-import { reviewVocabAction } from '@/server/review.actions';
 import type { NextReviewBatch, ReviewItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
+import SessionSizePicker from '@/components/shared/session-size-picker';
+import { REVIEW_SESSION_SIZES } from '@/lib/study-session-size';
+import { useState } from 'react';
 
 type Props = {
   dueReviews: ReviewItem[];
   nextReview: NextReviewBatch | null;
+  selectedSize: number;
+  availableCount: number;
 };
 
-export default function AllDecksReviewMode({ dueReviews, nextReview }: Props) {
+export default function AllDecksReviewMode({
+  dueReviews,
+  nextReview,
+  selectedSize,
+  availableCount,
+}: Props) {
+  const [hasStarted, setHasStarted] = useState(false);
+
   if (dueReviews.length === 0) {
     return (
       <StudySession>
         <Card>
           <Card.Header>
-            <Card.Title>No reviews due</Card.Title>
+            <Card.Title render={props => <h1 {...props} />}>No reviews due</Card.Title>
             <Card.Description>
               <NextReviewText nextReview={nextReview} />
             </Card.Description>
@@ -35,14 +46,21 @@ export default function AllDecksReviewMode({ dueReviews, nextReview }: Props) {
   return (
     <StudySession className="space-y-6">
       <h1 className="text-2xl font-semibold text-success">Review due cards</h1>
+      {!hasStarted ? (
+        <SessionSizePicker
+          baseHref="/review"
+          selectedSize={selectedSize}
+          sizes={REVIEW_SESSION_SIZES}
+          totalCount={availableCount}
+          noun="card"
+        />
+      ) : null}
       <QuizMode
         quizItems={dueReviews}
         tone="review"
         studyMode="review"
         completionHref="/dashboard"
-        onVocabComplete={async (vocabId, wasCorrect) => {
-          return await reviewVocabAction(vocabId, wasCorrect);
-        }}
+        onSessionStart={() => setHasStarted(true)}
       />
     </StudySession>
   );

@@ -4,9 +4,9 @@ import { Bars3Icon } from '@heroicons/react/24/outline';
 import { Button, Popover } from '@heroui/react';
 import { useState } from 'react';
 import ThemeToggle from '@/app/_components/theme-toggle';
-import { signOutAction } from '@/server/auth.actions';
-import { getNavigationItems, navigationItemClassName } from '@/app/_components/navigation-items';
+import { getNavigationItems } from '@/app/_components/navigation-items';
 import NavigationLink from '@/app/_components/navigation-link';
+import SignOutControl from '@/app/_components/sign-out-control';
 
 type Props = {
   loggedIn: boolean;
@@ -41,16 +41,7 @@ export default function MobileNavigation({ loggedIn }: Props) {
                   onNavigate={() => setIsOpen(false)}
                 />
               ))}
-              {loggedIn && (
-                <form action={signOutAction} onSubmit={() => setIsOpen(false)}>
-                  <button
-                    type="submit"
-                    className={`w-full bg-transparent text-left ${navigationItemClassName('mobile')}`}
-                  >
-                    Sign out
-                  </button>
-                </form>
-              )}
+              {loggedIn && <SignOutControl variant="mobile" onSignedOut={() => setIsOpen(false)} />}
             </div>
           </Popover.Dialog>
         </Popover.Content>

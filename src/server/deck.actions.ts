@@ -215,6 +215,7 @@ export async function updateDeckAction(id: number, input: Omit<CreateDeckInput, 
     revalidatePath(`/decks/${deckId}`);
     revalidatePath(`/decks/${deckId}/edit`);
     revalidatePath('/discover');
+    revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
   });
 }
 
