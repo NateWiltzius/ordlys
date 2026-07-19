@@ -1,6 +1,6 @@
 'use client';
 
-import { Accordion, Card, Chip } from '@heroui/react';
+import { Accordion, Chip } from '@heroui/react';
 import { ReactNode, useState } from 'react';
 
 type Props = {
@@ -12,9 +12,9 @@ export default function LessonsSection({ children, lessonCount }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string | number>>(new Set());
 
   return (
-    <Card className="gap-0 overflow-hidden p-0">
+    <section className="border-y border-default-200">
       <Accordion
-        className="w-full"
+        className="deck-lessons-section w-full"
         expandedKeys={expandedKeys}
         onExpandedChange={keys => setExpandedKeys(new Set(keys))}
       >
@@ -43,6 +43,6 @@ export default function LessonsSection({ children, lessonCount }: Props) {
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
-    </Card>
+    </section>
   );
 }

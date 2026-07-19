@@ -55,7 +55,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
     <Modal state={modalState}>
       <Modal.Trigger
         aria-label="Choose what to review"
-        className="group block h-full cursor-pointer rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
+        className="group block h-full cursor-pointer rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
       >
         {reviewCard}
       </Modal.Trigger>
@@ -71,7 +71,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
               <p className="mb-3 text-sm text-default-600">
                 Review everything together or focus on one deck.
               </p>
-              <ul className="divide-y divide-default-200 rounded-xl border border-default-200">
+              <ul className="divide-y divide-default-200 rounded-lg border border-default-200">
                 <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-3">
                     <p className="truncate font-medium text-default-900">All decks</p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, Input } from '@heroui/react';
+import { Button, Input } from '@heroui/react';
 import { FormEvent, KeyboardEvent, useRef } from 'react';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
@@ -35,7 +35,7 @@ export default function QuizAnswerForm({
   onSubmit,
 }: Props) {
   const answerInputRef = useRef<HTMLInputElement>(null);
-  const answerCardRef = useRef<HTMLDivElement>(null);
+  const answerCardRef = useRef<HTMLElement>(null);
   const shownLanguageCode = direction === 'btf' ? backLanguage : frontLanguage;
   const answerLanguageCode = direction === 'btf' ? frontLanguage : backLanguage;
   const { promptLabel, answerLabel, answerInstruction } = getQuizLanguageLabels(
@@ -67,46 +67,38 @@ export default function QuizAnswerForm({
   };
 
   return (
-    <Card ref={answerCardRef} variant="secondary" className="quiz-answer-card w-full">
+    <section
+      ref={answerCardRef}
+      data-study-tone={tone}
+      className="quiz-answer-card w-full border-y border-default-200 py-6 sm:py-8"
+    >
       <form onSubmit={handleSubmit}>
-        <Card.Content className="quiz-answer-content space-y-4">
-          <div
-            className="overflow-hidden rounded-lg border border-default-200 bg-default-100"
-            role="note"
-            aria-label={`${promptLabel} shown; ${answerInstruction.toLowerCase()}`}
-          >
-            <div
-              className={`flex items-center justify-center gap-3 border-b px-3 py-2 ${STUDY_TONE_STYLES[tone].surface}`}
-            >
-              <p className="min-w-0 flex-1 text-center text-xs sm:text-sm">
-                <span className="text-default-500">Shown: </span>
-                <strong className="font-semibold text-default-900">{promptLabel}</strong>
-              </p>
+        <div className="quiz-answer-content">
+          <div role="note" aria-label={`${promptLabel} shown; ${answerInstruction.toLowerCase()}`}>
+            <div className="quiz-answer-direction flex items-center justify-center gap-2 text-xs text-default-500 sm:text-sm">
+              <strong className="font-medium text-default-700">{promptLabel}</strong>
               <ArrowRightIcon
                 className={`size-4 shrink-0 ${STUDY_TONE_STYLES[tone].text}`}
                 aria-hidden="true"
               />
-              <p
-                className={`min-w-0 flex-1 text-center text-xs sm:text-sm ${STUDY_TONE_STYLES[tone].text}`}
-              >
-                <span>Type: </span>
-                <strong className="font-bold">{answerLabel}</strong>
-              </p>
+              <strong className={`font-medium ${STUDY_TONE_STYLES[tone].text}`}>
+                {answerLabel}
+              </strong>
             </div>
             <p
-              className="quiz-answer-prompt break-words px-4 py-6 text-center text-2xl font-semibold"
+              className="quiz-answer-prompt break-words py-8 text-center text-4xl leading-tight font-semibold sm:py-10 sm:text-5xl"
               lang={shownLanguageCode ?? undefined}
             >
               {prompt}
             </p>
             {hint ? (
-              <p className="border-t border-default-200 px-4 py-3 text-center text-sm text-default-600">
+              <p className="text-center text-sm text-default-500">
                 <span className="font-semibold text-default-700">Hint:</span> {hint}
               </p>
             ) : null}
           </div>
 
-          <div className="space-y-2">
+          <div className="mt-6 space-y-2 border-t border-default-200 pt-5">
             <p className="text-sm font-medium">{answerInstruction}</p>
             <Input
               ref={answerInputRef}
@@ -122,19 +114,19 @@ export default function QuizAnswerForm({
               autoComplete="off"
             />
           </div>
-        </Card.Content>
+        </div>
 
-        <Card.Footer className="quiz-answer-footer">
+        <div className="quiz-answer-footer mt-5 flex justify-end">
           <Button
             type="submit"
             variant="primary"
             isDisabled={!hasAnswer}
-            className={`mt-4 w-full sm:w-auto ${STUDY_TONE_STYLES[tone].button}`}
+            className={`w-full sm:w-auto ${STUDY_TONE_STYLES[tone].button}`}
           >
             Submit answer
           </Button>
-        </Card.Footer>
+        </div>
       </form>
-    </Card>
+    </section>
   );
 }

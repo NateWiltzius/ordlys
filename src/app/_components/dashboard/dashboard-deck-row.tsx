@@ -19,7 +19,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
     stats.totalWords === 0 ? 0 : Math.round((introducedCards / stats.totalWords) * 100);
 
   return (
-    <div className="px-6 py-4">
+    <div className="py-4">
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-default-200 bg-default-100 text-default-600">

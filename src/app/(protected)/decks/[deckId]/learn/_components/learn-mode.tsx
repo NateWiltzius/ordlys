@@ -1,9 +1,10 @@
 import { LearnItem } from '@/types/review.types';
-import { Button, Card, Chip, ProgressBar } from '@heroui/react';
+import { Button, Chip } from '@heroui/react';
 import { useState } from 'react';
 import WordSide from '@/app/(protected)/decks/[deckId]/learn/_components/word-side';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import { getLanguageName } from '@/lib/languages';
+import StudyProgress from '@/components/shared/study-progress';
 
 type Props = {
   learnItems: LearnItem[];
@@ -35,48 +36,45 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
 
   return (
     <div className="w-full space-y-4 pb-20 sm:pb-0">
-      <div className="space-y-2">
-        <div className="flex h-10 items-start justify-between gap-3 text-sm">
+      <StudyProgress
+        label={
           <span
             className="line-clamp-2 min-w-0 break-words text-default-500"
             title={currentItem.lessonTitle}
           >
             {currentItem.lessonTitle}
           </span>
-          <span className="shrink-0 font-medium">
+        }
+        counter={
+          <>
             {currentIndex + 1} / {learnItems.length}
-          </span>
-        </div>
-        <ProgressBar aria-label="Learning progress" value={progress}>
-          <ProgressBar.Track>
-            <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
-          </ProgressBar.Track>
-        </ProgressBar>
-      </div>
+          </>
+        }
+        value={progress}
+        ariaLabel="Learning progress"
+        tone="learning"
+      />
 
-      <Card>
-        <Card.Header>
-          <Card.Title render={props => <h2 {...props} />}>New vocabulary</Card.Title>
-          <Card.Description>Review the word and its meaning before the quiz.</Card.Description>
-        </Card.Header>
-        <Card.Content className="space-y-4">
+      <article className="border-y border-default-200 px-1 py-7 sm:px-4 sm:py-9">
+        <h2 className="sr-only">New vocabulary</h2>
+        <div>
           <WordSide
             label="Word"
             language={frontLanguage}
             value={currentItem.front}
             reading={currentItem.reading}
             alternatives={currentItem.frontAlternatives}
+            primary
           />
           <WordSide
             label="Meaning"
             language={backLanguage}
             value={currentItem.back}
             alternatives={currentItem.backAlternatives}
-            emphasis
           />
 
           {hasDetails ? (
-            <section className="space-y-3 border-t border-default-200 pt-4">
+            <section className="mt-7 space-y-3 border-t border-default-200 pt-5 text-left">
               {currentItem.notes ? (
                 <div>
                   <h3 className="text-sm font-semibold">Notes</h3>
@@ -97,8 +95,8 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
               ) : null}
             </section>
           ) : null}
-        </Card.Content>
-      </Card>
+        </div>
+      </article>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-default-200 bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-lg backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
         <div className="mx-auto grid w-full max-w-xl grid-cols-2 gap-3">

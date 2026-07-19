@@ -11,17 +11,8 @@ import {
 import type { DeckRelease } from '@/types/deck-release.types';
 import type { Deck } from '@/types/deck.types';
 import { isActionFailure } from '@/lib/action-result';
-import {
-  Alert,
-  Button,
-  Card,
-  Chip,
-  Description,
-  Input,
-  Label,
-  ListBox,
-  Select,
-} from '@heroui/react';
+import PageSection from '@/components/shared/layout/page-section';
+import { Alert, Button, Chip, Description, Input, Label, ListBox, Select } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
@@ -112,15 +103,10 @@ export default function PublicationPanel({
   }
 
   return (
-    <Card>
-      <Card.Header className="flex-col items-start gap-2 sm:flex-row sm:justify-between">
-        <div>
-          <Card.Title render={props => <h2 {...props} />}>Publishing</Card.Title>
-          <Card.Description>
-            Publish changes when you are ready to share them. Your edits stay private until then.
-          </Card.Description>
-        </div>
-
+    <PageSection
+      title="Publishing"
+      description="Publish changes when you are ready to share them. Your edits stay private until then."
+      action={
         <Chip size="sm" variant="soft">
           {current
             ? hasUnpublishedChanges
@@ -128,9 +114,10 @@ export default function PublicationPanel({
               : 'Published'
             : 'Private draft'}
         </Chip>
-      </Card.Header>
-
-      <Card.Content className="space-y-5">
+      }
+      contentClassName="space-y-5"
+    >
+      <>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="form-field flex-1">
             <Label htmlFor={`change-summary-${deck.id}`}>What changed? (optional)</Label>
@@ -225,7 +212,7 @@ export default function PublicationPanel({
           </Select.Popover>
         </Select>
 
-        <details className="overflow-hidden rounded-xl border border-default-200 bg-default-50/50">
+        <details className="overflow-hidden rounded-lg border border-default-200 bg-default-50/50">
           <summary className="cursor-pointer px-4 py-3 font-medium text-default-700">
             Advanced publishing settings
           </summary>
@@ -365,7 +352,7 @@ export default function PublicationPanel({
             </Alert.Content>
           </Alert>
         ) : null}
-      </Card.Content>
-    </Card>
+      </>
+    </PageSection>
   );
 }

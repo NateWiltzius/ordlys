@@ -22,3 +22,15 @@ export function parseSessionSize(
 export function getSessionSizeChoices(sizes: readonly number[], totalCount: number): number[] {
   return [...new Set(sizes)].filter(size => size > 0 && size < totalCount);
 }
+
+export function getFullQueueSessionSize(
+  sizes: readonly number[],
+  totalCount: number,
+): number | null {
+  return (
+    [...new Set(sizes)]
+      .filter(size => size > 0)
+      .sort((left, right) => left - right)
+      .find(size => size >= totalCount) ?? null
+  );
+}

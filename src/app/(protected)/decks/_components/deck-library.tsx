@@ -8,14 +8,21 @@ import { buildDeckLibrary } from '@/lib/deck-library';
 import { Tabs } from '@heroui/react';
 import { useMemo } from 'react';
 import ButtonLink from '@/components/shared/button-link';
+import type { ReviewCounts } from '@/types/review.types';
 
 type Props = {
   ownedDecks: LibraryDeck[];
   followedDecks: LibraryDeck[];
   restorableDecks: LibraryDeck[];
+  deckStats: Record<number, ReviewCounts>;
 };
 
-export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks }: Props) {
+export default function DeckLibrary({
+  ownedDecks,
+  followedDecks,
+  restorableDecks,
+  deckStats,
+}: Props) {
   const libraryDecks = useMemo(
     () => buildDeckLibrary(ownedDecks, followedDecks, restorableDecks),
     [followedDecks, ownedDecks, restorableDecks],
@@ -42,7 +49,7 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
 
   return (
     <Tabs className="w-full" defaultSelectedKey={learningDecks.length ? 'learning' : 'created'}>
-      <Tabs.ListContainer className="w-full">
+      <Tabs.ListContainer className="w-full sm:max-w-md">
         <Tabs.List aria-label="Library sections" className="grid w-full grid-cols-2">
           <Tabs.Tab id="learning" className="w-full justify-center">
             Learning ({learningDecks.length})
@@ -60,6 +67,7 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
           context="learning"
           heading="Learning decks"
           decks={learningDecks}
+          deckStats={deckStats}
           emptyTitle="No decks in learning"
           emptyDescription="Discover a public deck or follow one of your own published decks."
           emptyAction={<ButtonLink href="/discover">Discover decks</ButtonLink>}
@@ -71,6 +79,7 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
           context="created"
           heading="Your decks"
           decks={createdDecks}
+          deckStats={deckStats}
           emptyTitle="No decks of your own yet"
           emptyDescription="Create or import a deck, or copy a public deck to edit independently."
           emptyAction={

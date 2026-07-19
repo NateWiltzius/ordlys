@@ -1,13 +1,12 @@
 import SkeletonBlock from '@/components/shared/skeleton/skeleton-block';
 import SkeletonLine from '@/components/shared/skeleton/skeleton-line';
-import { Card } from '@heroui/react';
 
 const barHeights = ['18%', '42%', '24%', '68%', '34%', '12%', '56%', '28%'];
 
 export default function ReviewForecastSkeleton() {
   return (
-    <Card>
-      <Card.Header className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start">
+    <section className="border-t border-default-200 pt-6">
+      <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start">
         <div className="space-y-2">
           <SkeletonLine className="h-5 w-36" />
           <SkeletonLine className="h-4 w-64 max-w-full" />
@@ -17,8 +16,8 @@ export default function ReviewForecastSkeleton() {
           <SkeletonLine className="h-3 w-14" />
           <SkeletonLine className="mt-2 h-6 w-8 sm:ml-auto" />
         </div>
-      </Card.Header>
-      <Card.Content>
+      </div>
+      <div className="mt-5">
         <div className="grid h-40 w-full grid-cols-24 items-end gap-px border-b border-default-200 sm:h-48 sm:gap-1">
           {Array.from({ length: 24 }, (_, index) => (
             <div key={index} className="flex min-w-0 flex-col items-center justify-end gap-2">
@@ -28,7 +27,11 @@ export default function ReviewForecastSkeleton() {
                   style={{ height: barHeights[index % barHeights.length] }}
                 />
               </div>
-              <SkeletonLine className="h-3 w-3 rounded-sm sm:w-4" />
+              <SkeletonLine
+                className={`h-3 w-3 rounded-sm sm:w-4 ${
+                  index % 3 === 0 ? '' : 'invisible sm:visible'
+                }`}
+              />
             </div>
           ))}
         </div>
@@ -36,7 +39,7 @@ export default function ReviewForecastSkeleton() {
           <SkeletonLine className="h-3 w-16" />
           <SkeletonLine className="h-3 w-20" />
         </div>
-      </Card.Content>
-    </Card>
+      </div>
+    </section>
   );
 }

@@ -32,7 +32,7 @@ export default function VocabTable({
   const desktopColumns = getVocabGridColumns(showSrsLevels, Boolean(renderActions));
 
   return (
-    <div className="overflow-hidden rounded-xl border border-default-200">
+    <div className="overflow-hidden rounded-lg border border-default-200">
       <div
         className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-default-500 sm:grid sm:items-center ${desktopColumns}`}
       >

@@ -1,4 +1,4 @@
-import { Card } from '@heroui/react';
+import PageSection from '@/components/shared/layout/page-section';
 import { SRS_CATEGORIES, type SrsCategoryCounts } from '@/lib/srs/srs-config';
 import { SRS_CATEGORY_STYLES } from '@/lib/srs/srs-styles';
 
@@ -17,18 +17,17 @@ export default function DashboardSrsCard({ counts }: Props) {
   const total = SRS_CATEGORIES.reduce((sum, category) => sum + counts[category.key], 0);
 
   return (
-    <Card>
-      <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="card__title">Memory strength</h2>
-          <Card.Description>How well you remember words across your active decks.</Card.Description>
-        </div>
-        <p className="text-sm text-default-500">
+    <PageSection
+      title="Memory strength"
+      description="How well you remember words across your active decks."
+      action={
+        <p className="pt-1 text-sm text-default-500">
           {total} {total === 1 ? 'word' : 'words'}
         </p>
-      </Card.Header>
-
-      <Card.Content className="space-y-4">
+      }
+      contentClassName="space-y-4"
+    >
+      <>
         {total > 0 ? (
           <div
             className="flex h-3 w-full overflow-hidden rounded-full bg-default-100"
@@ -50,11 +49,14 @@ export default function DashboardSrsCard({ counts }: Props) {
           </div>
         ) : null}
 
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl className="grid grid-cols-2 border-y border-default-200 sm:grid-cols-4">
           {SRS_CATEGORIES.map(category => {
             const styles = SRS_CATEGORY_STYLES[category.key];
             return (
-              <div key={category.key} className={`rounded-xl border p-3 ${styles.surface}`}>
+              <div
+                key={category.key}
+                className="border-default-200 px-3 py-4 odd:border-r sm:border-r sm:last:border-r-0"
+              >
                 <dt className="flex items-center gap-2 text-sm font-medium">
                   <span className={`size-2.5 rounded-full ${styles.dot}`} aria-hidden="true" />
                   {category.label}
@@ -69,7 +71,7 @@ export default function DashboardSrsCard({ counts }: Props) {
             );
           })}
         </dl>
-      </Card.Content>
-    </Card>
+      </>
+    </PageSection>
   );
 }

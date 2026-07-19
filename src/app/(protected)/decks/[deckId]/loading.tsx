@@ -6,7 +6,7 @@ export default function DeckLoading() {
   return (
     <div className="space-y-6" role="status" aria-label="Loading deck" aria-busy="true">
       <span className="sr-only">Loading deck…</span>
-      <PageHeaderSkeleton actionCount={1} badgeCount={2} />
+      <PageHeaderSkeleton actionCount={1} />
       <StudyContentSkeleton />
       <LessonsSkeleton />
     </div>

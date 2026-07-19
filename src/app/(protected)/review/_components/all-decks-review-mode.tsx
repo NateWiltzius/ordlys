@@ -53,6 +53,7 @@ export default function AllDecksReviewMode({
           sizes={REVIEW_SESSION_SIZES}
           totalCount={availableCount}
           noun="card"
+          showFullQueue
         />
       ) : null}
       <QuizMode

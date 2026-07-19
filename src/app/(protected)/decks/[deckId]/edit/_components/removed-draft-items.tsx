@@ -3,11 +3,12 @@
 import type { RemovedDraftItem } from '@/db/queries/deck-release.queries';
 import { restoreLessonAction } from '@/server/lesson.actions';
 import { restoreVocabAction } from '@/server/vocab.actions';
-import { Button, Card } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import PageSection from '@/components/shared/layout/page-section';
 
 type Props = {
   items: RemovedDraftItem[];
@@ -38,21 +39,15 @@ export default function RemovedDraftItems({ items }: Props) {
     }
   }
   return (
-    <Card>
-      <Card.Header>
-        <div>
-          <Card.Title>Removed content</Card.Title>
-          <Card.Description>
-            Restore lessons or cards before the next publish while keeping existing learner progress
-            connected.
-          </Card.Description>
-        </div>
-      </Card.Header>
-      <Card.Content className="space-y-2">
+    <PageSection
+      title="Removed content"
+      description="Restore lessons or cards before the next publish while keeping existing learner progress connected."
+    >
+      <div className="divide-y divide-default-200 border-y border-default-200">
         {items.map(item => (
           <div
             key={`${item.kind}-${item.id}`}
-            className="flex items-center justify-between gap-3 rounded-lg bg-default-100 px-3 py-2"
+            className="flex items-center justify-between gap-3 py-3"
           >
             <span className="text-sm">
               <span className="capitalize">{item.kind}</span>: {item.label}
@@ -68,7 +63,7 @@ export default function RemovedDraftItems({ items }: Props) {
           </div>
         ))}
         {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
-      </Card.Content>
-    </Card>
+      </div>
+    </PageSection>
   );
 }

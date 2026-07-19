@@ -1,10 +1,9 @@
-import { MapIcon, TrophyIcon } from '@heroicons/react/24/outline';
-import { Card, ProgressBar } from '@heroui/react';
+import { TrophyIcon } from '@heroicons/react/24/outline';
+import { ProgressBar } from '@heroui/react';
+import LessonJourney from '@/app/(protected)/decks/[deckId]/_components/lesson-journey';
 import { summarizeDeckProgress } from '@/lib/deck-progress';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { LessonProgress } from '@/types/review.types';
-import SemanticCardTitle from '@/components/shared/semantic-card-title';
-import LessonJourney from '@/app/(protected)/decks/[deckId]/_components/lesson-journey';
 
 type Props = {
   lessonProgress: LessonProgress[];
@@ -20,45 +19,35 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
     : 0;
 
   return (
-    <Card className="overflow-hidden">
-      <Card.Header className="flex-row items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <span
-            className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
-              progress.lessonMilestonesComplete
-                ? 'bg-success/10 text-success'
-                : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-            }`}
-          >
+    <section className="border-t border-default-200 pt-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
             {progress.lessonMilestonesComplete ? (
-              <TrophyIcon className="size-6" aria-hidden="true" />
-            ) : (
-              <MapIcon className="size-6" aria-hidden="true" />
-            )}
-          </span>
-          <div className="min-w-0">
-            <SemanticCardTitle level={2}>Deck journey</SemanticCardTitle>
-            <Card.Description>
-              {progress.lessonMilestonesComplete
-                ? 'Every lesson milestone is complete.'
-                : progress.allCardsIntroduced
-                  ? 'You have started every word. Keep strengthening your recall.'
-                  : currentLesson
-                    ? `Currently working through ${currentLesson.lessonTitle}.`
-                    : 'Start learning to begin your journey.'}
-            </Card.Description>
-          </div>
+              <TrophyIcon className="size-5 text-success" aria-hidden="true" />
+            ) : null}
+            Deck journey
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-default-500">
+            {progress.lessonMilestonesComplete
+              ? 'Every lesson milestone is complete.'
+              : progress.allCardsIntroduced
+                ? 'You have started every word. Keep strengthening your recall.'
+                : currentLesson
+                  ? `Currently working through ${currentLesson.lessonTitle}.`
+                  : 'Start learning to begin your journey.'}
+          </p>
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="text-2xl font-semibold tracking-tight text-blue-600 dark:text-blue-400">
+          <p className={`text-2xl font-semibold ${STUDY_TONE_STYLES.learning.text}`}>
             {progress.percentage}%
           </p>
           <p className="text-xs font-medium text-default-500">started</p>
         </div>
-      </Card.Header>
+      </div>
 
-      <Card.Content className="space-y-5">
+      <div className="mt-5 space-y-5">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium text-default-700">
@@ -87,12 +76,12 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
         />
 
         {currentLesson && !progress.lessonMilestonesComplete ? (
-          <div className="space-y-2 rounded-xl border border-default-200 bg-default-50/70 p-4">
+          <div className="space-y-3 border-y border-default-200 py-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="font-medium text-default-800">{currentLesson.lessonTitle}</p>
                 <p className="text-sm text-default-500">
-                  Lesson {progress.currentLessonNumber} of {progress.lessons.length} ·{' '}
+                  Lesson {progress.currentLessonNumber} of {progress.lessons.length} &middot;{' '}
                   {currentLesson.introducedWords} of {currentLesson.totalWords} words started
                 </p>
               </div>
@@ -125,7 +114,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
             </p>
           </div>
         ) : null}
-      </Card.Content>
-    </Card>
+      </div>
+    </section>
   );
 }

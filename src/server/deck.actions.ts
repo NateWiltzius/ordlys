@@ -96,7 +96,24 @@ export async function getLibraryPageDataAction() {
     getUserFollowedDecks(userId),
     getRestorableDecksByOwnerId(userId),
   ]);
-  return { ownedDecks, learningDecks, restorableDecks };
+  const activeDeckIds = [...new Set([...ownedDecks, ...learningDecks].map(deck => deck.id))];
+  const [deckStudyCounts, newVocabCounts] = await Promise.all([
+    getDeckCardStudyCounts(activeDeckIds, userId),
+    getNewVocabCountsForDecks(activeDeckIds, userId),
+  ]);
+  const deckStats = Object.fromEntries(
+    activeDeckIds.map(deckId => [
+      deckId,
+      {
+        totalWords: deckStudyCounts[deckId]?.totalWords ?? 0,
+        reviewsDue: deckStudyCounts[deckId]?.reviewsDue ?? 0,
+        wordsInReview: deckStudyCounts[deckId]?.wordsInReview ?? 0,
+        newWordsAvailable: newVocabCounts[deckId] ?? 0,
+      },
+    ]),
+  );
+
+  return { ownedDecks, learningDecks, restorableDecks, deckStats };
 }
 
 export async function getDiscoverPageDataAction() {

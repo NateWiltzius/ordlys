@@ -44,7 +44,7 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
     <Modal state={modalState}>
       <Modal.Trigger
         aria-label="Choose a deck to start learning"
-        className="group block h-full cursor-pointer rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        className="group block h-full cursor-pointer rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         {learningCard}
       </Modal.Trigger>
@@ -60,7 +60,7 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
               <p className="mb-3 text-sm text-default-600">
                 Choose a deck to start learning new cards.
               </p>
-              <ul className="divide-y divide-default-200 rounded-xl border border-default-200">
+              <ul className="divide-y divide-default-200 rounded-lg border border-default-200">
                 {decksWithNewWords.map(deck => {
                   const count = deckStats[deck.id]?.newWordsAvailable ?? 0;
 

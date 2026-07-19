@@ -59,6 +59,7 @@ export default function ReviewMode({
           sizes={REVIEW_SESSION_SIZES}
           totalCount={availableCount}
           noun="card"
+          showFullQueue
         />
       ) : null}
       <QuizMode

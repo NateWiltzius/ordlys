@@ -5,7 +5,8 @@ import PageHeader from '@/components/shared/layout/page-header';
 import { getLibraryPageDataAction } from '@/server/deck.actions';
 
 export default async function DecksContent() {
-  const { ownedDecks, learningDecks, restorableDecks } = await getLibraryPageDataAction();
+  const { ownedDecks, learningDecks, restorableDecks, deckStats } =
+    await getLibraryPageDataAction();
 
   return (
     <div className="space-y-6">
@@ -23,6 +24,7 @@ export default async function DecksContent() {
         ownedDecks={ownedDecks}
         followedDecks={learningDecks}
         restorableDecks={restorableDecks}
+        deckStats={deckStats}
       />
     </div>
   );

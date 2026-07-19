@@ -2,12 +2,13 @@ import PageHeader from '@/components/shared/layout/page-header';
 import type { getDeckFollowState, inspectReleaseChanges } from '@/db/queries/deck-release.queries';
 import type { DeckRelease } from '@/types/deck-release.types';
 import type { Deck } from '@/types/deck.types';
-import DeckBadge, { type DeckBadgeKind } from '@/components/shared/deck-badge';
 import DeckSafetyControls from './deck-safety-controls';
 import FollowReleaseControls from './follow-release-controls';
 import RestoreDeckButton from './restore-deck-button';
 import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
 import ButtonLink from '@/components/shared/button-link';
+import DeckMetadataLine from '@/components/shared/deck-metadata-line';
+import { formatLanguagePair } from '@/lib/languages';
 
 type Props = {
   deck: Deck;
@@ -30,18 +31,28 @@ export default function DeckHeader({
   canModerate,
   protectedFollowerCount,
 }: Props) {
-  const badges: DeckBadgeKind[] = [];
-
-  if (isOwned) badges.push(deck.sourceReleaseId ? 'copy' : 'owned');
-  if (isFollowing) badges.push('following');
-
-  if (deck.status === 'active') {
-    badges.push(deck.visibility);
-  } else if (isOwned) {
-    badges.push(deck.visibility, deck.status === 'deleted' ? 'deletion-pending' : 'archived');
-  } else {
-    badges.push(deck.status === 'deleted' ? 'source-deletion-pending' : 'source-archived');
-  }
+  const relationship = isOwned
+    ? deck.sourceReleaseId
+      ? 'Copy'
+      : 'Owned'
+    : isFollowing
+      ? 'Following'
+      : null;
+  const visibility =
+    deck.status === 'active'
+      ? `${deck.visibility[0].toUpperCase()}${deck.visibility.slice(1)}`
+      : isOwned
+        ? deck.status === 'deleted'
+          ? 'Deletion pending'
+          : 'Archived'
+        : deck.status === 'deleted'
+          ? 'Source deletion pending'
+          : 'Source archived';
+  const metadata = [
+    formatLanguagePair(deck.frontLanguage, deck.backLanguage),
+    relationship,
+    visibility,
+  ].filter((item): item is string => Boolean(item));
 
   return (
     <PageHeader
@@ -74,11 +85,7 @@ export default function DeckHeader({
         </>
       }
     >
-      <div className="flex flex-wrap gap-2">
-        {badges.map(kind => (
-          <DeckBadge key={kind} kind={kind} />
-        ))}
-      </div>
+      <DeckMetadataLine rows={[metadata]} />
 
       {isOwned && deck.status === 'deleted' && deck.retentionUntil ? (
         <p className="text-sm text-default-500">

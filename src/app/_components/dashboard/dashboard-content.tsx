@@ -1,5 +1,5 @@
 import PageHeader from '@/components/shared/layout/page-header';
-import { Card } from '@heroui/react';
+import PageSection from '@/components/shared/layout/page-section';
 import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
 import DashboardDeckRow from '@/app/_components/dashboard/dashboard-deck-row';
@@ -70,53 +70,45 @@ export default async function DashboardContent() {
         ))}
       </div>
 
-      <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} />
+      <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} surface="section" />
 
       <DashboardSrsCard counts={srsCategoryCounts} />
 
-      <Card>
-        <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="card__title">Deck shortcuts</h2>
-            <Card.Description>
-              Your most relevant decks based on reviews and new words available.
-            </Card.Description>
-          </div>
-
-          {activeDecks.length > 0 ? (
+      <PageSection
+        title="Deck shortcuts"
+        description="Your most relevant decks based on reviews and new words available."
+        action={
+          activeDecks.length > 0 ? (
             <ButtonLink href="/decks" variant="tertiary" size="sm">
               View library
             </ButtonLink>
-          ) : null}
-        </Card.Header>
-
-        <Card.Content>
-          {activeDecks.length === 0 ? (
-            <EmptyState
-              title="No active decks yet"
-              description="Discover a public deck or create your own to start learning."
-              action={<ButtonLink href="/decks">Open library</ButtonLink>}
+          ) : null
+        }
+        contentClassName={activeDecks.length > 0 ? 'divide-y divide-default-200' : undefined}
+      >
+        {activeDecks.length === 0 ? (
+          <EmptyState
+            title="No active decks yet"
+            description="Discover a public deck or create your own to start learning."
+            action={<ButtonLink href="/decks">Open library</ButtonLink>}
+          />
+        ) : (
+          deckShortcuts.map(deck => (
+            <DashboardDeckRow
+              key={deck.id}
+              deck={deck}
+              stats={
+                deckStats[deck.id] ?? {
+                  totalWords: 0,
+                  newWordsAvailable: 0,
+                  reviewsDue: 0,
+                  wordsInReview: 0,
+                }
+              }
             />
-          ) : (
-            <div className="-mx-6 divide-y divide-default-200">
-              {deckShortcuts.map(deck => (
-                <DashboardDeckRow
-                  key={deck.id}
-                  deck={deck}
-                  stats={
-                    deckStats[deck.id] ?? {
-                      totalWords: 0,
-                      newWordsAvailable: 0,
-                      reviewsDue: 0,
-                      wordsInReview: 0,
-                    }
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </Card.Content>
-      </Card>
+          ))
+        )}
+      </PageSection>
     </div>
   );
 }

@@ -35,7 +35,7 @@ export default function QuizCompletionSummary({
   const returnsToToday = completionHref === '/dashboard';
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" data-study-tone={tone}>
       <Card.Header className="flex-row items-start gap-3">
         <span
           className={`flex size-11 shrink-0 items-center justify-center rounded-lg ${STUDY_TONE_STYLES[tone].accent}`}
@@ -43,7 +43,9 @@ export default function QuizCompletionSummary({
           <CheckCircleIcon className="size-6" aria-hidden="true" />
         </span>
         <div>
-          <Card.Title render={props => <h2 {...props} />}>{content.title}</Card.Title>
+          <Card.Title className={STUDY_TONE_STYLES[tone].text} render={props => <h2 {...props} />}>
+            {content.title}
+          </Card.Title>
           <Card.Description>{content.description}</Card.Description>
         </div>
       </Card.Header>

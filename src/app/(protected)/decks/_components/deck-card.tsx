@@ -6,7 +6,7 @@ import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actio
 import { forkReleaseAction, restoreDeckAction } from '@/server/deck-release.actions';
 import { Deck } from '@/types/deck.types';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
-import { Button, Card, ListBox, Popover } from '@heroui/react';
+import { Button, Card, ListBox, Popover, ProgressBar } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { errorMessage } from '@/lib/validation/content';
@@ -18,10 +18,14 @@ import Link from 'next/link';
 import ButtonLink from '@/components/shared/button-link';
 import {
   getDeckCardActionPlan,
+  getDeckRowPrimaryAction,
   type DeckCardAction,
   type DeckCardContext,
   type DeckCardRelationship,
 } from '@/lib/deck-card-actions';
+import type { ReviewCounts } from '@/types/review.types';
+import { formatLanguagePair } from '@/lib/languages';
+import DeckMetadataLine from '@/components/shared/deck-metadata-line';
 
 type Props = {
   deck: Deck;
@@ -29,6 +33,8 @@ type Props = {
   relationship: DeckCardRelationship;
   isFollowing?: boolean;
   subscriberCount?: number;
+  layout?: 'card' | 'row';
+  stats?: Pick<ReviewCounts, 'totalWords' | 'newWordsAvailable' | 'reviewsDue' | 'wordsInReview'>;
 };
 
 export function DeckCard({
@@ -37,6 +43,8 @@ export function DeckCard({
   relationship,
   isFollowing = false,
   subscriberCount,
+  layout = 'card',
+  stats,
 }: Props) {
   const router = useRouter();
   const [following, setFollowing] = useState(isFollowing);
@@ -155,6 +163,263 @@ export function DeckCard({
   if (following) relationshipBadges.push('following');
   relationshipBadges.push(deck.visibility);
 
+  const studyStats = stats ?? {
+    totalWords: 0,
+    newWordsAvailable: 0,
+    reviewsDue: 0,
+    wordsInReview: 0,
+  };
+  const rowPrimaryAction = getDeckRowPrimaryAction(actionPlan.primary, context, studyStats);
+  const introducedCards = Math.min(studyStats.wordsInReview, studyStats.totalWords);
+  const progressPercentage =
+    studyStats.totalWords === 0 ? 0 : Math.round((introducedCards / studyStats.totalWords) * 100);
+  const languagePair = formatLanguagePair(deck.frontLanguage, deck.backLanguage);
+  const relationshipLabel = {
+    owned: 'Owned',
+    copy: 'Copy',
+    following: 'Following',
+    discover: null,
+    restorable: deck.status === 'deleted' ? 'Deletion pending' : 'Archived',
+  }[relationship];
+  const identityMetadata = [
+    languagePair,
+    relationshipLabel,
+    context === 'created'
+      ? deck.currentReleaseId
+        ? `${deck.visibility[0].toUpperCase()}${deck.visibility.slice(1)}`
+        : 'Private draft'
+      : null,
+  ].filter((item): item is string => Boolean(item));
+  const activityMetadata = [
+    studyStats.totalWords > 0
+      ? `${introducedCards} of ${studyStats.totalWords} started`
+      : deck.currentReleaseId
+        ? 'No cards'
+        : null,
+    studyStats.reviewsDue > 0
+      ? `${studyStats.reviewsDue} ${studyStats.reviewsDue === 1 ? 'review' : 'reviews'} due`
+      : null,
+    studyStats.newWordsAvailable > 0 ? `${studyStats.newWordsAvailable} new` : null,
+    context === 'created' && subscriberCount && subscriberCount > 0
+      ? `${subscriberCount} ${subscriberCount === 1 ? 'follower' : 'followers'}`
+      : null,
+  ].filter((item): item is string => Boolean(item));
+  const primaryClassName = layout === 'row' ? 'w-full sm:w-auto' : 'flex-1';
+  const primaryAction =
+    rowPrimaryAction === 'restore' ? (
+      <Button
+        size="sm"
+        className={primaryClassName}
+        isPending={pending === 'restore'}
+        onPress={() =>
+          run('restore', () => restoreDeckAction(deck.id), 'Could not restore the deck.')
+        }
+      >
+        Restore deck <span className="sr-only">{deck.title}</span>
+      </Button>
+    ) : rowPrimaryAction === 'review' ? (
+      <ButtonLink
+        href={`/decks/${deck.id}/review`}
+        size="sm"
+        className={`${primaryClassName} ${STUDY_TONE_STYLES.review.button}`}
+      >
+        {layout === 'row' && studyStats.reviewsDue > 0
+          ? `Review ${studyStats.reviewsDue}`
+          : 'Review deck'}{' '}
+        <span className="sr-only">in {deck.title}</span>
+      </ButtonLink>
+    ) : rowPrimaryAction === 'learn' ? (
+      <ButtonLink
+        href={`/decks/${deck.id}/learn`}
+        size="sm"
+        className={`${primaryClassName} ${STUDY_TONE_STYLES.learning.button}`}
+      >
+        Learn {studyStats.newWordsAvailable}
+        <span className="sr-only"> in {deck.title}</span>
+      </ButtonLink>
+    ) : rowPrimaryAction === 'open' ? (
+      <ButtonLink
+        href={`/decks/${deck.id}`}
+        size="sm"
+        variant="secondary"
+        className={primaryClassName}
+      >
+        Open deck <span className="sr-only">{deck.title}</span>
+      </ButtonLink>
+    ) : rowPrimaryAction === 'manage' ? (
+      <ButtonLink
+        href={`/decks/${deck.id}/edit`}
+        size="sm"
+        variant="secondary"
+        className={primaryClassName}
+      >
+        Manage deck <span className="sr-only">{deck.title}</span>
+      </ButtonLink>
+    ) : (
+      <Button
+        size="sm"
+        className={`${primaryClassName} ${STUDY_TONE_STYLES.learning.button}`}
+        isPending={pending === 'follow'}
+        onPress={handleFollow}
+      >
+        Follow deck <span className="sr-only">{deck.title}</span>
+      </Button>
+    );
+  const menuAction =
+    actionPlan.menu.length > 0 ? (
+      <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <Button
+          variant="tertiary"
+          size="sm"
+          isIconOnly
+          isDisabled={pending !== null}
+          aria-label={`More actions for ${deck.title}`}
+        >
+          <EllipsisVerticalIcon className="h-5 w-5" />
+        </Button>
+        <Popover.Content placement="bottom end">
+          <Popover.Dialog className="w-44 p-1">
+            <ListBox
+              aria-label={`Actions for ${deck.title}`}
+              selectionMode="none"
+              onAction={handleMenuAction}
+            >
+              {actionPlan.menu.map(action => (
+                <ListBox.Item
+                  key={action}
+                  id={action}
+                  variant={action === 'delete' ? 'danger' : undefined}
+                  className={action === 'delete' ? 'text-danger' : undefined}
+                >
+                  {
+                    {
+                      copy: 'Copy & edit',
+                      delete: 'Delete deck',
+                      follow: 'Follow deck',
+                      manage: 'Manage deck',
+                      review: 'Review deck',
+                      restore: 'Restore deck',
+                      unfollow: 'Unfollow deck',
+                    }[action]
+                  }
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Popover.Dialog>
+        </Popover.Content>
+      </Popover>
+    ) : null;
+
+  const confirmationDialog = (
+    <ConfirmationDialog
+      isOpen={confirmation !== null}
+      onOpenChange={isOpen => {
+        if (!isOpen && !pending) setConfirmation(null);
+      }}
+      title={
+        confirmation === 'copy'
+          ? `Copy “${deck.title}”?`
+          : confirmation === 'unfollow'
+            ? `Unfollow “${deck.title}”?`
+            : `Delete “${deck.title}”?`
+      }
+      description={
+        confirmation === 'copy'
+          ? 'The published release becomes an independent private deck. Source learning progress is not copied.'
+          : confirmation === 'unfollow'
+            ? 'Updates will stop, but your learning progress will be retained.'
+            : 'The deck will be removed from your active decks. If it has no followers, permanent deletion is available immediately; otherwise it remains recoverable for 30 days.'
+      }
+      confirmLabel={
+        confirmation === 'copy'
+          ? 'Copy deck'
+          : confirmation === 'unfollow'
+            ? 'Unfollow deck'
+            : 'Delete deck'
+      }
+      tone={
+        confirmation === 'copy' ? 'neutral' : confirmation === 'unfollow' ? 'warning' : 'danger'
+      }
+      isPending={pending !== null}
+      onConfirm={async () => {
+        const action = confirmation;
+        if (action === 'copy') await handleCopy();
+        if (action === 'delete') await handleDelete();
+        if (action === 'unfollow') await handleUnfollow();
+        setConfirmation(null);
+      }}
+    />
+  );
+
+  if (layout === 'row') {
+    return (
+      <article className="py-5">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h3 className="min-w-0 text-lg font-semibold">
+                <Link
+                  href={`/decks/${deck.id}`}
+                  className="break-words rounded-sm hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  {deck.title}
+                </Link>
+              </h3>
+              {relationship === 'restorable' ? (
+                <DeckBadge kind={deck.status === 'deleted' ? 'deletion-pending' : 'archived'} />
+              ) : null}
+            </div>
+
+            <DeckMetadataLine rows={[identityMetadata, activityMetadata]} className="mt-1" />
+
+            {deck.description ? (
+              <p className="mt-2 line-clamp-2 text-sm text-default-500 sm:line-clamp-1">
+                {deck.description}
+              </p>
+            ) : null}
+
+            {studyStats.totalWords > 0 ? (
+              <div className="mt-3 flex max-w-xl items-center gap-3">
+                <ProgressBar
+                  aria-label={`${deck.title}: ${introducedCards} of ${studyStats.totalWords} cards started`}
+                  value={progressPercentage}
+                  size="sm"
+                  className="min-w-0 flex-1"
+                >
+                  <ProgressBar.Track>
+                    <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
+                  </ProgressBar.Track>
+                </ProgressBar>
+                <span className="shrink-0 text-xs tabular-nums text-default-500">
+                  {progressPercentage}%
+                </span>
+              </div>
+            ) : null}
+
+            {mutationError ? (
+              <StatusAlert status="danger" className="mt-3">
+                {mutationError}
+              </StatusAlert>
+            ) : null}
+            {relationship === 'restorable' && deck.status === 'deleted' ? (
+              <p className="mt-2 text-xs text-default-500">
+                {deck.retentionUntil && deck.retentionUntil.getTime() <= Date.now()
+                  ? 'Ready for permanent deletion.'
+                  : `Recoverable until ${deck.retentionUntil?.toLocaleDateString() ?? 'an unknown date'}.`}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+            {primaryAction}
+            {menuAction}
+          </div>
+        </div>
+        {confirmationDialog}
+      </article>
+    );
+  }
+
   return (
     <Card className="flex h-full w-full flex-col">
       <Card.Header className="flex items-start justify-between gap-3 pb-2">
@@ -200,124 +465,12 @@ export function DeckCard({
             </p>
           ) : null}
           <div className="flex items-start gap-2">
-            {actionPlan.primary === 'restore' ? (
-              <Button
-                size="sm"
-                className="flex-1"
-                isPending={pending === 'restore'}
-                onPress={() =>
-                  run('restore', () => restoreDeckAction(deck.id), 'Could not restore the deck.')
-                }
-              >
-                Restore deck <span className="sr-only">{deck.title}</span>
-              </Button>
-            ) : actionPlan.primary === 'review' ? (
-              <ButtonLink
-                href={`/decks/${deck.id}/review`}
-                size="sm"
-                className={`flex-1 ${STUDY_TONE_STYLES.review.button}`}
-              >
-                Review deck <span className="sr-only">{deck.title}</span>
-              </ButtonLink>
-            ) : actionPlan.primary === 'manage' ? (
-              <ButtonLink href={`/decks/${deck.id}/edit`} size="sm" className="flex-1">
-                Manage deck <span className="sr-only">{deck.title}</span>
-              </ButtonLink>
-            ) : (
-              <Button
-                size="sm"
-                className={`flex-1 ${STUDY_TONE_STYLES.learning.button}`}
-                isPending={pending === 'follow'}
-                onPress={handleFollow}
-              >
-                Follow deck <span className="sr-only">{deck.title}</span>
-              </Button>
-            )}
-
-            {actionPlan.menu.length > 0 ? (
-              <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  isIconOnly
-                  isDisabled={pending !== null}
-                  aria-label={`More actions for ${deck.title}`}
-                >
-                  <EllipsisVerticalIcon className="h-5 w-5" />
-                </Button>
-                <Popover.Content placement="bottom end">
-                  <Popover.Dialog className="w-44 p-1">
-                    <ListBox
-                      aria-label={`Actions for ${deck.title}`}
-                      selectionMode="none"
-                      onAction={handleMenuAction}
-                    >
-                      {actionPlan.menu.map(action => (
-                        <ListBox.Item
-                          key={action}
-                          id={action}
-                          variant={action === 'delete' ? 'danger' : undefined}
-                          className={action === 'delete' ? 'text-danger' : undefined}
-                        >
-                          {
-                            {
-                              copy: 'Copy & edit',
-                              delete: 'Delete deck',
-                              follow: 'Follow deck',
-                              manage: 'Manage deck',
-                              review: 'Review deck',
-                              restore: 'Restore deck',
-                              unfollow: 'Unfollow deck',
-                            }[action]
-                          }
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Popover.Dialog>
-                </Popover.Content>
-              </Popover>
-            ) : null}
+            {primaryAction}
+            {menuAction}
           </div>
         </div>
       </Card.Footer>
-      <ConfirmationDialog
-        isOpen={confirmation !== null}
-        onOpenChange={isOpen => {
-          if (!isOpen && !pending) setConfirmation(null);
-        }}
-        title={
-          confirmation === 'copy'
-            ? `Copy “${deck.title}”?`
-            : confirmation === 'unfollow'
-              ? `Unfollow “${deck.title}”?`
-              : `Delete “${deck.title}”?`
-        }
-        description={
-          confirmation === 'copy'
-            ? 'The published release becomes an independent private deck. Source learning progress is not copied.'
-            : confirmation === 'unfollow'
-              ? 'Updates will stop, but your learning progress will be retained.'
-              : 'The deck will be removed from your active decks. If it has no followers, permanent deletion is available immediately; otherwise it remains recoverable for 30 days.'
-        }
-        confirmLabel={
-          confirmation === 'copy'
-            ? 'Copy deck'
-            : confirmation === 'unfollow'
-              ? 'Unfollow deck'
-              : 'Delete deck'
-        }
-        tone={
-          confirmation === 'copy' ? 'neutral' : confirmation === 'unfollow' ? 'warning' : 'danger'
-        }
-        isPending={pending !== null}
-        onConfirm={async () => {
-          const action = confirmation;
-          if (action === 'copy') await handleCopy();
-          if (action === 'delete') await handleDelete();
-          if (action === 'unfollow') await handleUnfollow();
-          setConfirmation(null);
-        }}
-      />
+      {confirmationDialog}
     </Card>
   );
 }

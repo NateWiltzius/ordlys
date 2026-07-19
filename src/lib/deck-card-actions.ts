@@ -10,6 +10,8 @@ export type DeckCardAction =
   | 'restore'
   | 'unfollow';
 
+export type DeckRowPrimaryAction = DeckCardAction | 'learn' | 'open';
+
 type DeckCardActionInput = {
   context: DeckCardContext;
   relationship: DeckCardRelationship;
@@ -53,4 +55,15 @@ export function getDeckCardActionPlan({
   if (isOwned) menu.push('delete');
 
   return { primary, menu };
+}
+
+export function getDeckRowPrimaryAction(
+  primary: DeckCardAction,
+  context: DeckCardContext,
+  stats: { reviewsDue: number; newWordsAvailable: number },
+): DeckRowPrimaryAction {
+  if (context !== 'learning' || primary !== 'review') return primary;
+  if (stats.reviewsDue > 0) return 'review';
+  if (stats.newWordsAvailable > 0) return 'learn';
+  return 'open';
 }

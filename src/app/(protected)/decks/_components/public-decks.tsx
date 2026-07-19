@@ -32,6 +32,7 @@ export default function PublicDecks({ decks, libraryDeckIds }: Props) {
 
     return (
       <EmptyState
+        variant="flat"
         title={
           everyPublicDeckIsInLibrary
             ? 'You have added every public deck'

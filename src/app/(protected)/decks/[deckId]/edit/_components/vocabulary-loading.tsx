@@ -5,7 +5,7 @@ export default function VocabularyLoading() {
   const desktopColumns = getVocabGridColumns(false, true);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-default-200" aria-hidden="true">
+    <div className="overflow-hidden rounded-lg border border-default-200" aria-hidden="true">
       <div
         className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 sm:grid sm:items-center ${desktopColumns}`}
       >

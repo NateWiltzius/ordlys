@@ -1,25 +1,31 @@
 import SkeletonBlock from '@/components/shared/skeleton/skeleton-block';
 import SkeletonLine from '@/components/shared/skeleton/skeleton-line';
-import { Card } from '@heroui/react';
 
 export default function SrsDistributionSkeleton() {
   return (
-    <Card>
-      <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+    <section className="border-t border-default-200 pt-6">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <SkeletonLine className="h-5 w-36" />
           <SkeletonLine className="h-4 w-72 max-w-full" />
         </div>
         <SkeletonLine className="h-4 w-16" />
-      </Card.Header>
-      <Card.Content className="space-y-4">
+      </div>
+      <div className="mt-4 space-y-4">
         <SkeletonBlock className="h-3 w-full rounded-full" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 border-y border-default-200 sm:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
-            <SkeletonBlock key={index} className="h-24 rounded-xl" />
+            <div
+              key={index}
+              className="border-default-200 px-3 py-4 odd:border-r sm:border-r sm:last:border-r-0"
+            >
+              <SkeletonLine className="h-4 w-20" />
+              <SkeletonLine className="mt-3 h-7 w-8" />
+              <SkeletonLine className="mt-2 h-3 w-24 max-w-full" />
+            </div>
           ))}
         </div>
-      </Card.Content>
-    </Card>
+      </div>
+    </section>
   );
 }

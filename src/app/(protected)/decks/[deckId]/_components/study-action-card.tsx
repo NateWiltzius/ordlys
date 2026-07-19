@@ -70,7 +70,7 @@ export default function StudyActionCard({
     >
       <Card.Header className="flex-row items-start gap-3">
         <span
-          className={`flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm ${
+          className={`flex size-11 shrink-0 items-center justify-center rounded-lg ${
             isDisabled ? 'bg-default-100 text-default-400' : toneStyles.accent
           }`}
         >
@@ -120,7 +120,7 @@ export default function StudyActionCard({
   return href ? (
     <Link
       href={href}
-      className={`group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${cardStyles.focus}`}
+      className={`group block h-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${cardStyles.focus}`}
     >
       {card}
     </Link>

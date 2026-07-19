@@ -3,8 +3,9 @@
 import LessonCard from '@/app/(protected)/decks/[deckId]/edit/_components/lesson-card';
 import CreateLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/create-lesson-modal';
 import PageHeader from '@/components/shared/layout/page-header';
+import PageSection from '@/components/shared/layout/page-section';
 import { EditLessonSummary } from '@/types/lesson.types';
-import { Accordion, Card, Tabs } from '@heroui/react';
+import { Accordion, Tabs } from '@heroui/react';
 import EmptyState from '@/components/shared/empty-state';
 import { moveLessonAction } from '@/server/lesson.actions';
 import { moveItem } from '@/lib/order/move-item';
@@ -127,7 +128,7 @@ export default function EditPage({
       />
 
       <Tabs className="w-full" selectedKey={selectedTab} onSelectionChange={handleTabChange}>
-        <Tabs.ListContainer className="w-full">
+        <Tabs.ListContainer className="w-full sm:max-w-md">
           <Tabs.List aria-label="Deck management sections" className="grid w-full grid-cols-2">
             <Tabs.Tab id="content" className="w-full justify-center">
               Content
@@ -143,13 +144,10 @@ export default function EditPage({
         <Tabs.Panel className="space-y-6 pt-4" id="content">
           {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
 
-          <Card>
-            <Card.Header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <Card.Title render={props => <h2 {...props} />}>Lessons</Card.Title>
-                <Card.Description>Group vocabulary into focused study sections.</Card.Description>
-              </div>
-
+          <PageSection
+            title="Lessons"
+            description="Group vocabulary into focused study sections."
+            action={
               <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                 <p className="text-sm text-default-500">
                   {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
@@ -157,37 +155,35 @@ export default function EditPage({
                 </p>
                 <CreateLessonModal deckId={parsedDeckId} />
               </div>
-            </Card.Header>
-
-            <Card.Content>
-              {orderedLessons.length === 0 ? (
-                <EmptyState
-                  title="No lessons yet"
-                  description="Create your first lesson to start adding vocabulary."
-                  action={<CreateLessonModal deckId={parsedDeckId} />}
-                />
-              ) : (
-                <Accordion
-                  expandedKeys={expandedLessonKeys}
-                  onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}
-                >
-                  {orderedLessons.map((lesson, index) => (
-                    <LessonCard
-                      key={lesson.id}
-                      deckId={parsedDeckId}
-                      lesson={lesson}
-                      canMoveUp={index > 0}
-                      canMoveDown={index < orderedLessons.length - 1}
-                      isLessonOrderPending={movingLessonId !== null}
-                      onMoveLesson={handleMoveLesson}
-                      isExpanded={expandedLessonKeys.has(String(lesson.id))}
-                      onCardCountChange={handleLessonCardCountChange}
-                    />
-                  ))}
-                </Accordion>
-              )}
-            </Card.Content>
-          </Card>
+            }
+          >
+            {orderedLessons.length === 0 ? (
+              <EmptyState
+                title="No lessons yet"
+                description="Create your first lesson to start adding vocabulary."
+                action={<CreateLessonModal deckId={parsedDeckId} />}
+              />
+            ) : (
+              <Accordion
+                expandedKeys={expandedLessonKeys}
+                onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}
+              >
+                {orderedLessons.map((lesson, index) => (
+                  <LessonCard
+                    key={lesson.id}
+                    deckId={parsedDeckId}
+                    lesson={lesson}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < orderedLessons.length - 1}
+                    isLessonOrderPending={movingLessonId !== null}
+                    onMoveLesson={handleMoveLesson}
+                    isExpanded={expandedLessonKeys.has(String(lesson.id))}
+                    onCardCountChange={handleLessonCardCountChange}
+                  />
+                ))}
+              </Accordion>
+            )}
+          </PageSection>
 
           <RemovedDraftItems items={removedDraftItems} />
         </Tabs.Panel>

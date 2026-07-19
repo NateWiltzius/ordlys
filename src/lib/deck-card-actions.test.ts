@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDeckCardActionPlan } from './deck-card-actions';
+import { getDeckCardActionPlan, getDeckRowPrimaryAction } from './deck-card-actions';
 
 describe('getDeckCardActionPlan', () => {
   it('makes review primary for a followed deck', () => {
@@ -120,5 +120,37 @@ describe('getDeckCardActionPlan', () => {
       primary: 'restore',
       menu: [],
     });
+  });
+});
+
+describe('getDeckRowPrimaryAction', () => {
+  it('prioritizes reviews, then learning, for learning rows', () => {
+    expect(
+      getDeckRowPrimaryAction('review', 'learning', {
+        reviewsDue: 3,
+        newWordsAvailable: 5,
+      }),
+    ).toBe('review');
+    expect(
+      getDeckRowPrimaryAction('review', 'learning', {
+        reviewsDue: 0,
+        newWordsAvailable: 5,
+      }),
+    ).toBe('learn');
+    expect(
+      getDeckRowPrimaryAction('review', 'learning', {
+        reviewsDue: 0,
+        newWordsAvailable: 0,
+      }),
+    ).toBe('open');
+  });
+
+  it('preserves the action policy outside active learning rows', () => {
+    expect(
+      getDeckRowPrimaryAction('manage', 'created', {
+        reviewsDue: 4,
+        newWordsAvailable: 4,
+      }),
+    ).toBe('manage');
   });
 });

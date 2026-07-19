@@ -13,6 +13,7 @@ type Props = {
   description?: string;
   nextReview?: NextReviewBatch | null;
   collapsible?: boolean;
+  surface?: 'card' | 'section';
 };
 
 export default function ReviewForecastCard({
@@ -21,6 +22,7 @@ export default function ReviewForecastCard({
   description = 'Reviews scheduled over the next 24 hours.',
   nextReview,
   collapsible = false,
+  surface = 'card',
 }: Props) {
   const [hasMounted, setHasMounted] = useState(false);
   const maxCount = Math.max(...forecast.hours.map(item => item.count), 1);
@@ -33,7 +35,7 @@ export default function ReviewForecastCard({
     <>
       <div className="w-full min-w-0">
         <div className="grid h-40 w-full grid-cols-24 gap-px border-b border-default-200 sm:h-48 sm:gap-1">
-          {forecast.hours.map(item => {
+          {forecast.hours.map((item, index) => {
             const date = new Date(item.hour);
             const hourLabel = hasMounted ? String(date.getHours()).padStart(2, '0') : '';
             const fullLabel = hasMounted
@@ -71,7 +73,11 @@ export default function ReviewForecastCard({
                     }`}
                   />
                 </div>
-                <span className="h-4 whitespace-nowrap font-mono text-[7px] tabular-nums text-default-400 sm:text-[10px]">
+                <span
+                  className={`h-4 whitespace-nowrap font-mono text-[10px] tabular-nums text-default-400 ${
+                    index % 3 === 0 ? '' : 'invisible sm:visible'
+                  }`}
+                >
                   {hourLabel}
                 </span>
               </div>
@@ -126,6 +132,27 @@ export default function ReviewForecastCard({
         </summary>
         <div className="pb-5 pt-1">{forecastChart}</div>
       </details>
+    );
+  }
+
+  if (surface === 'section') {
+    return (
+      <section className="border-t border-default-200 pt-6">
+        <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start">
+          <div>
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <p className="mt-1 text-sm leading-6 text-default-500">{description}</p>
+            {nextReview !== undefined && forecast.dueNow === 0 ? (
+              <NextReviewText
+                nextReview={nextReview}
+                className="mt-1 block text-sm text-default-500"
+              />
+            ) : null}
+          </div>
+          {dueNow}
+        </div>
+        <div className="mt-5">{forecastChart}</div>
+      </section>
     );
   }
 

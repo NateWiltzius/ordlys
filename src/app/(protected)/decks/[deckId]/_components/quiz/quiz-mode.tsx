@@ -21,7 +21,7 @@ import {
   SaveQuizAttemptInput,
   StudyMode,
 } from '@/types/quiz.types';
-import { Button, Card, ProgressBar } from '@heroui/react';
+import { Button, ProgressBar } from '@heroui/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StudyTone } from '@/lib/study-colors';
 import { HomeIcon } from '@heroicons/react/24/outline';
@@ -332,13 +332,11 @@ export default function QuizMode({
     return (
       <>
         {exitQuizButton}
-        <div className="w-full">
-          <Card>
-            <Card.Header>
-              <Card.Title render={props => <h2 {...props} />}>Preparing quiz</Card.Title>
-              <Card.Description>Building your study queue.</Card.Description>
-            </Card.Header>
-            <Card.Content>
+        <div className="w-full" data-study-tone={tone}>
+          <section className="border-y border-default-200 py-6">
+            <h2 className="text-lg font-semibold">Preparing quiz</h2>
+            <p className="mt-1 text-sm text-default-500">Building your study queue.</p>
+            <div className="mt-4">
               {hasMounted ? (
                 <ProgressBar isIndeterminate aria-label="Preparing quiz">
                   <ProgressBar.Track>
@@ -348,8 +346,8 @@ export default function QuizMode({
               ) : (
                 <div className="h-2 w-full animate-pulse rounded-full bg-default-200" />
               )}
-            </Card.Content>
-          </Card>
+            </div>
+          </section>
         </div>
       </>
     );
@@ -358,7 +356,7 @@ export default function QuizMode({
   if (!currentQuizItem) {
     if (pendingSaveCount === 0 && !saveError) {
       return (
-        <div className="w-full">
+        <div className="w-full" data-study-tone={tone}>
           <QuizCompletionSummary
             progressStats={progressStats}
             attemptStats={attemptStats}
@@ -375,19 +373,17 @@ export default function QuizMode({
     return (
       <>
         {exitQuizButton}
-        <div className="w-full">
-          <Card>
-            <Card.Header>
-              <Card.Title render={props => <h2 {...props} />}>
-                {saveError ? 'Progress needs attention' : 'Saving progress'}
-              </Card.Title>
-              <Card.Description>
-                {saveError
-                  ? 'Your unsaved answers are stored in this tab so you can retry now or leave safely.'
-                  : 'Finishing your session.'}
-              </Card.Description>
-            </Card.Header>
-            <Card.Content className="space-y-4">
+        <div className="w-full" data-study-tone={tone}>
+          <section className="border-y border-default-200 py-6">
+            <h2 className="text-lg font-semibold">
+              {saveError ? 'Progress needs attention' : 'Saving progress'}
+            </h2>
+            <p className="mt-1 text-sm text-default-500">
+              {saveError
+                ? 'Your unsaved answers are stored in this tab so you can retry now or leave safely.'
+                : 'Finishing your session.'}
+            </p>
+            <div className="mt-4 space-y-4">
               {saveError ? (
                 <StatusAlert status="danger">{saveError}</StatusAlert>
               ) : (
@@ -397,18 +393,18 @@ export default function QuizMode({
                   </ProgressBar.Track>
                 </ProgressBar>
               )}
-            </Card.Content>
+            </div>
             {saveError ? (
-              <Card.Footer className="flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" onPress={retryFailedSaves}>
                   Retry saving
                 </Button>
                 <Button variant="tertiary" onPress={exitQuiz}>
                   Leave for now
                 </Button>
-              </Card.Footer>
+              </div>
             ) : null}
-          </Card>
+          </section>
         </div>
       </>
     );
@@ -432,7 +428,7 @@ export default function QuizMode({
   return (
     <>
       {exitQuizButton}
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-4" data-study-tone={tone}>
         <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
 
         {saveError ? (

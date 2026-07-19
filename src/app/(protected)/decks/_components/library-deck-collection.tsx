@@ -9,12 +9,14 @@ import type { DeckLibraryItem } from '@/lib/deck-library';
 import type { DeckCardContext } from '@/lib/deck-card-actions';
 import { Button } from '@heroui/react';
 import { type ReactNode, useMemo, useState } from 'react';
+import type { ReviewCounts } from '@/types/review.types';
 
 type Props = {
   idPrefix: string;
   context: Extract<DeckCardContext, 'learning' | 'created'>;
   heading: string;
   decks: DeckLibraryItem<LibraryDeck>[];
+  deckStats: Record<number, ReviewCounts>;
   emptyTitle: string;
   emptyDescription: string;
   emptyAction: ReactNode;
@@ -25,6 +27,7 @@ export default function LibraryDeckCollection({
   context,
   heading,
   decks,
+  deckStats,
   emptyTitle,
   emptyDescription,
   emptyAction,
@@ -43,7 +46,7 @@ export default function LibraryDeckCollection({
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       <h2 className="sr-only">{heading}</h2>
       <DeckDiscoveryControls
         idPrefix={idPrefix}
@@ -53,10 +56,11 @@ export default function LibraryDeckCollection({
         totalCount={decks.length}
         onQueryChange={setQuery}
         onSortChange={setSort}
+        compact
       />
 
       {visibleDecks.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="divide-y divide-default-200 border-b border-default-200">
           {visibleDecks.map(deck => (
             <DeckCard
               key={deck.id}
@@ -64,6 +68,9 @@ export default function LibraryDeckCollection({
               context={context}
               relationship={deck.relationship}
               isFollowing={deck.isFollowing}
+              subscriberCount={deck.subscriberCount}
+              layout="row"
+              stats={deckStats[deck.id]}
             />
           ))}
         </div>
