@@ -18,8 +18,6 @@ type Props = {
   keyboardShortcutEnabled?: boolean;
 };
 
-const KEYBOARD_SHORTCUT_DELAY = 250;
-
 export default function QuizFeedbackPanel({
   feedback,
   wordCompletion,
@@ -48,10 +46,12 @@ export default function QuizFeedbackPanel({
   useEffect(() => {
     if (!keyboardShortcutEnabled) return;
 
+    // React can mount this listener before the submitting Enter event has finished
+    // bubbling. Arm it after that event completes so only a new keypress continues.
     let shortcutReady = false;
-    const shortcutTimer = window.setTimeout(() => {
+    queueMicrotask(() => {
       shortcutReady = true;
-    }, KEYBOARD_SHORTCUT_DELAY);
+    });
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target;
@@ -78,7 +78,6 @@ export default function QuizFeedbackPanel({
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.clearTimeout(shortcutTimer);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [keyboardShortcutEnabled]);
