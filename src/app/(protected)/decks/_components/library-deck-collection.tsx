@@ -6,11 +6,13 @@ import EmptyState from '@/components/shared/empty-state';
 import type { LibraryDeck } from '@/db/queries/deck.queries';
 import { filterAndSortDecks, type DeckDiscoverySort } from '@/lib/deck-discovery';
 import type { DeckLibraryItem } from '@/lib/deck-library';
+import type { DeckCardContext } from '@/lib/deck-card-actions';
 import { Button } from '@heroui/react';
 import { type ReactNode, useMemo, useState } from 'react';
 
 type Props = {
   idPrefix: string;
+  context: Extract<DeckCardContext, 'learning' | 'created'>;
   heading: string;
   decks: DeckLibraryItem<LibraryDeck>[];
   emptyTitle: string;
@@ -20,6 +22,7 @@ type Props = {
 
 export default function LibraryDeckCollection({
   idPrefix,
+  context,
   heading,
   decks,
   emptyTitle,
@@ -58,6 +61,7 @@ export default function LibraryDeckCollection({
             <DeckCard
               key={deck.id}
               deck={deck}
+              context={context}
               relationship={deck.relationship}
               isFollowing={deck.isFollowing}
             />

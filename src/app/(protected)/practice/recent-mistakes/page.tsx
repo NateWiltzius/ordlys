@@ -37,7 +37,7 @@ export default async function RecentMistakesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Extra practice"
-        description="Optional practice from the last 24 hours. Answers here do not affect your SRS level or due dates."
+        description="Optional practice from the last 24 hours. Answers here do not change your memory strength or review schedule."
       />
       <RecentMistakesMode quizItems={quizItems} />
     </div>

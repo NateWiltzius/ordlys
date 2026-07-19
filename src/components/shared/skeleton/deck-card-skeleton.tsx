@@ -23,7 +23,6 @@ export default function DeckCardSkeleton({ showMeta = false }: Props) {
           {showMeta ? <SkeletonLine className="h-4 w-20" /> : null}
           <div className="flex items-start gap-2">
             <SkeletonBlock className="h-8 flex-1 rounded-lg" />
-            <SkeletonBlock className="h-8 w-20 rounded-lg" />
             <SkeletonBlock className="h-8 w-9 rounded-lg" />
           </div>
         </div>

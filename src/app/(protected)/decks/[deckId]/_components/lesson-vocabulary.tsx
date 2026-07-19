@@ -11,9 +11,17 @@ type Props = {
   deckId: number;
   lessonId: number;
   isExpanded: boolean;
+  frontLabel: string;
+  backLabel: string;
 };
 
-export default function LessonVocabulary({ deckId, lessonId, isExpanded }: Props) {
+export default function LessonVocabulary({
+  deckId,
+  lessonId,
+  isExpanded,
+  frontLabel,
+  backLabel,
+}: Props) {
   const [vocabs, setVocabs] = useState<Vocab[] | null>(null);
   const [srsLevels, setSrsLevels] = useState<Record<number, number>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -49,6 +57,8 @@ export default function LessonVocabulary({ deckId, lessonId, isExpanded }: Props
         emptyTitle="No vocabulary in this lesson"
         srsLevels={srsLevels}
         showSrsLevels
+        frontLabel={frontLabel}
+        backLabel={backLabel}
       />
     );
   }

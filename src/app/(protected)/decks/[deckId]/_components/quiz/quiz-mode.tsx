@@ -31,6 +31,7 @@ import {
   readPendingQuizAttempts,
   writePendingQuizAttempts,
 } from '@/lib/quiz/pending-quiz-attempts';
+import QuizCompletionSummary from '@/components/quiz/quiz-completion-summary';
 
 type Props = {
   quizItems: QuizSourceItem[];
@@ -57,6 +58,7 @@ export default function QuizMode({
   const [sessionQuizItems] = useState(() => quizItems);
   const [answer, setAnswer] = useState('');
   const [failedCardIds, setFailedCardIds] = useState<Set<number>>(() => new Set());
+  const [missedCardIds, setMissedCardIds] = useState<Set<number>>(() => new Set());
   const [quizQueue, setQuizQueue] = useState<QuizQueueItem[] | null>(null);
   const [quizProgress, setQuizProgress] = useState<QuizProgress>(() =>
     buildQuizProgress(sessionQuizItems),
@@ -135,6 +137,7 @@ export default function QuizMode({
     setHasMounted(true);
     setAnswer('');
     setFailedCardIds(new Set());
+    setMissedCardIds(new Set());
     setQuizQueue(shuffleArray(buildQuizQueue(sessionQuizItems)));
     setQuizProgress(buildQuizProgress(sessionQuizItems));
     setAttemptStats({
@@ -232,12 +235,6 @@ export default function QuizMode({
     };
   }, [sessionQuizItems.length, quizProgress, attemptStats]);
 
-  useEffect(() => {
-    if (quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0 && !saveError) {
-      window.location.replace(completionHref);
-    }
-  }, [completionHref, pendingSaveCount, quizQueue, saveError]);
-
   const handleAnswerSubmit = () => {
     if (!currentQuizItem || answer.trim().length === 0) return;
 
@@ -284,6 +281,10 @@ export default function QuizMode({
     }
 
     attemptKeyRef.current = null;
+
+    if (!feedback.isCorrect) {
+      setMissedCardIds(previous => new Set(previous).add(quizItem.cardId));
+    }
 
     setAttemptStats(prev => ({
       totalAttempts: prev.totalAttempts + 1,
@@ -355,6 +356,22 @@ export default function QuizMode({
   }
 
   if (!currentQuizItem) {
+    if (pendingSaveCount === 0 && !saveError) {
+      return (
+        <div className="w-full">
+          <QuizCompletionSummary
+            progressStats={progressStats}
+            attemptStats={attemptStats}
+            studyMode={studyMode}
+            recordAttempts={recordAttempts}
+            missedCardCount={missedCardIds.size}
+            completionHref={completionHref}
+            tone={tone}
+          />
+        </div>
+      );
+    }
+
     return (
       <>
         {exitQuizButton}

@@ -8,4 +8,3 @@ export { default as SkeletonBlock } from './skeleton-block';
 export { default as SkeletonLine } from './skeleton-line';
 export { default as SrsDistributionSkeleton } from './srs-distribution-skeleton';
 export { default as StudyActionCardSkeleton } from './study-action-card-skeleton';
-export { default as StudySummarySkeleton } from './study-summary-skeleton';

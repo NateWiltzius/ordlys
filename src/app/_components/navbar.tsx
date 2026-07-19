@@ -72,7 +72,7 @@ export default function Navbar() {
       ) : (
         <div className="flex items-center gap-1 md:hidden" aria-hidden="true">
           <ThemeToggle />
-          <div className="size-8 animate-pulse rounded-lg bg-default-200" />
+          <div className="size-11 animate-pulse rounded-lg bg-default-200" />
         </div>
       )}
     </nav>

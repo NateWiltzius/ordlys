@@ -1,4 +1,4 @@
-import { Card, cn } from '@heroui/react';
+import { cn } from '@heroui/react';
 import { ReactNode } from 'react';
 
 type Props = {
@@ -17,26 +17,26 @@ export default function PageHeader({
   contentClassName,
 }: Props) {
   return (
-    <Card className="w-full">
-      <Card.Header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <header className="w-full py-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
-          {title ? <h1 className="text-2xl font-semibold tracking-tight">{title}</h1> : null}
+          {title ? <h1 className="break-words text-2xl font-semibold">{title}</h1> : null}
 
-          {description ? <p className="text-sm text-default-500">{description}</p> : null}
+          {description ? (
+            <p className="max-w-3xl text-sm leading-6 text-default-500">{description}</p>
+          ) : null}
         </div>
 
         {actions ? (
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end sm:pt-0.5">
             {actions}
           </div>
         ) : null}
-      </Card.Header>
+      </div>
 
       {children ? (
-        <Card.Content className="pt-0">
-          <div className={cn('flex flex-wrap gap-2', contentClassName)}>{children}</div>
-        </Card.Content>
+        <div className={cn('mt-4 flex flex-wrap gap-2', contentClassName)}>{children}</div>
       ) : null}
-    </Card>
+    </header>
   );
 }

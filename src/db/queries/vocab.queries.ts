@@ -113,7 +113,7 @@ export const moveVocab = async (
     const orderedVocabs = await tx
       .select({ id: vocabs.id, orderIndex: vocabs.orderIndex })
       .from(vocabs)
-      .where(eq(vocabs.lessonId, targetVocab.lessonId))
+      .where(and(eq(vocabs.lessonId, targetVocab.lessonId), isNull(vocabs.removedAt)))
       .orderBy(vocabs.orderIndex, vocabs.id);
 
     const currentIndex = orderedVocabs.findIndex(vocab => vocab.id === vocabId);
@@ -133,6 +133,63 @@ export const moveVocab = async (
       .update(vocabs)
       .set({ orderIndex: currentVocab.orderIndex })
       .where(eq(vocabs.id, adjacentVocab.id));
+
+    return targetVocab.deckId;
+  });
+};
+
+export const moveVocabToPosition = async (
+  vocabId: number,
+  userId: string,
+  targetIndex: number,
+): Promise<number> => {
+  return db.transaction(async tx => {
+    await lockAuthoringAccount(tx, userId);
+    const [targetVocab] = await tx
+      .select({ lessonId: vocabs.lessonId, deckId: lessons.deckId })
+      .from(vocabs)
+      .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .where(
+        and(
+          eq(vocabs.id, vocabId),
+          isNull(vocabs.removedAt),
+          eq(decks.ownerId, userId),
+          eq(decks.status, 'active'),
+        ),
+      )
+      .for('update')
+      .limit(1);
+
+    if (!targetVocab) {
+      throw new Error('Vocabulary not found or access denied');
+    }
+
+    const orderedVocabs = await tx
+      .select({ id: vocabs.id })
+      .from(vocabs)
+      .where(and(eq(vocabs.lessonId, targetVocab.lessonId), isNull(vocabs.removedAt)))
+      .orderBy(vocabs.orderIndex, vocabs.id);
+
+    const currentIndex = orderedVocabs.findIndex(vocab => vocab.id === vocabId);
+    if (
+      currentIndex < 0 ||
+      targetIndex < 0 ||
+      targetIndex >= orderedVocabs.length ||
+      !Number.isInteger(targetIndex)
+    ) {
+      throw new Error('Invalid vocabulary position.');
+    }
+
+    if (currentIndex === targetIndex) return targetVocab.deckId;
+
+    const reorderedVocabs = [...orderedVocabs];
+    const [movedVocab] = reorderedVocabs.splice(currentIndex, 1);
+    reorderedVocabs.splice(targetIndex, 0, movedVocab);
+
+    for (const [orderIndex, vocab] of reorderedVocabs.entries()) {
+      await tx.update(vocabs).set({ orderIndex }).where(eq(vocabs.id, vocab.id));
+    }
 
     return targetVocab.deckId;
   });

@@ -16,7 +16,7 @@ type Props = {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   tone: ActionTone;
   href?: string;
-  onAction?: () => void;
+  isModalTrigger?: boolean;
   unavailableAction?: ReactNode;
   isDisabled?: boolean;
 };
@@ -53,7 +53,7 @@ export default function StudyActionCard({
   icon: Icon,
   tone,
   href,
-  onAction,
+  isModalTrigger = false,
   unavailableAction,
   isDisabled = false,
 }: Props) {
@@ -96,7 +96,7 @@ export default function StudyActionCard({
       </Card.Content>
 
       <Card.Footer>
-        {href ? (
+        {href || isModalTrigger ? (
           <span
             className={buttonVariants({
               variant: 'primary',
@@ -110,22 +110,6 @@ export default function StudyActionCard({
               aria-hidden="true"
             />
           </span>
-        ) : onAction ? (
-          <button
-            type="button"
-            className={buttonVariants({
-              variant: 'primary',
-              size: 'lg',
-              className: `w-full shadow-sm ${toneStyles.button}`,
-            })}
-            onClick={onAction}
-          >
-            {actionLabel}
-            <ArrowRightIcon
-              className="size-4 transition-transform group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </button>
         ) : (
           unavailableAction
         )}

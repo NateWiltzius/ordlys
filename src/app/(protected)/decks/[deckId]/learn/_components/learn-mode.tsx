@@ -34,7 +34,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 pb-20 sm:pb-0">
       <div className="space-y-2">
         <div className="flex h-10 items-start justify-between gap-3 text-sm">
           <span
@@ -54,12 +54,12 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
         </ProgressBar>
       </div>
 
-      <Card className="h-[clamp(28rem,65dvh,34rem)]">
-        <Card.Header className="shrink-0">
+      <Card>
+        <Card.Header>
           <Card.Title render={props => <h2 {...props} />}>New vocabulary</Card.Title>
           <Card.Description>Review the word and its meaning before the quiz.</Card.Description>
         </Card.Header>
-        <Card.Content className="min-h-0 space-y-4 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
+        <Card.Content className="space-y-4">
           <WordSide
             label="Word"
             language={frontLanguage}
@@ -98,7 +98,10 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
             </section>
           ) : null}
         </Card.Content>
-        <Card.Footer className="grid shrink-0 grid-cols-2 gap-3">
+      </Card>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-default-200 bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-lg backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+        <div className="mx-auto grid w-full max-w-xl grid-cols-2 gap-3">
           <Button
             variant="secondary"
             className="w-full"
@@ -114,8 +117,8 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
           >
             {isLastItem ? 'Start quiz' : 'Next word'}
           </Button>
-        </Card.Footer>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

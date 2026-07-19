@@ -14,17 +14,30 @@ import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 import DeckBadge, { type DeckBadgeKind } from '@/components/shared/deck-badge';
+import Link from 'next/link';
+import ButtonLink from '@/components/shared/button-link';
+import {
+  getDeckCardActionPlan,
+  type DeckCardAction,
+  type DeckCardContext,
+  type DeckCardRelationship,
+} from '@/lib/deck-card-actions';
 
-type Relationship = 'owned' | 'copy' | 'following' | 'discover' | 'restorable';
 type Props = {
   deck: Deck;
-  relationship: Relationship;
+  context: DeckCardContext;
+  relationship: DeckCardRelationship;
   isFollowing?: boolean;
   subscriberCount?: number;
 };
-type DeckAction = 'review' | 'view' | 'edit' | 'delete' | 'follow' | 'unfollow';
 
-export function DeckCard({ deck, relationship, isFollowing = false, subscriberCount }: Props) {
+export function DeckCard({
+  deck,
+  context,
+  relationship,
+  isFollowing = false,
+  subscriberCount,
+}: Props) {
   const router = useRouter();
   const [following, setFollowing] = useState(isFollowing);
   const [pending, setPending] = useState<string | null>(null);
@@ -94,21 +107,22 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
       window.location.assign(`/decks/${copiedDeckId}/edit`);
     } catch (error) {
       setMutationError(errorMessage(error, 'Could not create the copy.'));
+    } finally {
       setPending(null);
     }
   };
 
   const handleMenuAction = async (key: React.Key) => {
     setIsMenuOpen(false);
-    switch (key as DeckAction) {
+    switch (key as DeckCardAction) {
       case 'review':
         router.push(`/decks/${deck.id}/review`);
         break;
-      case 'view':
-        router.push(`/decks/${deck.id}`);
-        break;
-      case 'edit':
+      case 'manage':
         router.push(`/decks/${deck.id}/edit`);
+        break;
+      case 'copy':
+        setConfirmation('copy');
         break;
       case 'delete':
         setConfirmation('delete');
@@ -121,6 +135,14 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
         break;
     }
   };
+
+  const actionPlan = getDeckCardActionPlan({
+    context,
+    relationship,
+    isFollowing: following,
+    hasPublishedRelease: deck.currentReleaseId !== null,
+    allowsCopying: deck.copyPolicy !== 'follow_only',
+  });
 
   const relationshipBadges: DeckBadgeKind[] = {
     owned: ['owned'],
@@ -137,7 +159,14 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
     <Card className="flex h-full w-full flex-col">
       <Card.Header className="flex items-start justify-between gap-3 pb-2">
         <div className="min-w-0 flex-1 space-y-1">
-          <h3 className="break-words text-lg font-semibold">{deck.title}</h3>
+          <h3 className="break-words text-lg font-semibold">
+            <Link
+              href={`/decks/${deck.id}`}
+              className="rounded-sm hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {deck.title}
+            </Link>
+          </h3>
           <p
             className={
               deck.description
@@ -171,34 +200,29 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
             </p>
           ) : null}
           <div className="flex items-start gap-2">
-            {relationship === 'restorable' ? (
-              <>
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  isPending={pending === 'restore'}
-                  onPress={() =>
-                    run('restore', () => restoreDeckAction(deck.id), 'Could not restore the deck.')
-                  }
-                >
-                  Restore deck
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onPress={() => router.push(`/decks/${deck.id}`)}
-                >
-                  Open deck
-                </Button>
-              </>
-            ) : relationship !== 'discover' || following ? (
+            {actionPlan.primary === 'restore' ? (
               <Button
                 size="sm"
-                className={`flex-1 ${relationship === 'following' ? STUDY_TONE_STYLES.learning.button : ''}`}
-                onPress={() => router.push(`/decks/${deck.id}`)}
+                className="flex-1"
+                isPending={pending === 'restore'}
+                onPress={() =>
+                  run('restore', () => restoreDeckAction(deck.id), 'Could not restore the deck.')
+                }
               >
-                Open deck
+                Restore deck <span className="sr-only">{deck.title}</span>
               </Button>
+            ) : actionPlan.primary === 'review' ? (
+              <ButtonLink
+                href={`/decks/${deck.id}/review`}
+                size="sm"
+                className={`flex-1 ${STUDY_TONE_STYLES.review.button}`}
+              >
+                Review deck <span className="sr-only">{deck.title}</span>
+              </ButtonLink>
+            ) : actionPlan.primary === 'manage' ? (
+              <ButtonLink href={`/decks/${deck.id}/edit`} size="sm" className="flex-1">
+                Manage deck <span className="sr-only">{deck.title}</span>
+              </ButtonLink>
             ) : (
               <Button
                 size="sm"
@@ -206,37 +230,17 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
                 isPending={pending === 'follow'}
                 onPress={handleFollow}
               >
-                Follow deck
+                Follow deck <span className="sr-only">{deck.title}</span>
               </Button>
             )}
 
-            {(relationship === 'discover' || relationship === 'following') &&
-            deck.copyPolicy !== 'follow_only' ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                isPending={pending === 'copy'}
-                onPress={() => setConfirmation('copy')}
-              >
-                Copy &amp; edit
-              </Button>
-            ) : null}
-            {relationship === 'owned' || relationship === 'copy' ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                onPress={() => router.push(`/decks/${deck.id}/edit`)}
-              >
-                Manage deck
-              </Button>
-            ) : null}
-
-            {relationship !== 'restorable' ? (
+            {actionPlan.menu.length > 0 ? (
               <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <Button
                   variant="tertiary"
                   size="sm"
                   isIconOnly
+                  isDisabled={pending !== null}
                   aria-label={`More actions for ${deck.title}`}
                 >
                   <EllipsisVerticalIcon className="h-5 w-5" />
@@ -248,21 +252,26 @@ export function DeckCard({ deck, relationship, isFollowing = false, subscriberCo
                       selectionMode="none"
                       onAction={handleMenuAction}
                     >
-                      {following ? <ListBox.Item id="review">Review</ListBox.Item> : null}
-                      {following ? <ListBox.Item id="unfollow">Unfollow deck</ListBox.Item> : null}
-                      {(relationship === 'owned' || relationship === 'copy') &&
-                      !following &&
-                      deck.currentReleaseId ? (
-                        <ListBox.Item id="follow">Follow deck</ListBox.Item>
-                      ) : null}
-                      {relationship === 'discover' && !following ? (
-                        <ListBox.Item id="view">Preview deck</ListBox.Item>
-                      ) : null}
-                      {relationship === 'owned' || relationship === 'copy' ? (
-                        <ListBox.Item id="delete" variant="danger" className="text-danger">
-                          Delete deck
+                      {actionPlan.menu.map(action => (
+                        <ListBox.Item
+                          key={action}
+                          id={action}
+                          variant={action === 'delete' ? 'danger' : undefined}
+                          className={action === 'delete' ? 'text-danger' : undefined}
+                        >
+                          {
+                            {
+                              copy: 'Copy & edit',
+                              delete: 'Delete deck',
+                              follow: 'Follow deck',
+                              manage: 'Manage deck',
+                              review: 'Review deck',
+                              restore: 'Restore deck',
+                              unfollow: 'Unfollow deck',
+                            }[action]
+                          }
                         </ListBox.Item>
-                      ) : null}
+                      ))}
                     </ListBox>
                   </Popover.Dialog>
                 </Popover.Content>

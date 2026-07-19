@@ -1,6 +1,6 @@
 'use client';
 
-import { Bars3Icon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Button, Popover } from '@heroui/react';
 import { useState } from 'react';
 import ThemeToggle from '@/app/_components/theme-toggle';
@@ -25,10 +25,15 @@ export default function MobileNavigation({ loggedIn }: Props) {
           size="sm"
           variant="tertiary"
           isIconOnly
-          aria-label="Open navigation menu"
+          className="size-11 min-w-11"
+          aria-label={`${isOpen ? 'Close' : 'Open'} navigation menu`}
           aria-expanded={isOpen}
         >
-          <Bars3Icon className="h-5 w-5" aria-hidden="true" />
+          {isOpen ? (
+            <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <Bars3Icon className="h-5 w-5" aria-hidden="true" />
+          )}
         </Button>
         <Popover.Content placement="bottom end">
           <Popover.Dialog aria-label="Navigation menu" className="w-44 p-1">

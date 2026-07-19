@@ -6,7 +6,6 @@ import { LearnItem, LessonProgress } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import { useState } from 'react';
 import ButtonLink from '@/components/shared/button-link';
-import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
 import SessionSizePicker from '@/components/shared/session-size-picker';
@@ -48,7 +47,9 @@ export default function LearnPage({
             </Card.Title>
             <Card.Description>
               {nextLockedLesson && previousLesson
-                ? `${remainingRequired} more ${remainingRequired === 1 ? 'word needs' : 'words need'} to reach SRS level ${LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} in ${previousLesson.lessonTitle}.`
+                ? `${remainingRequired} more ${
+                    remainingRequired === 1 ? 'word needs' : 'words need'
+                  } stronger recall in ${previousLesson.lessonTitle}.`
                 : 'You have added every word in this deck to your review queue.'}
             </Card.Description>
           </Card.Header>

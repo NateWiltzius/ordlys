@@ -10,6 +10,7 @@ import DashboardRecentMistakesCard from '@/app/_components/dashboard/dashboard-r
 import { getRecentMistakeCountAction } from '@/server/review.actions';
 import DashboardSrsCard from '@/app/_components/dashboard/dashboard-srs-card';
 import DashboardLearningCard from '@/app/_components/dashboard/dashboard-learning-card';
+import { DashboardAction, getDashboardActionOrder } from '@/lib/dashboard-actions';
 
 export default async function DashboardContent() {
   const [dashboardData, recentMistakeCount] = await Promise.all([
@@ -28,6 +29,28 @@ export default async function DashboardContent() {
       return (secondStats?.newWordsAvailable ?? 0) - (firstStats?.newWordsAvailable ?? 0);
     })
     .slice(0, 3);
+  const actionOrder = getDashboardActionOrder({
+    reviewsDue: allDeckStats.reviewsDue,
+    newWordsAvailable: allDeckStats.newWordsAvailable,
+    recentMistakes: recentMistakeCount,
+  });
+  const actionCards: Record<DashboardAction, React.ReactNode> = {
+    review: (
+      <DashboardReviewCard
+        decks={activeDecks}
+        deckStats={deckStats}
+        reviewsDue={allDeckStats.reviewsDue}
+      />
+    ),
+    learn: (
+      <DashboardLearningCard
+        decks={activeDecks}
+        deckStats={deckStats}
+        newWordsAvailable={allDeckStats.newWordsAvailable}
+      />
+    ),
+    practice: <DashboardRecentMistakesCard count={recentMistakeCount} />,
+  };
 
   return (
     <div className="space-y-6">
@@ -37,21 +60,14 @@ export default async function DashboardContent() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <DashboardReviewCard
-          decks={activeDecks}
-          deckStats={deckStats}
-          reviewsDue={allDeckStats.reviewsDue}
-        />
-
-        <DashboardLearningCard
-          decks={activeDecks}
-          deckStats={deckStats}
-          newWordsAvailable={allDeckStats.newWordsAvailable}
-        />
-
-        <div className="h-full md:col-span-2 xl:col-span-1">
-          <DashboardRecentMistakesCard count={recentMistakeCount} />
-        </div>
+        {actionOrder.map((action, index) => (
+          <div
+            key={action}
+            className={index === 2 ? 'h-full md:col-span-2 xl:col-span-1' : 'h-full'}
+          >
+            {actionCards[action]}
+          </div>
+        ))}
       </div>
 
       <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} />

@@ -29,6 +29,7 @@ export default function ThemeToggle() {
       size="sm"
       variant="tertiary"
       isIconOnly
+      className="size-11 min-w-11 md:size-9 md:min-w-9"
       aria-label={`Switch to ${nextThemeLabel} mode`}
       onPress={toggleTheme}
     >

@@ -55,7 +55,7 @@ export default function PublicDeckCard({ deck }: Props) {
 
       <Card.Footer>
         <ButtonLink href={href} variant="secondary" className="w-full">
-          Preview deck
+          Preview deck <span className="sr-only">{deck.title}</span>
         </ButtonLink>
       </Card.Footer>
     </Card>

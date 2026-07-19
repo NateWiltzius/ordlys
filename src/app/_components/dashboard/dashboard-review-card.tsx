@@ -7,6 +7,7 @@ import { Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
 import { ClockIcon } from '@heroicons/react/24/outline';
 import { Button, Chip, Modal, useOverlayState } from '@heroui/react';
+import { getDashboardReviewAction } from '@/lib/dashboard-actions';
 
 type Props = {
   decks: Pick<Deck, 'id' | 'title'>[];
@@ -18,25 +19,46 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
   const modalState = useOverlayState();
   const decksWithReviews = decks.filter(deck => (deckStats[deck.id]?.reviewsDue ?? 0) > 0);
   const hasReviewsDue = reviewsDue > 0;
+  const singleDeck = decksWithReviews.length === 1 ? decksWithReviews[0] : null;
+  const { href: directReviewHref, shouldChooseDeck } = getDashboardReviewAction(
+    reviewsDue,
+    decksWithReviews.map(deck => deck.id),
+  );
+
+  const reviewCard = (
+    <StudyActionCard
+      title="Review due cards"
+      description={
+        singleDeck
+          ? `Continue reviewing ${singleDeck.title}.`
+          : 'Review everything together or focus on a single deck.'
+      }
+      count={reviewsDue}
+      countLabel="reviews due across your decks"
+      actionLabel="Start review"
+      icon={ClockIcon}
+      tone="review"
+      href={directReviewHref}
+      isModalTrigger={hasReviewsDue && shouldChooseDeck}
+      isDisabled={!hasReviewsDue}
+      unavailableAction={
+        <Button variant="secondary" size="lg" className="w-full" isDisabled>
+          No reviews due
+        </Button>
+      }
+    />
+  );
+
+  if (!shouldChooseDeck) return reviewCard;
 
   return (
     <Modal state={modalState}>
-      <StudyActionCard
-        title="Review due cards"
-        description="Review everything together or focus on a single deck."
-        count={reviewsDue}
-        countLabel="reviews due across your decks"
-        actionLabel="Start review"
-        icon={ClockIcon}
-        tone="review"
-        onAction={hasReviewsDue ? modalState.open : undefined}
-        isDisabled={!hasReviewsDue}
-        unavailableAction={
-          <Button variant="secondary" size="lg" className="w-full" isDisabled>
-            No reviews due
-          </Button>
-        }
-      />
+      <Modal.Trigger
+        aria-label="Choose what to review"
+        className="group block h-full cursor-pointer rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
+      >
+        {reviewCard}
+      </Modal.Trigger>
 
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
@@ -82,7 +104,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
                         href={`/decks/${deck.id}/review`}
                         className={`w-full shrink-0 sm:w-auto ${STUDY_TONE_STYLES.review.button}`}
                       >
-                        Review deck
+                        Review <span className="sr-only">{deck.title}</span>
                       </ButtonLink>
                     </li>
                   );

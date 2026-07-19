@@ -1,6 +1,5 @@
 import { getCachedLessonProgress } from '@/app/(protected)/decks/[deckId]/_lib/get-cached-lesson-progress';
 import DeckProgressMarker from '@/app/(protected)/decks/[deckId]/_components/deck-progress-marker';
-import StudySummary from '@/components/shared/study-summary';
 import { getDeckStudyCountsAction } from '@/server/deck.actions';
 import { Deck } from '@/types/deck.types';
 import { Button } from '@heroui/react';
@@ -61,7 +60,7 @@ export default async function DeckStudyContent({
 
         <StudyActionCard
           title="Learn new words"
-          description="Add new vocabulary from this deck into your active review queue."
+          description="Learn new vocabulary now and review it again at the right time."
           count={counts.newWordsAvailable}
           countLabel="ready to learn"
           actionLabel="Start learning"
@@ -76,7 +75,7 @@ export default async function DeckStudyContent({
               </Button>
             ) : isOwned && !deck.currentReleaseId && deck.status === 'active' ? (
               <ButtonLink
-                href={`/decks/${deck.id}/edit#publishing`}
+                href={`/decks/${deck.id}/edit?tab=publishing`}
                 variant="secondary"
                 size="lg"
                 className="w-full"
@@ -96,13 +95,15 @@ export default async function DeckStudyContent({
 
       {canStudy ? <DeckProgressMarker lessonProgress={lessonProgress} /> : null}
 
-      <ReviewForecastCard
-        forecast={reviewForecast}
-        nextReview={nextReview}
-        description="Reviews from this deck scheduled over the next 24 hours."
-      />
-
-      <StudySummary counts={counts} description="Your progress in this deck." />
+      {canStudy ? (
+        <ReviewForecastCard
+          forecast={reviewForecast}
+          nextReview={nextReview}
+          title="Review schedule"
+          description="Reviews from this deck over the next 24 hours."
+          collapsible
+        />
+      ) : null}
     </div>
   );
 }

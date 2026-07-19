@@ -10,6 +10,8 @@ type Props = {
   actions?: ReactNode;
   srsLevel?: number;
   showSrsLevel?: boolean;
+  frontLabel: string;
+  backLabel: string;
 };
 
 export default function VocabCard({
@@ -18,6 +20,8 @@ export default function VocabCard({
   actions,
   srsLevel,
   showSrsLevel = false,
+  frontLabel,
+  backLabel,
 }: Props) {
   const desktopColumns = getVocabGridColumns(showSrsLevel, Boolean(actions));
 
@@ -34,13 +38,13 @@ export default function VocabCard({
 
       <span className="hidden pt-0.5 text-sm tabular-nums text-default-400 sm:block">{index}</span>
 
-      <VocabSide label="Front" value={vocab.front} alternatives={vocab.frontAlternatives}>
+      <VocabSide label={frontLabel} value={vocab.front} alternatives={vocab.frontAlternatives}>
         {vocab.reading ? (
           <p className="text-xs text-default-500">Reading: {vocab.reading}</p>
         ) : null}
       </VocabSide>
 
-      <VocabSide label="Back" value={vocab.back} alternatives={vocab.backAlternatives} />
+      <VocabSide label={backLabel} value={vocab.back} alternatives={vocab.backAlternatives} />
 
       {showSrsLevel ? (
         <div className="hidden pt-0.5 sm:block">

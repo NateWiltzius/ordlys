@@ -7,6 +7,8 @@ import type { DiscoverableDeck } from '@/db/queries/deck.queries';
 import { filterAndSortDecks, type DeckDiscoverySort } from '@/lib/deck-discovery';
 import { Button } from '@heroui/react';
 import { useMemo, useState } from 'react';
+import ButtonLink from '@/components/shared/button-link';
+import CreateDeckModal from '@/app/(protected)/decks/_components/create-deck-modal';
 
 type Props = {
   decks: DiscoverableDeck[];
@@ -26,10 +28,26 @@ export default function PublicDecks({ decks, libraryDeckIds }: Props) {
   );
 
   if (!discoverableDecks.length) {
+    const everyPublicDeckIsInLibrary = decks.length > 0;
+
     return (
       <EmptyState
-        title="No new decks to discover"
-        description="Public decks you have not added to your library will appear here."
+        title={
+          everyPublicDeckIsInLibrary
+            ? 'You have added every public deck'
+            : 'No public decks are available yet'
+        }
+        description={
+          everyPublicDeckIsInLibrary
+            ? 'Continue learning from your library or create a deck of your own.'
+            : 'Create a deck of your own, or check back when more public decks are available.'
+        }
+        action={
+          <div className="flex flex-wrap justify-center gap-2">
+            <ButtonLink href="/decks">View library</ButtonLink>
+            <CreateDeckModal triggerLabel="Create a deck" />
+          </div>
+        }
       />
     );
   }
@@ -51,6 +69,7 @@ export default function PublicDecks({ decks, libraryDeckIds }: Props) {
             <DeckCard
               key={deck.id}
               deck={deck}
+              context="discover"
               relationship="discover"
               subscriberCount={deck.subscriberCount}
             />

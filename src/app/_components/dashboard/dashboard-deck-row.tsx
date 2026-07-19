@@ -52,6 +52,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
               className={STUDY_TONE_STYLES.review.button}
             >
               Review {stats.reviewsDue}
+              <span className="sr-only"> in {deck.title}</span>
             </ButtonLink>
           ) : null}
           {hasNewWords ? (
@@ -61,11 +62,12 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
               className={STUDY_TONE_STYLES.learning.button}
             >
               Learn {stats.newWordsAvailable}
+              <span className="sr-only"> in {deck.title}</span>
             </ButtonLink>
           ) : null}
           {!hasReviewsDue && !hasNewWords ? (
             <ButtonLink href={`/decks/${deck.id}`} size="sm" variant="secondary">
-              Open deck
+              Open deck <span className="sr-only">{deck.title}</span>
             </ButtonLink>
           ) : null}
         </div>
@@ -73,7 +75,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
 
       <div className="mt-3 flex items-center gap-2">
         <ProgressBar
-          aria-label={`${deck.title}: ${introducedCards} of ${stats.totalWords} cards introduced`}
+          aria-label={`${deck.title}: ${introducedCards} of ${stats.totalWords} words started`}
           value={progressPercentage}
           size="sm"
           className="min-w-0 flex-1"
@@ -83,7 +85,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
           </ProgressBar.Track>
         </ProgressBar>
         <span className="shrink-0 text-xs font-medium tabular-nums text-default-500">
-          {progressPercentage}% introduced
+          {progressPercentage}% started
         </span>
       </div>
     </div>

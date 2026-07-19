@@ -1,7 +1,6 @@
 import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mode';
 import SemanticCardTitle from '@/components/shared/semantic-card-title';
 import StudySession from '@/components/shared/layout/study-session';
-import { PLACEMENT_TEST_CONFIG } from '@/lib/srs/srs-config';
 import { PlacementTestItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
 
@@ -19,10 +18,9 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
             Placement test: {placementItems[0].lessonTitle}
           </SemanticCardTitle>
           <Card.Description>
-            Pass each word in both directions without a mistake to place it at the beginning of
-            Strong (SRS level {PLACEMENT_TEST_CONFIG.passedSrsLevel + 1}), where it counts as
-            learned. Missed words remain Not started and will appear in the normal learning queue.
-            Existing progress will not be reduced.
+            Pass each word in both directions without a mistake to mark its memory strength as
+            Strong, where it counts as learned. Missed words remain Not started and will appear in
+            the normal learning flow. Existing progress will not be reduced.
           </Card.Description>
         </Card.Header>
       </Card>

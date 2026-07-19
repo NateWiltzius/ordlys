@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import AnswerRow from '@/components/quiz/answer-row';
 import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { getQuizLanguageLabels } from '@/lib/quiz/quiz-language-labels';
 
 type WordCompletion = 'clean' | 'recovered';
 
@@ -31,6 +32,11 @@ export default function QuizFeedbackPanel({
     wordCompletion === 'recovered'
       ? 'border-danger/60 bg-danger/25'
       : 'border-success/60 bg-success/25';
+  const languageLabels = getQuizLanguageLabels(
+    feedback.quizItem.direction,
+    feedback.quizItem.frontLanguage,
+    feedback.quizItem.backLanguage,
+  );
   useEffect(() => {
     if (!keyboardShortcutEnabled) return;
 
@@ -62,8 +68,14 @@ export default function QuizFeedbackPanel({
           </Card.Description>
         </div>
 
-        <Chip size="sm" color="default" variant="soft">
-          {feedback.quizItem.direction === 'btf' ? 'Back → Front' : 'Front → Back'}
+        <Chip
+          size="sm"
+          color="default"
+          variant="soft"
+          className="max-w-full"
+          title={languageLabels.directionLabel}
+        >
+          <span className="truncate">{languageLabels.directionLabel}</span>
         </Chip>
       </Card.Header>
 
@@ -96,16 +108,10 @@ export default function QuizFeedbackPanel({
             </div>
           </div>
         ) : null}
-        <AnswerRow
-          label={feedback.quizItem.direction === 'btf' ? 'Back shown' : 'Front shown'}
-          value={feedback.quizItem.prompt}
-        />
+        <AnswerRow label={languageLabels.promptRowLabel} value={feedback.quizItem.prompt} />
         {feedback.quizItem.hint ? <AnswerRow label="Hint" value={feedback.quizItem.hint} /> : null}
         <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
-        <AnswerRow
-          label={feedback.quizItem.direction === 'btf' ? 'Correct front' : 'Correct back'}
-          value={feedback.quizItem.answer}
-        />
+        <AnswerRow label={languageLabels.correctAnswerRowLabel} value={feedback.quizItem.answer} />
       </Card.Content>
 
       <Card.Footer className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

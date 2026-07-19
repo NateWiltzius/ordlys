@@ -11,9 +11,17 @@ type Props = {
   deckId: number;
   lessons: LessonProgress[];
   canStudy: boolean;
+  frontLabel: string;
+  backLabel: string;
 };
 
-export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
+export default function LessonsAccordion({
+  deckId,
+  lessons,
+  canStudy,
+  frontLabel,
+  backLabel,
+}: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string | number>>(new Set());
 
   return (
@@ -37,9 +45,8 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
                     </Chip>
                   ) : lesson.isUnlocked ? (
                     <Chip size="sm" variant="soft" color="success" className="shrink-0">
-                      {lesson.learnedWords} {lesson.learnedWords === 1 ? 'card' : 'cards'} at level{' '}
-                      {LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} &middot;{' '}
-                      {lesson.requiredWords} required
+                      {Math.min(lesson.learnedWords, lesson.requiredWords)} of{' '}
+                      {lesson.requiredWords} words strengthened
                     </Chip>
                   ) : (
                     <Chip size="sm" variant="soft" className="shrink-0">
@@ -64,9 +71,8 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
                   </div>
                 ) : canStudy && lesson.totalWords > lesson.introducedWords ? (
                   <p className="mb-4 text-right text-sm text-default-500">
-                    Reach level {LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} with at least{' '}
-                    {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}% of the previous
-                    lesson to unlock this placement test.
+                    Strengthen at least {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}%
+                    of the previous lesson&apos;s words to unlock this placement test.
                   </p>
                 ) : null}
                 {lesson.totalWords > 0 ? (
@@ -74,6 +80,8 @@ export default function LessonsAccordion({ deckId, lessons, canStudy }: Props) {
                     deckId={deckId}
                     lessonId={lesson.lessonId}
                     isExpanded={isExpanded}
+                    frontLabel={frontLabel}
+                    backLabel={backLabel}
                   />
                 ) : null}
               </Accordion.Body>

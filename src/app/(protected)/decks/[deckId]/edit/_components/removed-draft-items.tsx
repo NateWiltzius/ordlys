@@ -41,9 +41,10 @@ export default function RemovedDraftItems({ items }: Props) {
     <Card>
       <Card.Header>
         <div>
-          <Card.Title>Removed from future releases</Card.Title>
+          <Card.Title>Removed content</Card.Title>
           <Card.Description>
-            Restore a logical identity to preserve its learner progress.
+            Restore lessons or cards before the next publish while keeping existing learner progress
+            connected.
           </Card.Description>
         </div>
       </Card.Header>

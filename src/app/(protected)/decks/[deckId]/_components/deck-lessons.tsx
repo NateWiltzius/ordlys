@@ -6,9 +6,11 @@ import EmptyState from '@/components/shared/empty-state';
 type Props = {
   deckId: number;
   canStudy: boolean;
+  frontLabel: string;
+  backLabel: string;
 };
 
-export default async function DeckLessons({ deckId, canStudy }: Props) {
+export default async function DeckLessons({ deckId, canStudy, frontLabel, backLabel }: Props) {
   const lessonProgress = await getCachedLessonProgress(deckId);
 
   return (
@@ -16,7 +18,13 @@ export default async function DeckLessons({ deckId, canStudy }: Props) {
       {lessonProgress.length === 0 ? (
         <EmptyState title="No lessons yet" />
       ) : (
-        <LessonsAccordion deckId={deckId} lessons={lessonProgress} canStudy={canStudy} />
+        <LessonsAccordion
+          deckId={deckId}
+          lessons={lessonProgress}
+          canStudy={canStudy}
+          frontLabel={frontLabel}
+          backLabel={backLabel}
+        />
       )}
     </LessonsSection>
   );

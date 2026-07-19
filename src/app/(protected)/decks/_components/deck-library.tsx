@@ -57,6 +57,7 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
       <Tabs.Panel className="pt-4" id="learning">
         <LibraryDeckCollection
           idPrefix="learning-decks"
+          context="learning"
           heading="Learning decks"
           decks={learningDecks}
           emptyTitle="No decks in learning"
@@ -67,6 +68,7 @@ export default function DeckLibrary({ ownedDecks, followedDecks, restorableDecks
       <Tabs.Panel className="pt-4" id="created">
         <LibraryDeckCollection
           idPrefix="created-decks"
+          context="created"
           heading="Your decks"
           decks={createdDecks}
           emptyTitle="No decks of your own yet"

@@ -7,7 +7,7 @@ const navigationItemBase = {
   desktop:
     'rounded-md px-2 py-2 transition-colors hover:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-3',
   mobile:
-    'rounded-lg px-3 py-2 text-sm transition-colors hover:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+    'flex min-h-11 items-center rounded-lg px-3 py-2 text-sm transition-colors hover:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
 };
 
 export function navigationItemClassName(variant: 'desktop' | 'mobile', isActive = false) {

@@ -4,7 +4,7 @@ import LessonCard from '@/app/(protected)/decks/[deckId]/edit/_components/lesson
 import CreateLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/create-lesson-modal';
 import PageHeader from '@/components/shared/layout/page-header';
 import { EditLessonSummary } from '@/types/lesson.types';
-import { Accordion, Card } from '@heroui/react';
+import { Accordion, Card, Tabs } from '@heroui/react';
 import EmptyState from '@/components/shared/empty-state';
 import { moveLessonAction } from '@/server/lesson.actions';
 import { moveItem } from '@/lib/order/move-item';
@@ -21,6 +21,7 @@ import RemovedDraftItems from './removed-draft-items';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 import ButtonLink from '@/components/shared/button-link';
+import type { DeckEditorTab } from '@/lib/deck-editor-tabs';
 
 type Props = {
   lessons: EditLessonSummary[];
@@ -30,6 +31,7 @@ type Props = {
   hasUnpublishedChanges: boolean;
   provenance: DeckProvenance | null;
   removedDraftItems: RemovedDraftItem[];
+  initialTab: DeckEditorTab;
 };
 
 export default function EditPage({
@@ -40,8 +42,10 @@ export default function EditPage({
   hasUnpublishedChanges,
   provenance,
   removedDraftItems,
+  initialTab,
 }: Props) {
   const router = useRouter();
+  const [selectedTab, setSelectedTab] = useState<DeckEditorTab>(initialTab);
   const [orderedLessons, setOrderedLessons] = useState(lessons);
   const [lessonCardCounts, setLessonCardCounts] = useState<Record<number, number>>(() =>
     Object.fromEntries(lessons.map(lesson => [lesson.id, lesson.vocabCount])),
@@ -97,81 +101,106 @@ export default function EditPage({
     }
   };
 
+  const handleTabChange = (key: string | number | null) => {
+    if (key !== 'content' && key !== 'publishing') return;
+
+    setSelectedTab(key);
+    const url = new URL(window.location.href);
+    if (key === 'publishing') url.searchParams.set('tab', 'publishing');
+    else url.searchParams.delete('tab');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title={deck.title}
-        description={
-          deck.sourceReleaseId
-            ? 'Manage your independent copy, its lessons, and publishing settings.'
-            : 'Manage this deck’s lessons and publishing settings.'
-        }
+        description="Edit this deck's content, details, and publishing settings."
         actions={
           <div className="flex flex-wrap gap-2">
-            <ButtonLink href={`/decks/${parsedDeckId}`} variant="secondary">
+            <ButtonLink href={`/decks/${parsedDeckId}`} variant="tertiary">
               Back to deck
             </ButtonLink>
-            <CreateLessonModal deckId={parsedDeckId} />
             <EditDeckModal deck={deck} />
           </div>
         }
       />
 
-      <section id="publishing" className="scroll-mt-6">
-        <PublicationPanel
-          deck={deck}
-          releases={releases}
-          hasUnpublishedChanges={hasUnpublishedChanges}
-          provenance={provenance}
-        />
-      </section>
+      <Tabs className="w-full" selectedKey={selectedTab} onSelectionChange={handleTabChange}>
+        <Tabs.ListContainer className="w-full">
+          <Tabs.List aria-label="Deck management sections" className="grid w-full grid-cols-2">
+            <Tabs.Tab id="content" className="w-full justify-center">
+              Content
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="publishing" className="w-full justify-center">
+              Publishing
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
 
-      <RemovedDraftItems items={removedDraftItems} />
+        <Tabs.Panel className="space-y-6 pt-4" id="content">
+          {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
 
-      {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
+          <Card>
+            <Card.Header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <Card.Title render={props => <h2 {...props} />}>Lessons</Card.Title>
+                <Card.Description>Group vocabulary into focused study sections.</Card.Description>
+              </div>
 
-      <Card>
-        <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <Card.Title render={props => <h2 {...props} />}>Lessons</Card.Title>
-            <Card.Description>Group vocabulary into focused study sections.</Card.Description>
-          </div>
+              <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                <p className="text-sm text-default-500">
+                  {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
+                  {totalCardCount} {totalCardCount === 1 ? 'card' : 'cards'}
+                </p>
+                <CreateLessonModal deckId={parsedDeckId} />
+              </div>
+            </Card.Header>
 
-          <p className="text-sm text-default-500">
-            {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
-            {totalCardCount} {totalCardCount === 1 ? 'card' : 'cards'}
-          </p>
-        </Card.Header>
-
-        <Card.Content>
-          {orderedLessons.length === 0 ? (
-            <EmptyState
-              title="No lessons yet"
-              description="Create your first lesson to start adding vocabulary."
-              action={<CreateLessonModal deckId={parsedDeckId} />}
-            />
-          ) : (
-            <Accordion
-              expandedKeys={expandedLessonKeys}
-              onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}
-            >
-              {orderedLessons.map((lesson, index) => (
-                <LessonCard
-                  key={lesson.id}
-                  deckId={parsedDeckId}
-                  lesson={lesson}
-                  canMoveUp={index > 0}
-                  canMoveDown={index < orderedLessons.length - 1}
-                  isLessonOrderPending={movingLessonId !== null}
-                  onMoveLesson={handleMoveLesson}
-                  isExpanded={expandedLessonKeys.has(String(lesson.id))}
-                  onCardCountChange={handleLessonCardCountChange}
+            <Card.Content>
+              {orderedLessons.length === 0 ? (
+                <EmptyState
+                  title="No lessons yet"
+                  description="Create your first lesson to start adding vocabulary."
+                  action={<CreateLessonModal deckId={parsedDeckId} />}
                 />
-              ))}
-            </Accordion>
-          )}
-        </Card.Content>
-      </Card>
+              ) : (
+                <Accordion
+                  expandedKeys={expandedLessonKeys}
+                  onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}
+                >
+                  {orderedLessons.map((lesson, index) => (
+                    <LessonCard
+                      key={lesson.id}
+                      deckId={parsedDeckId}
+                      lesson={lesson}
+                      canMoveUp={index > 0}
+                      canMoveDown={index < orderedLessons.length - 1}
+                      isLessonOrderPending={movingLessonId !== null}
+                      onMoveLesson={handleMoveLesson}
+                      isExpanded={expandedLessonKeys.has(String(lesson.id))}
+                      onCardCountChange={handleLessonCardCountChange}
+                    />
+                  ))}
+                </Accordion>
+              )}
+            </Card.Content>
+          </Card>
+
+          <RemovedDraftItems items={removedDraftItems} />
+        </Tabs.Panel>
+
+        <Tabs.Panel className="pt-4" id="publishing">
+          <PublicationPanel
+            deck={deck}
+            releases={releases}
+            hasUnpublishedChanges={hasUnpublishedChanges}
+            provenance={provenance}
+          />
+        </Tabs.Panel>
+      </Tabs>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { StudyContentSkeleton } from '@/app/(protected)/decks/[deckId]/_componen
 import { getDeckPageDataAction } from '@/server/deck.actions';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import { getLanguageName } from '@/lib/languages';
 
 type Props = {
   deckId: number;
@@ -52,7 +53,12 @@ export default async function DeckContent({ deckId }: Props) {
       </Suspense>
 
       <Suspense fallback={<LessonsSkeleton />}>
-        <DeckLessons deckId={deck.id} canStudy={canStudy} />
+        <DeckLessons
+          deckId={deck.id}
+          canStudy={canStudy}
+          frontLabel={getLanguageName(deck.frontLanguage) ?? 'Word'}
+          backLabel={getLanguageName(deck.backLanguage) ?? 'Meaning'}
+        />
       </Suspense>
     </div>
   );

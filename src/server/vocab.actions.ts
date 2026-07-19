@@ -10,6 +10,7 @@ import {
   getVocabByLessonId,
   getUserVocabLevelsByLessonId,
   moveVocab,
+  moveVocabToPosition,
   replaceVocab,
   restoreVocab,
   updateVocab,
@@ -101,6 +102,23 @@ export async function moveVocabAction(vocabId: number, direction: OrderDirection
     }
 
     const deckId = await moveVocab(vocabId, await getCurrentUserId(), direction);
+    revalidatePath(`/decks/${deckId}`);
+    revalidatePath(`/decks/${deckId}/edit`);
+  });
+}
+
+export async function moveVocabToPositionAction(vocabId: number, position: number) {
+  return withExpectedError(async () => {
+    const parsedVocabId = parsePositiveInteger(vocabId);
+    const parsedPosition = parsePositiveInteger(position);
+    if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
+    if (!parsedPosition) throw new Error('Invalid vocabulary position.');
+
+    const deckId = await moveVocabToPosition(
+      parsedVocabId,
+      await getCurrentUserId(),
+      parsedPosition - 1,
+    );
     revalidatePath(`/decks/${deckId}`);
     revalidatePath(`/decks/${deckId}/edit`);
   });

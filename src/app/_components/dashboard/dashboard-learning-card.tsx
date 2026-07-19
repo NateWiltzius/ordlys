@@ -19,24 +19,35 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
   const decksWithNewWords = decks.filter(deck => (deckStats[deck.id]?.newWordsAvailable ?? 0) > 0);
   const hasNewWords = newWordsAvailable > 0;
 
+  const learningCard = (
+    <StudyActionCard
+      title="Learn new cards"
+      description="Choose a deck and start learning new vocabulary."
+      count={newWordsAvailable}
+      countLabel="new cards across your decks"
+      actionLabel="Start learning"
+      icon={AcademicCapIcon}
+      tone="learning"
+      isModalTrigger={hasNewWords}
+      isDisabled={!hasNewWords}
+      unavailableAction={
+        <Button variant="secondary" size="lg" className="w-full" isDisabled>
+          No new cards available
+        </Button>
+      }
+    />
+  );
+
+  if (!hasNewWords) return learningCard;
+
   return (
     <Modal state={modalState}>
-      <StudyActionCard
-        title="Learn new cards"
-        description="Choose a deck and add new vocabulary to your review queue."
-        count={newWordsAvailable}
-        countLabel="new cards across your decks"
-        actionLabel="Start learning"
-        icon={AcademicCapIcon}
-        tone="learning"
-        onAction={hasNewWords ? modalState.open : undefined}
-        isDisabled={!hasNewWords}
-        unavailableAction={
-          <Button variant="secondary" size="lg" className="w-full" isDisabled>
-            No new cards available
-          </Button>
-        }
-      />
+      <Modal.Trigger
+        aria-label="Choose a deck to start learning"
+        className="group block h-full cursor-pointer rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+      >
+        {learningCard}
+      </Modal.Trigger>
 
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
@@ -68,7 +79,7 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
                         href={`/decks/${deck.id}/learn`}
                         className={`w-full shrink-0 sm:w-auto ${STUDY_TONE_STYLES.learning.button}`}
                       >
-                        Learn deck
+                        Learn <span className="sr-only">{deck.title}</span>
                       </ButtonLink>
                     </li>
                   );

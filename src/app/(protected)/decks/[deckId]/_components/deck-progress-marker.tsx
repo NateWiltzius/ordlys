@@ -1,10 +1,10 @@
-import { CheckIcon, MapIcon, TrophyIcon } from '@heroicons/react/24/outline';
+import { MapIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import { Card, ProgressBar } from '@heroui/react';
 import { summarizeDeckProgress } from '@/lib/deck-progress';
-import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { LessonProgress } from '@/types/review.types';
 import SemanticCardTitle from '@/components/shared/semantic-card-title';
+import LessonJourney from '@/app/(protected)/decks/[deckId]/_components/lesson-journey';
 
 type Props = {
   lessonProgress: LessonProgress[];
@@ -42,7 +42,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
               {progress.lessonMilestonesComplete
                 ? 'Every lesson milestone is complete.'
                 : progress.allCardsIntroduced
-                  ? 'Every card is in your review queue. Keep strengthening your recall.'
+                  ? 'You have started every word. Keep strengthening your recall.'
                   : currentLesson
                     ? `Currently working through ${currentLesson.lessonTitle}.`
                     : 'Start learning to begin your journey.'}
@@ -54,7 +54,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
           <p className="text-2xl font-semibold tracking-tight text-blue-600 dark:text-blue-400">
             {progress.percentage}%
           </p>
-          <p className="text-xs font-medium text-default-500">introduced</p>
+          <p className="text-xs font-medium text-default-500">started</p>
         </div>
       </Card.Header>
 
@@ -62,14 +62,14 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium text-default-700">
-              {progress.introducedCards} of {progress.totalCards} cards introduced
+              {progress.introducedCards} of {progress.totalCards} words started
             </span>
             <span className="text-default-500">
               {progress.coveredLessons} of {progress.lessons.length} lessons covered
             </span>
           </div>
           <ProgressBar
-            aria-label="Cards introduced across this deck"
+            aria-label="Words started across this deck"
             value={progress.introducedCards}
             maxValue={progress.totalCards}
             size="md"
@@ -80,50 +80,11 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
           </ProgressBar>
         </div>
 
-        <div className="overflow-x-auto px-1 pt-1 pb-4">
-          <ol className="flex min-w-max items-center" aria-label="Lesson journey">
-            {progress.lessons.map((lesson, index) => {
-              const isCovered = lesson.introducedWords >= lesson.totalWords;
-              const isCurrent = lesson.lessonId === currentLesson?.lessonId;
-              const isActive = isCurrent && !progress.lessonMilestonesComplete;
-
-              return (
-                <li key={lesson.lessonId} className="flex items-center" title={lesson.lessonTitle}>
-                  <span
-                    className={`flex size-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors ${
-                      isActive
-                        ? 'border-blue-600 bg-blue-600 text-white ring-2 ring-blue-500/15'
-                        : isCovered
-                          ? 'border-success bg-success text-white'
-                          : lesson.isUnlocked
-                            ? 'border-default-300 bg-background text-default-600'
-                            : 'border-default-200 bg-default-100 text-default-400'
-                    }`}
-                    aria-label={`${lesson.lessonTitle}: ${
-                      isActive
-                        ? 'current'
-                        : isCovered
-                          ? 'covered'
-                          : lesson.isUnlocked
-                            ? 'unlocked'
-                            : 'locked'
-                    }`}
-                  >
-                    {isCovered ? <CheckIcon className="size-4" aria-hidden="true" /> : index + 1}
-                  </span>
-                  {index < progress.lessons.length - 1 ? (
-                    <span
-                      className={`mx-1 h-0.5 w-10 sm:w-14 ${
-                        progress.lessons[index + 1]?.isUnlocked ? 'bg-success' : 'bg-default-200'
-                      }`}
-                      aria-hidden="true"
-                    />
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+        <LessonJourney
+          lessons={progress.lessons}
+          currentLessonId={currentLesson?.lessonId ?? null}
+          isComplete={progress.lessonMilestonesComplete}
+        />
 
         {currentLesson && !progress.lessonMilestonesComplete ? (
           <div className="space-y-2 rounded-xl border border-default-200 bg-default-50/70 p-4">
@@ -132,13 +93,12 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                 <p className="font-medium text-default-800">{currentLesson.lessonTitle}</p>
                 <p className="text-sm text-default-500">
                   Lesson {progress.currentLessonNumber} of {progress.lessons.length} ·{' '}
-                  {currentLesson.introducedWords} of {currentLesson.totalWords} cards introduced
+                  {currentLesson.introducedWords} of {currentLesson.totalWords} words started
                 </p>
               </div>
               <p className="text-sm font-medium text-default-700">
-                {currentLesson.learnedWords} {currentLesson.learnedWords === 1 ? 'card' : 'cards'}{' '}
-                at level {LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} &middot;{' '}
-                {currentLesson.requiredWords} required
+                {Math.min(currentLesson.learnedWords, currentLesson.requiredWords)} of{' '}
+                {currentLesson.requiredWords} words strengthened
               </p>
             </div>
             <ProgressBar
@@ -158,8 +118,8 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                   ? `${progress.nextLesson.lessonTitle} unlocked`
                   : 'Final lesson milestone reached'
                 : `${remainingLearnedWords} more ${
-                    remainingLearnedWords === 1 ? 'card' : 'cards'
-                  } at level ${LESSON_PROGRESSION_CONFIG.learnedDisplayLevel} to ${
+                    remainingLearnedWords === 1 ? 'word' : 'words'
+                  } to strengthen before you ${
                     progress.nextLesson ? 'unlock the next lesson' : 'complete the final milestone'
                   }`}
             </p>

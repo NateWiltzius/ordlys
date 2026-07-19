@@ -3,16 +3,18 @@
 import CreateVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/create-vocab-modal';
 import EditLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/edit-lesson-modal';
 import EditVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/edit-vocab-modal';
+import MoveVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/move-vocab-modal';
 import VocabularyLoading from '@/app/(protected)/decks/[deckId]/edit/_components/vocabulary-loading';
 import VocabTable from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-table';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
-import { moveItem } from '@/lib/order/move-item';
+import { moveItem, moveItemToIndex } from '@/lib/order/move-item';
 import { deleteLessonAction } from '@/server/lesson.actions';
 import {
   deleteVocabAction,
   getEditableLessonVocabularyAction,
   moveVocabAction,
+  moveVocabToPositionAction,
 } from '@/server/vocab.actions';
 import { EditLessonSummary } from '@/types/lesson.types';
 import { OrderDirection } from '@/types/order.types';
@@ -20,10 +22,11 @@ import { Vocab } from '@/types/vocab.types';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  NumberedListIcon,
   PencilSquareIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { Accordion, Button, Chip } from '@heroui/react';
+import { Accordion, Button, Chip, Tooltip } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isActionFailure } from '@/lib/action-result';
@@ -56,6 +59,7 @@ export default function LessonCard({
   const [movingVocabId, setMovingVocabId] = useState<number | null>(null);
   const [deletingVocabId, setDeletingVocabId] = useState<number | null>(null);
   const [selectedVocab, setSelectedVocab] = useState<Vocab | null>(null);
+  const [moveTarget, setMoveTarget] = useState<Vocab | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<'lesson' | Vocab | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const loadRequested = useRef(false);
@@ -134,6 +138,39 @@ export default function LessonCard({
     } catch (error) {
       setOrderedVocabs(previousVocabs);
       setMutationError(error instanceof Error ? error.message : 'Could not reorder vocabulary.');
+    } finally {
+      setMovingVocabId(null);
+    }
+  };
+
+  const handleMoveVocabToPosition = async (
+    vocabId: number,
+    position: number,
+  ): Promise<string | null> => {
+    if (!orderedVocabs || movingVocabId !== null) return 'Another card is already being moved.';
+
+    const previousVocabs = orderedVocabs;
+    const currentIndex = previousVocabs.findIndex(vocab => vocab.id === vocabId);
+    const nextVocabs = moveItemToIndex(previousVocabs, currentIndex, position - 1);
+    if (nextVocabs === previousVocabs) return null;
+
+    setOrderedVocabs(nextVocabs);
+    setMovingVocabId(vocabId);
+    setMutationError(null);
+
+    try {
+      const result = await moveVocabToPositionAction(vocabId, position);
+      if (isActionFailure(result)) {
+        setOrderedVocabs(previousVocabs);
+        setMutationError(result.message);
+        return result.message;
+      }
+      return null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not reorder vocabulary.';
+      setOrderedVocabs(previousVocabs);
+      setMutationError(message);
+      return message;
     } finally {
       setMovingVocabId(null);
     }
@@ -235,6 +272,19 @@ export default function LessonCard({
                     >
                       <TrashIcon className="size-4" aria-hidden="true" />
                     </Button>
+                    <Tooltip delay={300}>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isIconOnly
+                        isDisabled={orderedVocabs.length < 2 || movingVocabId !== null}
+                        aria-label={`Move ${vocab.front} to another position`}
+                        onPress={() => setMoveTarget(vocab)}
+                      >
+                        <NumberedListIcon className="size-4" aria-hidden="true" />
+                      </Button>
+                      <Tooltip.Content>Move to position</Tooltip.Content>
+                    </Tooltip>
                     <Button
                       size="sm"
                       variant="tertiary"
@@ -283,6 +333,24 @@ export default function LessonCard({
                 if (!isOpen) setSelectedVocab(null);
               }}
               onSaved={() => loadVocabulary(false)}
+            />
+            <MoveVocabModal
+              vocab={moveTarget}
+              currentPosition={
+                moveTarget
+                  ? (orderedVocabs?.findIndex(vocab => vocab.id === moveTarget.id) ?? -1) + 1
+                  : 0
+              }
+              totalPositions={orderedVocabs?.length ?? 0}
+              isOpen={moveTarget !== null}
+              onOpenChange={isOpen => {
+                if (!isOpen) setMoveTarget(null);
+              }}
+              onMove={position =>
+                moveTarget
+                  ? handleMoveVocabToPosition(moveTarget.id, position)
+                  : Promise.resolve('Vocabulary is no longer available.')
+              }
             />
             <ConfirmationDialog
               isOpen={deleteTarget !== null}

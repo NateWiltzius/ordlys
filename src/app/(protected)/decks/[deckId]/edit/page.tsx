@@ -3,6 +3,7 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { getEditDeckPageDataAction } from '@/server/deck.actions';
 import type { Metadata } from 'next';
+import { parseDeckEditorTab } from '@/lib/deck-editor-tabs';
 
 export const metadata: Metadata = {
   title: 'Manage deck',
@@ -13,10 +14,13 @@ type Props = {
   params: Promise<{
     deckId: string;
   }>;
+  searchParams: Promise<{
+    tab?: string | string[];
+  }>;
 };
 
-export default async function Page({ params }: Props) {
-  const { deckId } = await params;
+export default async function Page({ params, searchParams }: Props) {
+  const [{ deckId }, query] = await Promise.all([params, searchParams]);
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
 
@@ -33,6 +37,7 @@ export default async function Page({ params }: Props) {
       removedDraftItems={removedDraftItems}
       lessons={lessons}
       parsedDeckId={parsedDeckId}
+      initialTab={parseDeckEditorTab(query.tab)}
     />
   );
 }

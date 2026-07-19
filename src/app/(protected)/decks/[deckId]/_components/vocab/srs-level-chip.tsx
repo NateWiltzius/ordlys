@@ -20,7 +20,7 @@ export default function SrsLevelChip({ srsLevel }: Props) {
 
   return (
     <Chip size="sm" variant="soft" className={SRS_CATEGORY_STYLES[categoryKey].chip}>
-      Level {normalizedLevel + 1} · {SRS_LEVEL_LABELS[normalizedLevel]}
+      {SRS_LEVEL_LABELS[normalizedLevel]}
     </Chip>
   );
 }

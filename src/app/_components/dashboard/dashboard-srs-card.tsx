@@ -6,6 +6,13 @@ type Props = {
   counts: SrsCategoryCounts;
 };
 
+const categoryDescriptions: Record<(typeof SRS_CATEGORIES)[number]['key'], string> = {
+  learning: 'Needs frequent review',
+  strong: 'Recall is improving',
+  mature: 'Remembered over time',
+  mastered: 'Longest review interval',
+};
+
 export default function DashboardSrsCard({ counts }: Props) {
   const total = SRS_CATEGORIES.reduce((sum, category) => sum + counts[category.key], 0);
 
@@ -13,11 +20,11 @@ export default function DashboardSrsCard({ counts }: Props) {
     <Card>
       <Card.Header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="card__title">SRS distribution</h2>
-          <Card.Description>Cards you have started across your active decks.</Card.Description>
+          <h2 className="card__title">Memory strength</h2>
+          <Card.Description>How well you remember words across your active decks.</Card.Description>
         </div>
         <p className="text-sm text-default-500">
-          {total} {total === 1 ? 'card' : 'cards'}
+          {total} {total === 1 ? 'word' : 'words'}
         </p>
       </Card.Header>
 
@@ -25,7 +32,7 @@ export default function DashboardSrsCard({ counts }: Props) {
         {total > 0 ? (
           <div
             className="flex h-3 w-full overflow-hidden rounded-full bg-default-100"
-            aria-label={`SRS distribution across ${total} cards`}
+            aria-label={`Memory strength across ${total} words`}
           >
             {SRS_CATEGORIES.map(category => {
               const count = counts[category.key];
@@ -55,7 +62,9 @@ export default function DashboardSrsCard({ counts }: Props) {
                 <dd className={`mt-2 text-2xl font-semibold tabular-nums ${styles.text}`}>
                   {counts[category.key]}
                 </dd>
-                <dd className="mt-1 text-xs text-default-500">{category.levelLabel}</dd>
+                <dd className="mt-1 text-xs text-default-500">
+                  {categoryDescriptions[category.key]}
+                </dd>
               </div>
             );
           })}
