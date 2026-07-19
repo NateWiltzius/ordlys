@@ -85,8 +85,9 @@ export function useKeepAboveKeyboard(
       }, BLUR_CLEANUP_DELAY);
     };
 
+    // A visualViewport scroll can be a deliberate swipe. Reposition on focus and
+    // resize, but leave subsequent scrolling under the learner's control.
     viewport.addEventListener('resize', updatePosition);
-    viewport.addEventListener('scroll', updatePosition);
     input.addEventListener('focus', updatePosition);
     input.addEventListener('click', updatePosition);
     input.addEventListener('blur', clearKeyboardState);
@@ -95,7 +96,6 @@ export function useKeepAboveKeyboard(
     return () => {
       window.clearTimeout(settleTimer);
       viewport.removeEventListener('resize', updatePosition);
-      viewport.removeEventListener('scroll', updatePosition);
       input.removeEventListener('focus', updatePosition);
       input.removeEventListener('click', updatePosition);
       input.removeEventListener('blur', clearKeyboardState);
