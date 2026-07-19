@@ -2,7 +2,7 @@
 
 import { QuizFeedback } from '@/types/quiz.types';
 import { Button, Chip } from '@heroui/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import AnswerRow from '@/components/quiz/answer-row';
 import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
@@ -17,6 +17,8 @@ type Props = {
   onAcceptAnyway?: () => void;
   keyboardShortcutEnabled?: boolean;
 };
+
+const KEYBOARD_SHORTCUT_DELAY = 250;
 
 export default function QuizFeedbackPanel({
   feedback,
@@ -37,22 +39,49 @@ export default function QuizFeedbackPanel({
     feedback.quizItem.frontLanguage,
     feedback.quizItem.backLanguage,
   );
+  const onContinueRef = useRef(onContinue);
+
+  useEffect(() => {
+    onContinueRef.current = onContinue;
+  }, [onContinue]);
+
   useEffect(() => {
     if (!keyboardShortcutEnabled) return;
 
+    let shortcutReady = false;
+    const shortcutTimer = window.setTimeout(() => {
+      shortcutReady = true;
+    }, KEYBOARD_SHORTCUT_DELAY);
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' || event.repeat || event.isComposing) {
+      const target = event.target;
+      const isInteractiveTarget =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.matches('input, textarea, select, button, a[href], [role="button"]'));
+
+      if (
+        !shortcutReady ||
+        event.defaultPrevented ||
+        isInteractiveTarget ||
+        event.key !== 'Enter' ||
+        event.repeat ||
+        event.isComposing
+      ) {
         return;
       }
 
       event.preventDefault();
-      onContinue();
+      onContinueRef.current();
     };
 
     window.addEventListener('keydown', handleKeyDown);
 
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [keyboardShortcutEnabled, onContinue]);
+    return () => {
+      window.clearTimeout(shortcutTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [keyboardShortcutEnabled]);
 
   return (
     <section className="border-y border-default-200 py-5 sm:py-6">

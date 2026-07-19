@@ -21,13 +21,27 @@ export function useKeepAboveKeyboard(
     const input = inputRef.current;
     if (!viewport || !context || !input) return;
     let settleTimer: number | undefined;
+    let layoutViewportHeight = getStableLayoutViewportHeight(
+      0,
+      window.innerHeight,
+      document.documentElement.clientHeight,
+      viewport.height,
+    );
 
     const updatePosition = () => {
       window.clearTimeout(settleTimer);
       settleTimer = window.setTimeout(() => {
+        layoutViewportHeight = getStableLayoutViewportHeight(
+          layoutViewportHeight,
+          window.innerHeight,
+          document.documentElement.clientHeight,
+          viewport.height,
+        );
         // offsetTop describes viewport panning, not keyboard height. Subtracting it
-        // makes the keyboard inset disappear after the first question scrolls.
-        const keyboardInset = getKeyboardInset(window.innerHeight, viewport.height);
+        // makes the keyboard inset disappear after the first question scrolls. Keep
+        // the pre-keyboard layout height as well because some mobile browsers resize
+        // both window.innerHeight and visualViewport.height when the keyboard opens.
+        const keyboardInset = getKeyboardInset(layoutViewportHeight, viewport.height);
         const keyboardOpen = document.activeElement === input && keyboardInset > 0;
         context.dataset.keyboardOpen = String(keyboardOpen);
         context.style.marginBottom = keyboardOpen
@@ -93,4 +107,13 @@ export function useKeepAboveKeyboard(
 
 export function getKeyboardInset(layoutViewportHeight: number, visualViewportHeight: number) {
   return Math.max(0, layoutViewportHeight - visualViewportHeight);
+}
+
+export function getStableLayoutViewportHeight(
+  previousHeight: number,
+  windowHeight: number,
+  documentHeight: number,
+  visualViewportHeight: number,
+) {
+  return Math.max(previousHeight, windowHeight, documentHeight, visualViewportHeight);
 }

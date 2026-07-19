@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Input } from '@heroui/react';
-import { FormEvent, KeyboardEvent, useRef } from 'react';
+import { FormEvent, KeyboardEvent, useLayoutEffect, useRef } from 'react';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
 import { useKeepAboveKeyboard } from '@/hooks/use-keep-above-keyboard';
@@ -45,6 +45,12 @@ export default function QuizAnswerForm({
   );
   const hasAnswer = answer.trim().length > 0;
   useKeepAboveKeyboard(answerInputRef, answerCardRef, keepAboveKeyboard, `${direction}:${prompt}`);
+
+  useLayoutEffect(() => {
+    if (!autoFocus) return;
+
+    answerInputRef.current?.focus({ preventScroll: true });
+  }, [autoFocus, direction, prompt]);
 
   const submitAnswer = () => {
     if (!hasAnswer) {
@@ -107,7 +113,6 @@ export default function QuizAnswerForm({
               onChange={e => onAnswerChange(e.target.value)}
               onKeyDown={handleAnswerKeyDown}
               placeholder="Your answer"
-              autoFocus={autoFocus}
               required
               fullWidth
               lang={answerLanguageCode ?? undefined}

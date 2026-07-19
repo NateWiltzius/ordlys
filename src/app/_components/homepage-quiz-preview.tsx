@@ -4,7 +4,9 @@ import QuizAnswerForm from '@/components/quiz/quiz-answer-form';
 import QuizFeedbackPanel from '@/components/quiz/quiz-feedback-panel';
 import { normalizeAnswer } from '@/lib/quiz/normalize';
 import type { QuizFeedback, QuizQueueItem } from '@/types/quiz.types';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const SCROLL_RESTORE_DELAY = 100;
 
 const PREVIEW_ITEMS: QuizQueueItem[] = [
   {
@@ -43,12 +45,25 @@ export default function HomepageQuizPreview() {
   const [itemIndex, setItemIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<QuizFeedback | null>(null);
+  const scrollRestoreTimerRef = useRef<number | null>(null);
+  const previousOverflowAnchorRef = useRef<string | null>(null);
   const quizItem = PREVIEW_ITEMS[itemIndex];
   const reservedFeedback: QuizFeedback = feedback ?? {
     quizItem,
     submittedAnswer: quizItem.answer,
     isCorrect: true,
   };
+
+  useEffect(() => {
+    return () => {
+      if (scrollRestoreTimerRef.current !== null) {
+        window.clearTimeout(scrollRestoreTimerRef.current);
+      }
+      if (previousOverflowAnchorRef.current !== null) {
+        document.documentElement.style.overflowAnchor = previousOverflowAnchorRef.current;
+      }
+    };
+  }, []);
 
   const submitAnswer = () => {
     const normalizedAnswer = normalizeAnswer(answer);
@@ -62,9 +77,25 @@ export default function HomepageQuizPreview() {
   };
 
   const continuePreview = () => {
+    const previousScrollY = window.scrollY;
+    const root = document.documentElement;
+    const previousOverflowAnchor = root.style.overflowAnchor;
+    previousOverflowAnchorRef.current = previousOverflowAnchor;
+    root.style.overflowAnchor = 'none';
+
     setItemIndex(index => (index + 1) % PREVIEW_ITEMS.length);
     setAnswer('');
     setFeedback(null);
+
+    if (scrollRestoreTimerRef.current !== null) {
+      window.clearTimeout(scrollRestoreTimerRef.current);
+    }
+    scrollRestoreTimerRef.current = window.setTimeout(() => {
+      root.style.overflowAnchor = previousOverflowAnchor;
+      window.scrollTo({ top: previousScrollY, behavior: 'auto' });
+      scrollRestoreTimerRef.current = null;
+      previousOverflowAnchorRef.current = null;
+    }, SCROLL_RESTORE_DELAY);
   };
 
   return (
