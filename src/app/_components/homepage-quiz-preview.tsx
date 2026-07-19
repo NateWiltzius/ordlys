@@ -76,7 +76,7 @@ export default function HomepageQuizPreview() {
 
       <div className="grid">
         <div
-          className={`col-start-1 row-start-1 ${feedback ? 'invisible pointer-events-none' : ''}`}
+          className={`col-start-1 row-start-1 ${feedback ? 'hidden' : ''}`}
           aria-hidden={feedback ? true : undefined}
         >
           <QuizAnswerForm
@@ -95,7 +95,7 @@ export default function HomepageQuizPreview() {
         </div>
 
         <div
-          className={`col-start-1 row-start-1 ${feedback ? '' : 'invisible pointer-events-none'}`}
+          className={`col-start-1 row-start-1 ${feedback ? '' : 'hidden'}`}
           aria-hidden={feedback ? undefined : true}
         >
           <QuizFeedbackPanel

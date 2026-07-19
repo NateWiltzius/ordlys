@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import DeckBadge from '@/components/shared/deck-badge';
 import PublicDeckActions from '@/app/public/decks/[deckId]/_components/public-deck-actions';
+import CollapsibleSection from '@/components/shared/collapsible-section';
 
 type Props = {
   params: Promise<{ deckId: string }>;
@@ -77,8 +78,8 @@ export default async function PublicDeckPage({ params }: Props) {
         <span aria-hidden="true">/</span> <span>{deck.title}</span>
       </nav>
 
-      <Card className="overflow-hidden">
-        <Card.Header className="flex-col items-start gap-4 bg-default-50 px-6 py-7 sm:flex-row sm:justify-between">
+      <header className="py-2 sm:py-4">
+        <div className="flex flex-col items-start gap-6 sm:flex-row sm:justify-between">
           <div className="max-w-3xl space-y-3">
             <div className="flex flex-wrap gap-2">
               <DeckBadge kind="public" />
@@ -101,68 +102,72 @@ export default async function PublicDeckPage({ params }: Props) {
           <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:min-w-56">
             <PublicDeckActions appDeckPath={appDeckPath} placement="header" />
           </div>
-        </Card.Header>
-
-        <Card.Content className="px-6 py-5">
-          <dl className="grid max-w-lg grid-cols-2 gap-4">
-            <div>
-              <dt className="text-sm text-default-500">Lessons</dt>
-              <dd className="text-2xl font-semibold">{deck.lessonCount}</dd>
-            </div>
-            <div>
-              <dt className="text-sm text-default-500">Vocabulary cards</dt>
-              <dd className="text-2xl font-semibold">{deck.wordCount}</dd>
-            </div>
-          </dl>
-        </Card.Content>
-      </Card>
-
-      <section aria-labelledby="lesson-outline-heading" className="space-y-4">
-        <div>
-          <h2 id="lesson-outline-heading" className="text-2xl font-semibold">
-            Lesson outline
-          </h2>
-          <p className="mt-1 text-default-500">See how the vocabulary is organized.</p>
         </div>
 
+        <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-3">
+          <div>
+            <dt className="text-sm text-default-500">Lessons</dt>
+            <dd className="text-2xl font-semibold">{deck.lessonCount}</dd>
+          </div>
+          <div>
+            <dt className="text-sm text-default-500">Vocabulary cards</dt>
+            <dd className="text-2xl font-semibold">{deck.wordCount}</dd>
+          </div>
+        </dl>
+      </header>
+
+      <CollapsibleSection
+        id="lesson-outline"
+        title="Lesson outline"
+        description="Open to see how the vocabulary is organized."
+        summary={
+          <Chip size="sm" variant="soft">
+            {deck.lessonCount} {deck.lessonCount === 1 ? 'lesson' : 'lessons'}
+          </Chip>
+        }
+      >
         {deck.lessons.length > 0 ? (
-          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ol className="flex flex-col gap-1">
             {deck.lessons.map((lesson, index) => (
-              <li key={lesson.id}>
-                <Card className="h-full">
-                  <Card.Header className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-default-500">
-                      Lesson {index + 1}
-                    </p>
-                    <h3 className="font-semibold">{lesson.title}</h3>
-                    <Card.Description>
-                      {lesson.wordCount} {lesson.wordCount === 1 ? 'card' : 'cards'}
-                    </Card.Description>
-                  </Card.Header>
-                </Card>
+              <li
+                key={lesson.id}
+                className="flex flex-col gap-2 rounded-lg px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="w-16 shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-wide text-default-500">
+                    Lesson {index + 1}
+                  </span>
+                  <h3 className="min-w-0 font-medium">{lesson.title}</h3>
+                </div>
+                <Chip size="sm" variant="soft" className="w-fit shrink-0">
+                  {lesson.wordCount} {lesson.wordCount === 1 ? 'card' : 'cards'}
+                </Chip>
               </li>
             ))}
           </ol>
         ) : (
-          <p className="rounded-xl border border-default-200 bg-default-50 px-5 py-6 text-default-500">
+          <p className="rounded-lg bg-default-100 px-5 py-6 text-default-500">
             This deck does not have any lessons yet.
           </p>
         )}
-      </section>
+      </CollapsibleSection>
 
       {deck.vocabularyPreview.length > 0 ? (
-        <section aria-labelledby="vocabulary-preview-heading" className="space-y-4">
+        <section
+          aria-labelledby="vocabulary-preview-heading"
+          className="border-t border-default-200 pt-6"
+        >
           <div>
-            <h2 id="vocabulary-preview-heading" className="text-2xl font-semibold">
+            <h2 id="vocabulary-preview-heading" className="text-lg font-semibold">
               Vocabulary preview
             </h2>
-            <p className="mt-1 text-default-500">
+            <p className="mt-1 text-sm leading-6 text-default-500">
               Showing {deck.vocabularyPreview.length} of {deck.wordCount} cards. Create an account
               to study the deck with spaced repetition and save your progress.
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-default-200">
+          <div className="mt-4 overflow-x-auto rounded-lg border border-default-200">
             <table className="w-full border-collapse text-left">
               <thead className="bg-default-50 text-sm text-default-500">
                 <tr>
@@ -203,11 +208,14 @@ export default async function PublicDeckPage({ params }: Props) {
       ) : null}
 
       {deck.communityVariants.length ? (
-        <section className="space-y-3" aria-labelledby="community-variants-heading">
-          <h2 id="community-variants-heading" className="text-2xl font-semibold">
+        <section
+          className="border-t border-default-200 pt-6"
+          aria-labelledby="community-variants-heading"
+        >
+          <h2 id="community-variants-heading" className="text-lg font-semibold">
             Community variants
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {deck.communityVariants.map(variant => (
               <Card key={variant.id}>
                 <Card.Header>

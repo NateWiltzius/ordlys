@@ -14,7 +14,7 @@ export function StudyContentSkeleton() {
         <StudyActionCardSkeleton />
       </div>
       <DeckProgressSkeleton />
-      <div className="flex items-center justify-between gap-4 border-y border-default-200 py-4">
+      <div className="flex items-center justify-between gap-4 border-t border-default-200 py-6">
         <div className="min-w-0 flex-1 space-y-2">
           <SkeletonLine className="h-5 w-36" />
           <SkeletonLine className="h-4 w-64 max-w-full" />

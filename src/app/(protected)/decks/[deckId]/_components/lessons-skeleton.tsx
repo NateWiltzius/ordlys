@@ -3,7 +3,7 @@ import { SkeletonBlock, SkeletonLine } from '@/components/shared/skeleton';
 export default function LessonsSkeleton() {
   return (
     <section
-      className="border-y border-default-200 py-4"
+      className="border-t border-default-200 py-6"
       role="status"
       aria-label="Loading lessons"
       aria-busy="true"

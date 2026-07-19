@@ -1,5 +1,5 @@
 import PublicDeckBrowser from '@/app/public/decks/_components/public-deck-browser';
-import ButtonLink from '@/components/shared/button-link';
+import PublicDecksAccountAction from '@/app/public/decks/_components/public-decks-account-action';
 import { getCachedPublicDeckSummaries } from '@/db/queries/public-deck.queries';
 
 export default async function PublicDeckResults() {
@@ -16,9 +16,7 @@ export default async function PublicDeckResults() {
             Preview any deck without an account. An account is required to study and save progress.
           </p>
         </div>
-        <ButtonLink href="/auth/sign-up" size="sm">
-          Create an account
-        </ButtonLink>
+        <PublicDecksAccountAction />
       </div>
       <PublicDeckBrowser decks={decks} />
     </section>
@@ -28,9 +26,9 @@ export default async function PublicDeckResults() {
       <p className="mt-2 text-default-500">
         Create an account to build your own vocabulary decks in the meantime.
       </p>
-      <ButtonLink href="/auth/sign-up" className="mt-5">
-        Start learning
-      </ButtonLink>
+      <div className="mt-5 flex justify-center">
+        <PublicDecksAccountAction />
+      </div>
     </section>
   );
 }

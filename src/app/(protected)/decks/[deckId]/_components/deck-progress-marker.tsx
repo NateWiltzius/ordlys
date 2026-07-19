@@ -1,6 +1,5 @@
 import { TrophyIcon } from '@heroicons/react/24/outline';
 import { ProgressBar } from '@heroui/react';
-import LessonJourney from '@/app/(protected)/decks/[deckId]/_components/lesson-journey';
 import { summarizeDeckProgress } from '@/lib/deck-progress';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { LessonProgress } from '@/types/review.types';
@@ -43,11 +42,11 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
           <p className={`text-2xl font-semibold ${STUDY_TONE_STYLES.learning.text}`}>
             {progress.percentage}%
           </p>
-          <p className="text-xs font-medium text-default-500">started</p>
+          <p className="text-xs font-medium text-default-500">deck started</p>
         </div>
       </div>
 
-      <div className="mt-5 space-y-5">
+      <div className="mt-5">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="font-medium text-default-700">
@@ -69,20 +68,14 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
           </ProgressBar>
         </div>
 
-        <LessonJourney
-          lessons={progress.lessons}
-          currentLessonId={currentLesson?.lessonId ?? null}
-          isComplete={progress.lessonMilestonesComplete}
-        />
-
         {currentLesson && !progress.lessonMilestonesComplete ? (
-          <div className="space-y-3 border-y border-default-200 py-4">
+          <div className="mt-5 space-y-3 border-l-2 border-blue-500/40 pl-4 sm:pl-5">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="font-medium text-default-800">{currentLesson.lessonTitle}</p>
                 <p className="text-sm text-default-500">
-                  Lesson {progress.currentLessonNumber} of {progress.lessons.length} &middot;{' '}
-                  {currentLesson.introducedWords} of {currentLesson.totalWords} words started
+                  Current milestone &middot; Lesson {progress.currentLessonNumber} of{' '}
+                  {progress.lessons.length}
                 </p>
               </div>
               <p className="text-sm font-medium text-default-700">
@@ -111,6 +104,10 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                   } to strengthen before you ${
                     progress.nextLesson ? 'unlock the next lesson' : 'complete the final milestone'
                   }`}
+            </p>
+            <p className="text-xs text-default-500">
+              {currentLesson.introducedWords} of {currentLesson.totalWords} words introduced in this
+              lesson
             </p>
           </div>
         ) : null}

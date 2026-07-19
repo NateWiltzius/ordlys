@@ -52,15 +52,6 @@
     border-radius: 0.5rem;
     box-shadow: none;
   }
-
-  .deck-lessons-section .accordion__trigger {
-    background: transparent;
-    padding-inline: 0;
-  }
-
-  .deck-lessons-section .accordion__body-inner {
-    padding-inline: 0;
-  }
 }
 
 html[data-quiz-active='true'] [data-app-navigation],

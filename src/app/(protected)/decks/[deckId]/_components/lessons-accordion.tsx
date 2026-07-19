@@ -26,6 +26,8 @@ export default function LessonsAccordion({
 
   return (
     <Accordion
+      className="flex flex-col gap-1"
+      hideSeparator
       expandedKeys={expandedKeys}
       onExpandedChange={keys => setExpandedKeys(new Set(keys))}
     >
@@ -34,9 +36,13 @@ export default function LessonsAccordion({
         const isExpanded = expandedKeys.has(lessonKey);
 
         return (
-          <Accordion.Item key={lesson.lessonId} id={lessonKey}>
+          <Accordion.Item
+            key={lesson.lessonId}
+            id={lessonKey}
+            className="overflow-hidden rounded-lg"
+          >
             <Accordion.Heading>
-              <Accordion.Trigger>
+              <Accordion.Trigger className="px-3 py-3">
                 <span className="flex min-w-0 flex-1 flex-col items-start gap-2 pr-2 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <span className="min-w-0 break-words font-medium">{lesson.lessonTitle}</span>
                   {lesson.totalWords === 0 ? (
@@ -58,7 +64,7 @@ export default function LessonsAccordion({
               </Accordion.Trigger>
             </Accordion.Heading>
             <Accordion.Panel>
-              <Accordion.Body>
+              <Accordion.Body className="px-3 pb-4">
                 {canStudy && lesson.canTakePlacementTest ? (
                   <div className="mb-4 flex justify-end">
                     <ButtonLink

@@ -11,6 +11,7 @@ export function useKeepAboveKeyboard(
   inputRef: RefObject<HTMLInputElement | null>,
   contextRef: RefObject<HTMLElement | null>,
   enabled = true,
+  positionKey?: string | number,
 ) {
   useEffect(() => {
     if (!enabled) return;
@@ -24,10 +25,9 @@ export function useKeepAboveKeyboard(
     const updatePosition = () => {
       window.clearTimeout(settleTimer);
       settleTimer = window.setTimeout(() => {
-        const keyboardInset = Math.max(
-          0,
-          window.innerHeight - viewport.height - viewport.offsetTop,
-        );
+        // offsetTop describes viewport panning, not keyboard height. Subtracting it
+        // makes the keyboard inset disappear after the first question scrolls.
+        const keyboardInset = getKeyboardInset(window.innerHeight, viewport.height);
         const keyboardOpen = document.activeElement === input && keyboardInset > 0;
         context.dataset.keyboardOpen = String(keyboardOpen);
         context.style.marginBottom = keyboardOpen
@@ -72,17 +72,25 @@ export function useKeepAboveKeyboard(
     };
 
     viewport.addEventListener('resize', updatePosition);
+    viewport.addEventListener('scroll', updatePosition);
     input.addEventListener('focus', updatePosition);
+    input.addEventListener('click', updatePosition);
     input.addEventListener('blur', clearKeyboardState);
     updatePosition();
 
     return () => {
       window.clearTimeout(settleTimer);
       viewport.removeEventListener('resize', updatePosition);
+      viewport.removeEventListener('scroll', updatePosition);
       input.removeEventListener('focus', updatePosition);
+      input.removeEventListener('click', updatePosition);
       input.removeEventListener('blur', clearKeyboardState);
       context.style.marginBottom = '';
       delete context.dataset.keyboardOpen;
     };
-  }, [contextRef, enabled, inputRef]);
+  }, [contextRef, enabled, inputRef, positionKey]);
+}
+
+export function getKeyboardInset(layoutViewportHeight: number, visualViewportHeight: number) {
+  return Math.max(0, layoutViewportHeight - visualViewportHeight);
 }

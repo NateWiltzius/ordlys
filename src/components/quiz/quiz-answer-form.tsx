@@ -44,7 +44,7 @@ export default function QuizAnswerForm({
     backLanguage,
   );
   const hasAnswer = answer.trim().length > 0;
-  useKeepAboveKeyboard(answerInputRef, answerCardRef, keepAboveKeyboard);
+  useKeepAboveKeyboard(answerInputRef, answerCardRef, keepAboveKeyboard, `${direction}:${prompt}`);
 
   const submitAnswer = () => {
     if (!hasAnswer) {

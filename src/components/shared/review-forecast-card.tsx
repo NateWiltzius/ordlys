@@ -110,10 +110,10 @@ export default function ReviewForecastCard({
 
   if (collapsible) {
     return (
-      <details className="group border-y border-default-200">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
+      <details className="group border-t border-default-200">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
           <div className="min-w-0">
-            <h2 className="font-semibold">{title}</h2>
+            <h2 className="text-lg font-semibold">{title}</h2>
             <p className="text-sm text-default-500">{description}</p>
             {nextReview !== undefined && forecast.dueNow === 0 ? (
               <NextReviewText
@@ -130,7 +130,7 @@ export default function ReviewForecastCard({
             />
           </div>
         </summary>
-        <div className="pb-5 pt-1">{forecastChart}</div>
+        <div className="pb-5">{forecastChart}</div>
       </details>
     );
   }

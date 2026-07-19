@@ -16,10 +16,8 @@ export default function DeckProgressSkeleton() {
           <SkeletonLine className="h-4 w-36" />
         </div>
         <SkeletonBlock className="h-3 w-full rounded-full" />
-        <div className="flex gap-8">
-          {Array.from({ length: 4 }, (_, index) => (
-            <SkeletonBlock key={index} className="size-8 rounded-full" />
-          ))}
+        <div className="border-l-2 border-default-200 pl-4">
+          <SkeletonBlock className="h-24 w-full rounded-lg" />
         </div>
       </div>
     </section>
