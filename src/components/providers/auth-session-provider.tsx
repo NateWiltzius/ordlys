@@ -1,6 +1,5 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
 import { createContext, type PropsWithChildren, useEffect, useState } from 'react';
 
 export const AuthSessionContext = createContext<boolean | null | undefined>(undefined);
@@ -9,26 +8,26 @@ export default function AuthSessionProvider({ children }: PropsWithChildren) {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    let isActive = true;
-    const supabase = createClient();
+    const controller = new AbortController();
 
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (isActive) setLoggedIn(Boolean(data.session));
+    void fetch('/auth/session', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    })
+      .then(async response => {
+        if (!response.ok) throw new Error('Could not resolve the current session.');
+        return (await response.json()) as { loggedIn: boolean };
+      })
+      .then(({ loggedIn: hasSession }) => {
+        setLoggedIn(hasSession);
       })
       .catch(() => {
-        if (isActive) setLoggedIn(false);
+        if (!controller.signal.aborted) setLoggedIn(false);
       });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (isActive) setLoggedIn(Boolean(session));
-    });
-
-    return () => {
-      isActive = false;
-      data.subscription.unsubscribe();
-    };
+    return () => controller.abort();
   }, []);
 
   return <AuthSessionContext value={loggedIn}>{children}</AuthSessionContext>;

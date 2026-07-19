@@ -5,7 +5,6 @@ import ThemeToggle from '@/app/_components/theme-toggle';
 import MobileNavigation from '@/app/_components/mobile-navigation';
 import { getNavigationItems } from '@/app/_components/navigation-items';
 import NavigationLink from '@/app/_components/navigation-link';
-import { Button, Tooltip } from '@heroui/react';
 import { useAuthSessionState } from '@/hooks/use-auth-session-state';
 import SignOutControl from '@/app/_components/sign-out-control';
 
@@ -30,18 +29,18 @@ export default function Navbar() {
         ) : (
           <span className="text-2xl font-semibold">Ordlys</span>
         )}
-        <Tooltip delay={300} closeDelay={100}>
-          <Button
+        <div className="group relative">
+          <button
             type="button"
-            variant="tertiary"
             className="h-auto min-w-0 cursor-help rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-primary"
+            aria-describedby="beta-description"
           >
             Beta
-          </Button>
-          <Tooltip.Content
-            placement="bottom start"
-            showArrow
-            className="w-80 max-w-[calc(100vw-2rem)] break-normal"
+          </button>
+          <div
+            id="beta-description"
+            role="tooltip"
+            className="invisible absolute top-full left-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-default-200 bg-background p-3 text-sm font-normal normal-case tracking-normal text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
           >
             <div className="space-y-1">
               <p className="font-semibold">Ordlys is in beta</p>
@@ -50,9 +49,8 @@ export default function Navbar() {
                 or broken, please leave feedback using the link in the footer.
               </p>
             </div>
-            <Tooltip.Arrow />
-          </Tooltip.Content>
-        </Tooltip>
+          </div>
+        </div>
       </div>
       <div className="hidden min-w-0 items-center gap-2 text-base md:flex">
         {authResolved ? (

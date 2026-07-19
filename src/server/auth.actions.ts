@@ -8,6 +8,12 @@ import { redirect } from 'next/navigation';
 import { revalidateTag } from 'next/cache';
 import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 
+export async function signOutAction() {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  if (error) throw new Error('Could not sign out.');
+}
+
 export async function deleteAccountAction(confirmation: string) {
   if (confirmation !== 'DELETE') {
     throw new Error('Type DELETE to confirm account deletion.');

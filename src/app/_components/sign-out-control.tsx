@@ -2,8 +2,7 @@
 
 import { navigationItemClassName } from '@/app/_components/navigation-items';
 import { clearPendingQuizAttempts } from '@/lib/quiz/pending-quiz-attempts';
-import { createClient } from '@/lib/supabase/client';
-import { Button } from '@heroui/react';
+import { signOutAction } from '@/server/auth.actions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -32,9 +31,7 @@ export default function SignOutControl({ variant, onSignedOut }: Props) {
     }
 
     try {
-      const { error } = await createClient().auth.signOut();
-      if (error) throw error;
-
+      await signOutAction();
       clearPendingQuizAttempts();
       root.classList.toggle('dark', activeTheme === 'dark');
       root.style.colorScheme = activeTheme;
@@ -52,9 +49,14 @@ export default function SignOutControl({ variant, onSignedOut }: Props) {
   if (variant === 'account') {
     return (
       <div className="space-y-2">
-        <Button type="button" variant="tertiary" isPending={isPending} onPress={handleSignOut}>
+        <button
+          type="button"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-60"
+          disabled={isPending}
+          onClick={() => void handleSignOut()}
+        >
           {label}
-        </Button>
+        </button>
         {hasError ? (
           <p className="text-sm text-danger" role="alert">
             Sign out failed. Please try again.

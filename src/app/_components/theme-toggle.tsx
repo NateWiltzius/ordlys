@@ -1,7 +1,6 @@
 'use client';
 
 import { MoonIcon, SunIcon } from '@heroicons/react/24/outline';
-import { Button } from '@heroui/react';
 import { useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
@@ -24,20 +23,17 @@ export default function ThemeToggle() {
   const nextThemeLabel = theme === 'dark' ? 'light' : 'dark';
 
   return (
-    <Button
+    <button
       type="button"
-      size="sm"
-      variant="tertiary"
-      isIconOnly
-      className="size-11 min-w-11 md:size-9 md:min-w-9"
+      className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-default-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:size-9"
       aria-label={`Switch to ${nextThemeLabel} mode`}
-      onPress={toggleTheme}
+      onClick={toggleTheme}
     >
       {theme === 'dark' ? (
         <SunIcon className="h-5 w-5" aria-hidden="true" />
       ) : (
         <MoonIcon className="h-5 w-5" aria-hidden="true" />
       )}
-    </Button>
+    </button>
   );
 }
