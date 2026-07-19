@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getSrsCategoryKey,
+  getSrsLevelDisplayLabel,
   LESSON_PROGRESSION_CONFIG,
   normalizeSrsLevel,
   PLACEMENT_TEST_CONFIG,
@@ -28,6 +29,23 @@ describe('getSrsCategoryKey', () => {
     expect(normalizeSrsLevel(-1)).toBe(0);
     expect(normalizeSrsLevel(4.9)).toBe(4);
     expect(normalizeSrsLevel(99)).toBe(8);
+  });
+});
+
+describe('getSrsLevelDisplayLabel', () => {
+  it.each([
+    [0, 'Learning 1'],
+    [2, 'Learning 3'],
+    [3, 'Strong 4'],
+    [6, 'Mature 7'],
+    [8, 'Mastered 9'],
+  ] as const)('shows stored SRS level %s as %s', (level, label) => {
+    expect(getSrsLevelDisplayLabel(level)).toBe(label);
+  });
+
+  it('normalizes levels before displaying them', () => {
+    expect(getSrsLevelDisplayLabel(-1)).toBe('Learning 1');
+    expect(getSrsLevelDisplayLabel(99)).toBe('Mastered 9');
   });
 });
 

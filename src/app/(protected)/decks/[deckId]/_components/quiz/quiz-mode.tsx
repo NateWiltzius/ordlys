@@ -444,6 +444,7 @@ export default function QuizMode({
         {feedback ? (
           <QuizFeedbackPanel
             feedback={feedback}
+            studyMode={studyMode}
             wordCompletion={wordCompletion}
             onContinue={() => handleContinue()}
             onAcceptAnyway={

@@ -52,6 +52,11 @@ export function getSrsCategoryKey(srsLevel: number): SrsCategoryKey {
   );
 }
 
+export function getSrsLevelDisplayLabel(srsLevel: number): string {
+  const normalizedLevel = normalizeSrsLevel(srsLevel);
+  return `${SRS_LEVEL_LABELS[normalizedLevel]} ${normalizedLevel + 1}`;
+}
+
 export const DEFAULT_SRS_CONFIG = {
   initialLevel: 0,
   maxLevel: SRS_LEVEL_LABELS.length - 1,

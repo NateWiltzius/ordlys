@@ -1,4 +1,8 @@
-import { getSrsCategoryKey, normalizeSrsLevel, SRS_LEVEL_LABELS } from '@/lib/srs/srs-config';
+import {
+  getSrsCategoryKey,
+  getSrsLevelDisplayLabel,
+  normalizeSrsLevel,
+} from '@/lib/srs/srs-config';
 import { SRS_CATEGORY_STYLES } from '@/lib/srs/srs-styles';
 import { Chip } from '@heroui/react';
 
@@ -20,7 +24,7 @@ export default function SrsLevelChip({ srsLevel }: Props) {
 
   return (
     <Chip size="sm" variant="soft" className={SRS_CATEGORY_STYLES[categoryKey].chip}>
-      {SRS_LEVEL_LABELS[normalizedLevel]}
+      {getSrsLevelDisplayLabel(normalizedLevel)}
     </Chip>
   );
 }

@@ -131,6 +131,7 @@ export default function HomepageQuizPreview() {
         >
           <QuizFeedbackPanel
             feedback={reservedFeedback}
+            studyMode="learn"
             keyboardShortcutEnabled={feedback !== null}
             onContinue={continuePreview}
           />

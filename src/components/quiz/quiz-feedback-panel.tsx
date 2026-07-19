@@ -1,17 +1,17 @@
 'use client';
 
-import { QuizFeedback } from '@/types/quiz.types';
+import { QuizFeedback, StudyMode } from '@/types/quiz.types';
 import { Button, Chip } from '@heroui/react';
 import { useEffect, useRef } from 'react';
 import AnswerRow from '@/components/quiz/answer-row';
 import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { getQuizLanguageLabels } from '@/lib/quiz/quiz-language-labels';
-
-type WordCompletion = 'clean' | 'recovered';
+import { getWordCompletionContent, WordCompletion } from '@/lib/quiz/quiz-feedback';
 
 type Props = {
   feedback: QuizFeedback;
+  studyMode: StudyMode;
   wordCompletion?: WordCompletion;
   onContinue: () => void;
   onAcceptAnyway?: () => void;
@@ -20,14 +20,19 @@ type Props = {
 
 export default function QuizFeedbackPanel({
   feedback,
+  studyMode,
   wordCompletion,
   onContinue,
   onAcceptAnyway,
   keyboardShortcutEnabled = true,
 }: Props) {
   const styles = feedback.isCorrect ? QUIZ_FEEDBACK_STYLES.correct : QUIZ_FEEDBACK_STYLES.incorrect;
-  const completionStyles =
-    wordCompletion === 'recovered' ? QUIZ_FEEDBACK_STYLES.incorrect : QUIZ_FEEDBACK_STYLES.correct;
+  const wordCompletionContent = wordCompletion
+    ? getWordCompletionContent(studyMode, wordCompletion)
+    : null;
+  const completionStyles = wordCompletionContent?.isWarning
+    ? QUIZ_FEEDBACK_STYLES.incorrect
+    : QUIZ_FEEDBACK_STYLES.correct;
   const shownLanguageCode =
     feedback.quizItem.direction === 'btf'
       ? feedback.quizItem.backLanguage
@@ -135,35 +140,31 @@ export default function QuizFeedbackPanel({
       </div>
 
       <div className="space-y-3">
-        {wordCompletion ? (
+        {wordCompletionContent ? (
           <div
             role="status"
             className={`flex items-start gap-2 border-l-4 px-3 py-2 ${
-              wordCompletion === 'recovered'
+              wordCompletionContent.isWarning
                 ? 'border-danger bg-danger/10'
                 : 'border-success bg-success/10'
             }`}
           >
-            {wordCompletion === 'clean' ? (
-              <CheckCircleIcon
+            {wordCompletionContent.isWarning ? (
+              <ExclamationCircleIcon
                 className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
                 aria-hidden="true"
               />
             ) : (
-              <ExclamationCircleIcon
+              <CheckCircleIcon
                 className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
                 aria-hidden="true"
               />
             )}
             <div>
               <p className={`font-semibold ${completionStyles.text}`}>
-                {wordCompletion === 'clean' ? 'Word complete' : 'Word complete - keep practicing'}
+                {wordCompletionContent.title}
               </p>
-              <p className="text-sm text-foreground/80">
-                {wordCompletion === 'clean'
-                  ? 'You passed both directions with no misses.'
-                  : 'You passed both directions, but missed this word earlier.'}
-              </p>
+              <p className="text-sm text-foreground/80">{wordCompletionContent.description}</p>
             </div>
           </div>
         ) : null}
