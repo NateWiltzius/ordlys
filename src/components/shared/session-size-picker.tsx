@@ -1,5 +1,5 @@
 import ButtonLink from '@/components/shared/button-link';
-import { getFullQueueSessionSize, getSessionSizeChoices } from '@/lib/study-session-size';
+import { getSessionSizeChoices } from '@/lib/study-session-size';
 
 type Props = {
   baseHref: string;
@@ -8,7 +8,6 @@ type Props = {
   totalCount: number;
   noun: string;
   allowAll?: boolean;
-  showFullQueue?: boolean;
 };
 
 export default function SessionSizePicker({
@@ -18,14 +17,11 @@ export default function SessionSizePicker({
   totalCount,
   noun,
   allowAll = false,
-  showFullQueue = false,
 }: Props) {
   const selectedCount = selectedSize === 'all' ? totalCount : Math.min(selectedSize, totalCount);
   const sizeChoices = getSessionSizeChoices(sizes, totalCount);
   const isAllSelected = selectedSize === 'all' || selectedCount === totalCount;
-  const fullQueueSize = showFullQueue ? getFullQueueSessionSize(sizes, totalCount) : null;
-  const allSizeParam = allowAll ? 'all' : fullQueueSize;
-  const showAllChoice = allSizeParam !== null && sizeChoices.length > 0;
+  const showAllChoice = allowAll && sizeChoices.length > 0;
 
   if (sizeChoices.length === 0) return null;
 
@@ -50,7 +46,7 @@ export default function SessionSizePicker({
         ))}
         {showAllChoice ? (
           <ButtonLink
-            href={`${baseHref}?size=${allSizeParam}`}
+            href={`${baseHref}?size=all`}
             size="sm"
             variant={isAllSelected ? 'primary' : 'tertiary'}
           >

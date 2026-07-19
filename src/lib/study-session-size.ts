@@ -4,12 +4,12 @@ export const DEFAULT_LEARN_SESSION_SIZE = 5;
 
 export const REVIEW_SESSION_SIZES = [10, 25, 50] as const;
 
-export const DEFAULT_REVIEW_SESSION_SIZE = 25;
+export const DEFAULT_REVIEW_SESSION_SIZE = 'all' as const;
 
 export function parseSessionSize(
   value: string | string[] | undefined,
   allowedSizes: readonly number[],
-  defaultSize: number,
+  defaultSize: number | 'all',
   allowAll = false,
 ): number | 'all' {
   const normalizedValue = Array.isArray(value) ? value[0] : value;
@@ -21,16 +21,4 @@ export function parseSessionSize(
 
 export function getSessionSizeChoices(sizes: readonly number[], totalCount: number): number[] {
   return [...new Set(sizes)].filter(size => size > 0 && size < totalCount);
-}
-
-export function getFullQueueSessionSize(
-  sizes: readonly number[],
-  totalCount: number,
-): number | null {
-  return (
-    [...new Set(sizes)]
-      .filter(size => size > 0)
-      .sort((left, right) => left - right)
-      .find(size => size >= totalCount) ?? null
-  );
 }

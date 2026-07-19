@@ -19,7 +19,8 @@ export default async function AllDecksReviewPage({ searchParams }: Props) {
     (await searchParams).size,
     REVIEW_SESSION_SIZES,
     DEFAULT_REVIEW_SESSION_SIZE,
-  ) as number;
+    true,
+  );
   const data = await getAllReviewsPageDataAction(selectedSize);
 
   return (

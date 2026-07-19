@@ -29,8 +29,9 @@ export default async function ReviewPage({ params, searchParams }: Props) {
     (await searchParams).size,
     REVIEW_SESSION_SIZES,
     DEFAULT_REVIEW_SESSION_SIZE,
+    true,
   );
-  const data = await getReviewPageDataAction(parsedDeckId, selectedSize as number);
+  const data = await getReviewPageDataAction(parsedDeckId, selectedSize);
   if (!data) notFound();
 
   return (
@@ -38,7 +39,7 @@ export default async function ReviewPage({ params, searchParams }: Props) {
       deckId={parsedDeckId}
       dueReviews={data.dueReviews}
       nextReview={data.nextReview}
-      selectedSize={selectedSize as number}
+      selectedSize={selectedSize}
       availableCount={data.availableCount}
     />
   );

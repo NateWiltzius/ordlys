@@ -16,7 +16,7 @@ type Props = {
   deckId: number;
   dueReviews: ReviewItem[];
   nextReview: NextReviewBatch | null;
-  selectedSize: number;
+  selectedSize: number | 'all';
   availableCount: number;
 };
 
@@ -59,7 +59,7 @@ export default function ReviewMode({
           sizes={REVIEW_SESSION_SIZES}
           totalCount={availableCount}
           noun="card"
-          showFullQueue
+          allowAll
         />
       ) : null}
       <QuizMode

@@ -13,7 +13,7 @@ import { useState } from 'react';
 type Props = {
   dueReviews: ReviewItem[];
   nextReview: NextReviewBatch | null;
-  selectedSize: number;
+  selectedSize: number | 'all';
   availableCount: number;
 };
 
@@ -53,7 +53,7 @@ export default function AllDecksReviewMode({
           sizes={REVIEW_SESSION_SIZES}
           totalCount={availableCount}
           noun="card"
-          showFullQueue
+          allowAll
         />
       ) : null}
       <QuizMode

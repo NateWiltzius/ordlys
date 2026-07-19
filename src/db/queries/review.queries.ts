@@ -369,8 +369,8 @@ export async function getNextReviewBatch(
   return nextBatch ? { hour: nextBatch.hour, count: Number(nextBatch.count) } : null;
 }
 
-export async function getDueReviews(userId: string, deckId?: number, limit = 25) {
-  return db
+export async function getDueReviews(userId: string, deckId?: number, limit: number | 'all' = 25) {
+  const query = db
     .select({
       id: vocabs.id,
       ...vocabRevisionQuizSelection,
@@ -403,11 +403,16 @@ export async function getDueReviews(userId: string, deckId?: number, limit = 25)
         lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
       ),
     )
-    .orderBy(userVocabState.dueAt)
-    .limit(Math.min(100, Math.max(1, Math.trunc(limit))));
+    .orderBy(userVocabState.dueAt);
+
+  return limit === 'all' ? query : query.limit(Math.min(100, Math.max(1, Math.trunc(limit))));
 }
 
-export async function getDueReviewsForDeck(deckId: number, userId: string, limit = 25) {
+export async function getDueReviewsForDeck(
+  deckId: number,
+  userId: string,
+  limit: number | 'all' = 25,
+) {
   return getDueReviews(userId, deckId, limit);
 }
 

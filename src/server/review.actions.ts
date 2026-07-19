@@ -53,16 +53,17 @@ export async function getLearnPageDataAction(
 
 export async function getReviewPageDataAction(
   id: number,
-  requestedLimit = DEFAULT_REVIEW_SESSION_SIZE,
+  requestedLimit: number | 'all' = DEFAULT_REVIEW_SESSION_SIZE,
 ) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
   const userId = await getCurrentUserId();
-  const limit = REVIEW_SESSION_SIZES.includes(
-    requestedLimit as (typeof REVIEW_SESSION_SIZES)[number],
-  )
-    ? requestedLimit
-    : DEFAULT_REVIEW_SESSION_SIZE;
+  const limit =
+    requestedLimit === 'all'
+      ? 'all'
+      : REVIEW_SESSION_SIZES.includes(requestedLimit as (typeof REVIEW_SESSION_SIZES)[number])
+        ? requestedLimit
+        : DEFAULT_REVIEW_SESSION_SIZE;
   if (!(await getActiveReleaseId(deckId, userId))) return null;
   const [dueReviews, nextReview] = await Promise.all([
     getDueReviewsForDeck(deckId, userId, limit),
@@ -71,13 +72,16 @@ export async function getReviewPageDataAction(
   return { dueReviews, nextReview, availableCount: Number(dueReviews[0]?.availableCount ?? 0) };
 }
 
-export async function getAllReviewsPageDataAction(requestedLimit = DEFAULT_REVIEW_SESSION_SIZE) {
+export async function getAllReviewsPageDataAction(
+  requestedLimit: number | 'all' = DEFAULT_REVIEW_SESSION_SIZE,
+) {
   const userId = await getCurrentUserId();
-  const limit = REVIEW_SESSION_SIZES.includes(
-    requestedLimit as (typeof REVIEW_SESSION_SIZES)[number],
-  )
-    ? requestedLimit
-    : DEFAULT_REVIEW_SESSION_SIZE;
+  const limit =
+    requestedLimit === 'all'
+      ? 'all'
+      : REVIEW_SESSION_SIZES.includes(requestedLimit as (typeof REVIEW_SESSION_SIZES)[number])
+        ? requestedLimit
+        : DEFAULT_REVIEW_SESSION_SIZE;
   const [dueReviews, nextReview] = await Promise.all([
     getDueReviews(userId, undefined, limit),
     getNextReviewBatch(userId),
