@@ -29,7 +29,7 @@ export default function Navbar() {
         ) : (
           <span className="text-2xl font-semibold">Ordlys</span>
         )}
-        <div className="group relative">
+        <div className="group static sm:relative">
           <button
             type="button"
             className="h-auto min-w-0 cursor-help rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-primary"
@@ -40,7 +40,7 @@ export default function Navbar() {
           <div
             id="beta-description"
             role="tooltip"
-            className="invisible absolute top-full left-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-default-200 bg-background p-3 text-sm font-normal normal-case tracking-normal text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+            className="invisible absolute top-full right-4 left-4 z-50 mt-2 w-auto max-w-none rounded-xl border border-default-200 bg-background p-3 text-sm font-normal normal-case tracking-normal text-foreground opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 sm:right-auto sm:left-0 sm:w-80 sm:max-w-[calc(100vw-2rem)]"
           >
             <div className="space-y-1">
               <p className="font-semibold">Ordlys is in beta</p>
