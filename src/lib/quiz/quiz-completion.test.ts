@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getQuizCompletionContent } from './quiz-completion';
+import {
+  getDifficultQuizItems,
+  getMilestoneSummary,
+  getQuizCompletionContent,
+  getSrsMilestoneCounts,
+} from './quiz-completion';
 
 describe('getQuizCompletionContent', () => {
   it('describes newly introduced words after learning', () => {
@@ -14,7 +19,8 @@ describe('getQuizCompletionContent', () => {
     ).toMatchObject({
       title: 'Learning complete',
       completedLabel: 'New words',
-      detail: '1 word needed another try before completion.',
+      cleanLabel: 'Learned cleanly',
+      detail: 'Every new word is now in review; missed words will return sooner.',
     });
   });
 
@@ -30,7 +36,8 @@ describe('getQuizCompletionContent', () => {
     ).toMatchObject({
       title: 'Review complete',
       completedLabel: 'Cards reviewed',
-      detail: 'Every card was completed without a miss.',
+      cleanLabel: 'Strengthened',
+      detail: 'Every card passed cleanly and was scheduled further ahead.',
     });
   });
 
@@ -46,6 +53,7 @@ describe('getQuizCompletionContent', () => {
     ).toMatchObject({
       title: 'Practice complete',
       completedLabel: 'Cards practiced',
+      cleanLabel: 'Clean passes',
     });
   });
 
@@ -61,7 +69,82 @@ describe('getQuizCompletionContent', () => {
     ).toMatchObject({
       title: 'Placement test complete',
       completedLabel: 'Words tested',
+      cleanLabel: 'Qualified',
       detail: '4 of 6 words passed without a miss and qualified for placement.',
     });
+  });
+});
+
+describe('getDifficultQuizItems', () => {
+  const quizItems = [
+    {
+      id: 1,
+      front: 'one',
+      back: 'first',
+      frontAlternatives: [],
+      backAlternatives: [],
+      frontToBackQuizHint: null,
+      backToFrontQuizHint: null,
+      reading: null,
+      frontLanguage: 'one',
+      backLanguage: 'two',
+      deckTitle: 'Deck',
+      lessonTitle: 'Lesson',
+    },
+    {
+      id: 2,
+      front: 'two',
+      back: 'second',
+      frontAlternatives: [],
+      backAlternatives: [],
+      frontToBackQuizHint: null,
+      backToFrontQuizHint: null,
+      reading: null,
+      frontLanguage: 'one',
+      backLanguage: 'two',
+      deckTitle: 'Deck',
+      lessonTitle: 'Lesson',
+    },
+    {
+      id: 3,
+      front: 'three',
+      back: 'third',
+      frontAlternatives: [],
+      backAlternatives: [],
+      frontToBackQuizHint: null,
+      backToFrontQuizHint: null,
+      reading: null,
+      frontLanguage: 'one',
+      backLanguage: 'two',
+      deckTitle: 'Deck',
+      lessonTitle: 'Lesson',
+    },
+  ];
+
+  it('ranks missed words by miss frequency and applies the limit', () => {
+    expect(getDifficultQuizItems(quizItems, { 1: 1, 2: 3, 3: 2 }, 2)).toEqual([
+      expect.objectContaining({ id: 2, missCount: 3 }),
+      expect.objectContaining({ id: 3, missCount: 2 }),
+    ]);
+  });
+});
+
+describe('SRS milestone summaries', () => {
+  it('counts category thresholds crossed by saved transitions', () => {
+    const counts = getSrsMilestoneCounts([
+      { previousLevel: 2, nextLevel: 3 },
+      { previousLevel: 5, nextLevel: 6 },
+      { previousLevel: 7, nextLevel: 8 },
+      { previousLevel: 4, nextLevel: 3 },
+    ]);
+
+    expect(counts).toEqual({ strong: 1, mature: 1, mastered: 1 });
+    expect(getMilestoneSummary(counts)).toBe(
+      '1 word reached Strong · 1 word reached Mature · 1 word reached Mastered.',
+    );
+  });
+
+  it('omits the milestone message when no threshold was crossed', () => {
+    expect(getMilestoneSummary({ strong: 0, mature: 0, mastered: 0 })).toBeNull();
   });
 });

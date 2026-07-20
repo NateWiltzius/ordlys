@@ -4,35 +4,53 @@ import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mod
 import ButtonLink from '@/components/shared/button-link';
 import StudySession from '@/components/shared/layout/study-session';
 import NextReviewText from '@/components/shared/next-review-text';
-import type { NextReviewBatch, ReviewItem } from '@/types/review.types';
+import type { NextReviewBatch, ReviewDeckDueCount, ReviewItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import SessionSizePicker from '@/components/shared/session-size-picker';
-import { REVIEW_SESSION_SIZES } from '@/lib/study-session-size';
+import { REVIEW_SESSION_SIZE_COOKIE, REVIEW_SESSION_SIZES } from '@/lib/study-session-size';
 import { useState } from 'react';
+import ReviewDeckBreakdown from '@/components/shared/review-deck-breakdown';
 
 type Props = {
   dueReviews: ReviewItem[];
   nextReview: NextReviewBatch | null;
   selectedSize: number | 'all';
   availableCount: number;
+  deckBreakdown: ReviewDeckDueCount[];
 };
 
 export default function AllDecksReviewMode({
   dueReviews,
   nextReview,
   selectedSize,
-  availableCount,
+  availableCount: initialAvailableCount,
+  deckBreakdown,
 }: Props) {
-  const [hasStarted, setHasStarted] = useState(false);
+  // Server actions revalidate this route after every answer. Keep the batch that
+  // started this client session so the final revalidation cannot hide its summary.
+  const [startedSession, setStartedSession] = useState<{
+    dueReviews: ReviewItem[];
+    nextReview: NextReviewBatch | null;
+    availableCount: number;
+    deckBreakdown: ReviewDeckDueCount[];
+  } | null>(null);
+  const session = startedSession ?? {
+    dueReviews,
+    nextReview,
+    availableCount: initialAvailableCount,
+    deckBreakdown,
+  };
+  const hasStarted = startedSession !== null;
+  const availableCount = session.availableCount;
 
-  if (dueReviews.length === 0) {
+  if (session.dueReviews.length === 0) {
     return (
       <StudySession>
         <Card>
           <Card.Header>
             <Card.Title render={props => <h1 {...props} />}>No reviews due</Card.Title>
             <Card.Description>
-              <NextReviewText nextReview={nextReview} />
+              <NextReviewText nextReview={session.nextReview} />
             </Card.Description>
           </Card.Header>
           <Card.Footer>
@@ -45,24 +63,35 @@ export default function AllDecksReviewMode({
 
   return (
     <StudySession className="space-y-6">
-      <h1 className="text-2xl font-semibold text-success">Review due cards</h1>
+      <header>
+        <h1 className="text-2xl font-semibold text-success">Review due cards</h1>
+        <p className="mt-1 text-sm text-default-500">
+          Across your active decks · {availableCount} {availableCount === 1 ? 'review' : 'reviews'}{' '}
+          due
+        </p>
+      </header>
       {!hasStarted ? (
-        <SessionSizePicker
-          baseHref="/review"
-          selectedSize={selectedSize}
-          sizes={REVIEW_SESSION_SIZES}
-          totalCount={availableCount}
-          noun="card"
-          allowAll
-        />
+        <>
+          <SessionSizePicker
+            baseHref="/review"
+            selectedSize={selectedSize}
+            sizes={REVIEW_SESSION_SIZES}
+            totalCount={session.availableCount}
+            noun="card"
+            allowAll
+            showDurationEstimate
+            preferenceCookieName={REVIEW_SESSION_SIZE_COOKIE}
+          />
+          <ReviewDeckBreakdown decks={session.deckBreakdown} />
+        </>
       ) : null}
       <QuizMode
         key={selectedSize}
-        quizItems={dueReviews}
+        quizItems={session.dueReviews}
         tone="review"
         studyMode="review"
         completionHref="/dashboard"
-        onSessionStart={() => setHasStarted(true)}
+        onSessionStart={() => setStartedSession(current => current ?? session)}
       />
     </StudySession>
   );

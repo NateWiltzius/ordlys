@@ -29,6 +29,7 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
         quizItems={placementItems}
         studyMode="placement"
         completionHref={`/decks/${deckId}`}
+        reviewDeckId={deckId}
         allowAnswerOverride={false}
       />
     </StudySession>

@@ -8,6 +8,7 @@ describe('protected application routes', () => {
     '/decks/12/edit',
     '/discover',
     '/practice/recent-mistakes',
+    '/progress',
     '/review',
   ])('protects %s', pathname => {
     expect(isProtectedAppPath(pathname)).toBe(true);

@@ -25,6 +25,12 @@ export type NextReviewBatch = {
   count: number;
 };
 
+export type ReviewDeckDueCount = {
+  deckId: number;
+  deckTitle: string;
+  count: number;
+};
+
 export type LessonProgress = {
   lessonId: number;
   lessonTitle: string;

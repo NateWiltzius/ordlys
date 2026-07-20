@@ -2,6 +2,7 @@ import FeaturedPublicDecks from '@/app/_components/featured-public-decks';
 import FeaturedPublicDecksLoading from '@/app/_components/featured-public-decks-loading';
 import ButtonLink from '@/components/shared/button-link';
 import HomepageQuizPreview from '@/app/_components/homepage-quiz-preview';
+import HomepagePrimaryAction from '@/app/_components/homepage-primary-action';
 import { absoluteUrl, OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import { Chip } from '@heroui/react';
 import type { Metadata } from 'next';
@@ -69,9 +70,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/auth/sign-up" size="lg">
-              Start learning Norwegian
-            </ButtonLink>
+            <HomepagePrimaryAction />
             <ButtonLink href="/public/decks" variant="secondary" size="lg">
               Browse shared decks
             </ButtonLink>

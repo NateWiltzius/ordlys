@@ -18,6 +18,7 @@ export function navigationItemClassName(variant: 'desktop' | 'mobile', isActive 
 
 const authenticatedItems: NavigationItem[] = [
   { href: '/dashboard', label: 'Today' },
+  { href: '/progress', label: 'Progress' },
   { href: '/decks', label: 'Library' },
   { href: '/discover', label: 'Discover' },
   { href: '/account', label: 'Account' },

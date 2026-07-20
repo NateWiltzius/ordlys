@@ -1,4 +1,4 @@
-import { and, count, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   deckFollows,
@@ -71,6 +71,45 @@ export async function getSrsCategoryCountsForDecks(
   }
 
   return counts;
+}
+
+export async function getSrsCategoryCountsByDeck(
+  deckIds: number[],
+  userId: string,
+): Promise<Record<number, SrsCategoryCounts>> {
+  const countsByDeck = Object.fromEntries(
+    deckIds.map(deckId => [
+      deckId,
+      Object.fromEntries(SRS_CATEGORIES.map(category => [category.key, 0])) as SrsCategoryCounts,
+    ]),
+  );
+  if (deckIds.length === 0) return countsByDeck;
+
+  const rows = await db
+    .select({
+      deckId: decks.id,
+      srsLevel: userVocabState.srsLevel,
+      count: count(userVocabState.id),
+    })
+    .from(userVocabState)
+    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
+    .where(and(eq(userVocabState.userId, userId), inArray(decks.id, deckIds)))
+    .groupBy(decks.id, userVocabState.srsLevel);
+
+  for (const row of rows) {
+    countsByDeck[row.deckId][getSrsCategoryKey(row.srsLevel)] += Number(row.count);
+  }
+
+  return countsByDeck;
 }
 
 export async function getLessonProgressForDeck(
@@ -376,6 +415,15 @@ export async function getDueReviews(userId: string, deckId?: number, limit: numb
       ...vocabRevisionQuizSelection,
       lessonId: vocabs.lessonId,
       lessonTitle: lessons.title,
+      deckTitle: sql<string>`
+        case
+          when ${decks.ownerId} = ${userId} then ${decks.title}
+          else coalesce(
+            (select title from deck_releases where id = ${activeReleaseIdExpression(userId, false)}),
+            ${decks.title}
+          )
+        end
+      `,
       stateId: userVocabState.id,
       srsLevel: userVocabState.srsLevel,
       frontLanguage: decks.frontLanguage,
@@ -406,6 +454,48 @@ export async function getDueReviews(userId: string, deckId?: number, limit: numb
     .orderBy(userVocabState.dueAt);
 
   return limit === 'all' ? query : query.limit(Math.min(100, Math.max(1, Math.trunc(limit))));
+}
+
+export async function getDueReviewDeckBreakdown(userId: string) {
+  const deckTitle = sql<string>`
+    case
+      when ${decks.ownerId} = ${userId} then ${decks.title}
+      else coalesce(
+        (select title from deck_releases where id = ${activeReleaseIdExpression(userId, false)}),
+        ${decks.title}
+      )
+    end
+  `;
+  const dueCount = count(userVocabState.id);
+  const rows = await db
+    .select({
+      deckId: decks.id,
+      deckTitle,
+      count: dueCount,
+    })
+    .from(userVocabState)
+    .innerJoin(vocabs, eq(userVocabState.vocabId, vocabs.id))
+    .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
+    .innerJoin(decks, eq(lessons.deckId, decks.id))
+    .innerJoin(
+      releaseVocabs,
+      and(
+        eq(releaseVocabs.vocabId, vocabs.id),
+        eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+      ),
+    )
+    .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
+    .where(
+      and(
+        eq(userVocabState.userId, userId),
+        studyDeckAccess(userId),
+        lte(userVocabState.dueAt, sql`date_trunc('hour', now())`),
+      ),
+    )
+    .groupBy(decks.id, decks.ownerId, decks.title)
+    .orderBy(desc(dueCount), deckTitle);
+
+  return rows.map(row => ({ ...row, count: Number(row.count) }));
 }
 
 export async function getDueReviewsForDeck(

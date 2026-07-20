@@ -10,6 +10,7 @@ import {
   buildQuizProgress,
   getQuizAttemptOutcome,
   insertLater,
+  addFirstAttempt,
 } from '@/lib/quiz/quiz-helpers';
 import {
   QuizQueueItem,
@@ -17,6 +18,7 @@ import {
   QuizProgressItem,
   QuizFeedback,
   QuizAttemptStats,
+  QuizFirstAttemptStats,
   QuizProgressStats,
   QuizSourceItem,
   SaveQuizAttemptInput,
@@ -27,12 +29,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StudyTone } from '@/lib/study-colors';
 import { HomeIcon } from '@heroicons/react/24/outline';
 import StatusAlert from '@/components/shared/status-alert';
-import { saveQuizAttemptAction } from '@/server/review.actions';
+import { getNextReviewBatchAction, saveQuizAttemptAction } from '@/server/review.actions';
 import {
   readPendingQuizAttempts,
   writePendingQuizAttempts,
 } from '@/lib/quiz/pending-quiz-attempts';
 import QuizCompletionSummary from '@/components/quiz/quiz-completion-summary';
+import type { NextReviewBatch, SrsTransition } from '@/types/review.types';
+import { getDifficultQuizItems, getSrsMilestoneCounts } from '@/lib/quiz/quiz-completion';
 
 type Props = {
   quizItems: QuizSourceItem[];
@@ -42,6 +46,7 @@ type Props = {
   studyMode: StudyMode;
   recordAttempts?: boolean;
   onSessionStart?: () => void;
+  reviewDeckId?: number;
 };
 
 export default function QuizMode({
@@ -52,6 +57,7 @@ export default function QuizMode({
   studyMode,
   recordAttempts = true,
   onSessionStart,
+  reviewDeckId,
 }: Props) {
   // A server action can reconcile this route with fresh due-card data (for example when an
   // auth cookie is refreshed). Keep the cards that started this session so that reconciliation
@@ -59,7 +65,8 @@ export default function QuizMode({
   const [sessionQuizItems] = useState(() => quizItems);
   const [answer, setAnswer] = useState('');
   const [failedCardIds, setFailedCardIds] = useState<Set<number>>(() => new Set());
-  const [missedCardIds, setMissedCardIds] = useState<Set<number>>(() => new Set());
+  const [missCounts, setMissCounts] = useState<Record<number, number>>({});
+  const [srsTransitions, setSrsTransitions] = useState<Record<number, SrsTransition>>({});
   const [quizQueue, setQuizQueue] = useState<QuizQueueItem[] | null>(null);
   const [quizProgress, setQuizProgress] = useState<QuizProgress>(() =>
     buildQuizProgress(sessionQuizItems),
@@ -69,6 +76,13 @@ export default function QuizMode({
     correctAttempts: 0,
     incorrectAttempts: 0,
   });
+  const [firstAttemptStats, setFirstAttemptStats] = useState<QuizFirstAttemptStats>({
+    totalDirections: 0,
+    correctDirections: 0,
+    accuracyPercentage: 0,
+  });
+  const [nextReview, setNextReview] = useState<NextReviewBatch | null>(null);
+  const [nextReviewLoading, setNextReviewLoading] = useState(false);
   const [feedback, setFeedback] = useState<QuizFeedback | null>(null);
   const [pendingSaveCount, setPendingSaveCount] = useState(0);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -80,6 +94,9 @@ export default function QuizMode({
   const pendingAttemptsRef = useRef<Map<string, SaveQuizAttemptInput>>(new Map());
   const failedAttemptKeysRef = useRef<Set<string>>(new Set());
   const inFlightAttemptKeysRef = useRef<Set<string>>(new Set());
+  const attemptedDirectionKeysRef = useRef<Set<string>>(new Set());
+  const nextReviewFetchedRef = useRef(false);
+  const sessionCardIdsRef = useRef(new Set(sessionQuizItems.map(item => item.id)));
 
   const saveAttempt = useCallback((attempt: SaveQuizAttemptInput) => {
     pendingAttemptsRef.current.set(attempt.idempotencyKey, attempt);
@@ -91,7 +108,14 @@ export default function QuizMode({
     setPendingSaveCount(count => count + 1);
 
     void saveQuizAttemptAction(attempt)
-      .then(() => {
+      .then(result => {
+        const transition = result.transition;
+        if (transition && sessionCardIdsRef.current.has(attempt.vocabId)) {
+          setSrsTransitions(previous => ({
+            ...previous,
+            [attempt.vocabId]: transition,
+          }));
+        }
         pendingAttemptsRef.current.delete(attempt.idempotencyKey);
         failedAttemptKeysRef.current.delete(attempt.idempotencyKey);
         writePendingQuizAttempts(pendingAttemptsRef.current.values());
@@ -138,7 +162,8 @@ export default function QuizMode({
     setHasMounted(true);
     setAnswer('');
     setFailedCardIds(new Set());
-    setMissedCardIds(new Set());
+    setMissCounts({});
+    setSrsTransitions({});
     setQuizQueue(shuffleArray(buildQuizQueue(sessionQuizItems)));
     setQuizProgress(buildQuizProgress(sessionQuizItems));
     setAttemptStats({
@@ -146,11 +171,20 @@ export default function QuizMode({
       correctAttempts: 0,
       incorrectAttempts: 0,
     });
+    setFirstAttemptStats({
+      totalDirections: 0,
+      correctDirections: 0,
+      accuracyPercentage: 0,
+    });
+    setNextReview(null);
+    setNextReviewLoading(false);
     setFeedback(null);
     pendingSaveCountRef.current = 0;
     pendingAttemptsRef.current.clear();
     failedAttemptKeysRef.current.clear();
     inFlightAttemptKeysRef.current.clear();
+    attemptedDirectionKeysRef.current.clear();
+    nextReviewFetchedRef.current = false;
     setPendingSaveCount(0);
     setSaveError(null);
     setSaveNotice(null);
@@ -169,6 +203,32 @@ export default function QuizMode({
       }
     }
   }, [saveAttempt, sessionQuizItems]);
+
+  const sessionIsSaved =
+    quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0 && !saveError;
+
+  useEffect(() => {
+    if (!recordAttempts || !sessionIsSaved || nextReviewFetchedRef.current) return;
+
+    let ignore = false;
+    nextReviewFetchedRef.current = true;
+    setNextReviewLoading(true);
+
+    void getNextReviewBatchAction(reviewDeckId)
+      .then(result => {
+        if (!ignore) setNextReview(result);
+      })
+      .catch(() => {
+        if (!ignore) setNextReview(null);
+      })
+      .finally(() => {
+        if (!ignore) setNextReviewLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [recordAttempts, reviewDeckId, sessionIsSaved]);
 
   useEffect(() => {
     const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
@@ -251,6 +311,19 @@ export default function QuizMode({
     });
   };
 
+  const handleGiveUp = () => {
+    if (!currentQuizItem) return;
+
+    onSessionStart?.();
+    continueHandledRef.current = false;
+    attemptKeyRef.current = crypto.randomUUID();
+    setFeedback({
+      quizItem: currentQuizItem,
+      submittedAnswer: '',
+      isCorrect: false,
+    });
+  };
+
   const handleContinue = (acceptAnyway = false) => {
     if (!feedback || continueHandledRef.current) return;
     continueHandledRef.current = true;
@@ -270,6 +343,12 @@ export default function QuizMode({
     const wasAlreadyFullyPassed = currentProgress.btfPassed && currentProgress.ftbPassed;
     const isNowFullyPassed = nextProgressForCard.btfPassed && nextProgressForCard.ftbPassed;
     const completesCard = isAccepted && isNowFullyPassed && !wasAlreadyFullyPassed;
+    const directionKey = `${quizItem.cardId}:${quizItem.direction}`;
+
+    if (!attemptedDirectionKeysRef.current.has(directionKey)) {
+      attemptedDirectionKeysRef.current.add(directionKey);
+      setFirstAttemptStats(previous => addFirstAttempt(previous, isAccepted));
+    }
 
     if (recordAttempts) {
       saveAttempt({
@@ -287,7 +366,10 @@ export default function QuizMode({
     attemptKeyRef.current = null;
 
     if (shouldMarkMissed) {
-      setMissedCardIds(previous => new Set(previous).add(quizItem.cardId));
+      setMissCounts(previous => ({
+        ...previous,
+        [quizItem.cardId]: (previous[quizItem.cardId] ?? 0) + 1,
+      }));
     }
 
     setAttemptStats(prev => ({
@@ -362,9 +444,17 @@ export default function QuizMode({
           <QuizCompletionSummary
             progressStats={progressStats}
             attemptStats={attemptStats}
+            firstAttemptStats={firstAttemptStats}
             studyMode={studyMode}
             recordAttempts={recordAttempts}
-            missedCardCount={missedCardIds.size}
+            missedCardCount={Object.keys(missCounts).length}
+            difficultItems={getDifficultQuizItems(sessionQuizItems, missCounts)}
+            milestones={getSrsMilestoneCounts(Object.values(srsTransitions))}
+            nextReview={nextReview}
+            nextReviewLoading={
+              nextReviewLoading ||
+              (recordAttempts && sessionIsSaved && !nextReviewFetchedRef.current)
+            }
             completionHref={completionHref}
             tone={tone}
           />
@@ -448,9 +538,12 @@ export default function QuizMode({
             feedback={feedback}
             studyMode={studyMode}
             wordCompletion={wordCompletion}
+            recordAttempts={recordAttempts}
             onContinue={() => handleContinue()}
             onAcceptAnyway={
-              allowAnswerOverride && !feedback.isCorrect ? () => handleContinue(true) : undefined
+              allowAnswerOverride && !feedback.isCorrect && feedback.submittedAnswer.trim()
+                ? () => handleContinue(true)
+                : undefined
             }
           />
         ) : (
@@ -464,6 +557,9 @@ export default function QuizMode({
             tone={tone}
             onAnswerChange={setAnswer}
             onSubmit={handleAnswerSubmit}
+            onGiveUp={handleGiveUp}
+            deckTitle={currentQuizItem.deckTitle}
+            lessonTitle={currentQuizItem.lessonTitle}
           />
         )}
       </div>

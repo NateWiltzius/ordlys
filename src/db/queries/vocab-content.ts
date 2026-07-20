@@ -9,6 +9,7 @@ export const vocabRevisionQuizSelection = {
   frontToBackQuizHint: vocabRevisions.frontToBackQuizHint,
   backToFrontQuizHint: vocabRevisions.backToFrontQuizHint,
   reading: vocabRevisions.reading,
+  notes: vocabRevisions.notes,
 };
 
 export const vocabRevisionExtendedSelection = {

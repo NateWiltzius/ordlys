@@ -21,8 +21,13 @@ export type QuizSourceItem = {
   backAlternatives: string[];
   frontToBackQuizHint: string | null;
   backToFrontQuizHint: string | null;
+  reading: string | null;
+  notes?: string | null;
   frontLanguage: string | null;
   backLanguage: string | null;
+  deckTitle?: string | null;
+  lessonTitle?: string | null;
+  srsLevel?: number | null;
 };
 
 export type QuizQueueItem = {
@@ -34,6 +39,11 @@ export type QuizQueueItem = {
   acceptedAnswers: string[];
   frontLanguage: string | null;
   backLanguage: string | null;
+  reading?: string | null;
+  notes?: string | null;
+  deckTitle?: string | null;
+  lessonTitle?: string | null;
+  srsLevel?: number | null;
 };
 
 export type QuizProgressItem = {
@@ -52,6 +62,23 @@ export type QuizAttemptStats = {
   totalAttempts: number;
   correctAttempts: number;
   incorrectAttempts: number;
+};
+
+export type QuizFirstAttemptStats = {
+  totalDirections: number;
+  correctDirections: number;
+  accuracyPercentage: number;
+};
+
+export type QuizDifficultItem = {
+  id: number;
+  front: string;
+  back: string;
+  frontLanguage: string | null;
+  backLanguage: string | null;
+  deckTitle: string | null;
+  lessonTitle: string | null;
+  missCount: number;
 };
 
 export type QuizProgressStats = {

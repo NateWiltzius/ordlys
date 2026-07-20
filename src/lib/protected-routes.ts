@@ -4,6 +4,7 @@ export const PROTECTED_APP_PREFIXES = [
   '/decks',
   '/discover',
   '/practice',
+  '/progress',
   '/review',
 ] as const;
 

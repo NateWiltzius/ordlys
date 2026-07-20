@@ -7,7 +7,13 @@ import AnswerRow from '@/components/quiz/answer-row';
 import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { getQuizLanguageLabels } from '@/lib/quiz/quiz-language-labels';
-import { getWordCompletionContent, WordCompletion } from '@/lib/quiz/quiz-feedback';
+import {
+  getDirectionProgressContent,
+  getWordCompletionContent,
+  WordCompletion,
+} from '@/lib/quiz/quiz-feedback';
+import { getAnswerDifference } from '@/lib/quiz/answer-difference';
+import { normalizeAnswer } from '@/lib/quiz/normalize';
 
 type Props = {
   feedback: QuizFeedback;
@@ -16,6 +22,7 @@ type Props = {
   onContinue: () => void;
   onAcceptAnyway?: () => void;
   keyboardShortcutEnabled?: boolean;
+  recordAttempts?: boolean;
 };
 
 export default function QuizFeedbackPanel({
@@ -25,12 +32,18 @@ export default function QuizFeedbackPanel({
   onContinue,
   onAcceptAnyway,
   keyboardShortcutEnabled = true,
+  recordAttempts = true,
 }: Props) {
   const styles = feedback.isCorrect ? QUIZ_FEEDBACK_STYLES.correct : QUIZ_FEEDBACK_STYLES.incorrect;
   const wordCompletionContent = wordCompletion
-    ? getWordCompletionContent(studyMode, wordCompletion)
-    : null;
-  const completionStyles = wordCompletionContent?.isWarning
+    ? getWordCompletionContent(
+        studyMode,
+        wordCompletion,
+        feedback.quizItem.srsLevel ?? null,
+        recordAttempts,
+      )
+    : getDirectionProgressContent(feedback.isCorrect, recordAttempts);
+  const completionStyles = wordCompletionContent.isWarning
     ? QUIZ_FEEDBACK_STYLES.incorrect
     : QUIZ_FEEDBACK_STYLES.correct;
   const shownLanguageCode =
@@ -43,6 +56,15 @@ export default function QuizFeedbackPanel({
     feedback.quizItem.backLanguage,
   );
   const onContinueRef = useRef(onContinue);
+  const answerDifference = getAnswerDifference(feedback.submittedAnswer, feedback.quizItem.answer);
+  const canonicalAnswer = normalizeAnswer(feedback.quizItem.answer);
+  const acceptedAlternatives = [
+    ...new Map(
+      feedback.quizItem.acceptedAnswers
+        .filter(answer => normalizeAnswer(answer) !== canonicalAnswer)
+        .map(answer => [normalizeAnswer(answer), answer]),
+    ).values(),
+  ];
 
   useEffect(() => {
     onContinueRef.current = onContinue;
@@ -128,6 +150,13 @@ export default function QuizFeedbackPanel({
       </header>
 
       <div className="py-7 text-center sm:py-9">
+        {feedback.quizItem.deckTitle || feedback.quizItem.lessonTitle ? (
+          <p className="mb-3 truncate text-xs font-medium text-default-500">
+            {[feedback.quizItem.deckTitle, feedback.quizItem.lessonTitle]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        ) : null}
         <p className="text-xs font-semibold uppercase text-default-500">
           {languageLabels.promptRowLabel}
         </p>
@@ -140,59 +169,87 @@ export default function QuizFeedbackPanel({
       </div>
 
       <div className="space-y-3">
-        {wordCompletionContent ? (
-          <div
-            role="status"
-            className={`flex items-start gap-2 border-l-4 px-3 py-2 ${
-              wordCompletionContent.isWarning
-                ? 'border-danger bg-danger/10'
-                : 'border-success bg-success/10'
-            }`}
-          >
-            {wordCompletionContent.isWarning ? (
-              <ExclamationCircleIcon
-                className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
-                aria-hidden="true"
-              />
-            ) : (
-              <CheckCircleIcon
-                className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
-                aria-hidden="true"
-              />
-            )}
-            <div>
-              <p className={`font-semibold ${completionStyles.text}`}>
-                {wordCompletionContent.title}
-              </p>
-              <p className="text-sm text-foreground/80">{wordCompletionContent.description}</p>
-            </div>
+        <div
+          role="status"
+          className={`flex items-start gap-2 border-l-4 px-3 py-2 ${
+            wordCompletionContent.isWarning
+              ? 'border-danger bg-danger/10'
+              : 'border-success bg-success/10'
+          }`}
+        >
+          {wordCompletionContent.isWarning ? (
+            <ExclamationCircleIcon
+              className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
+              aria-hidden="true"
+            />
+          ) : (
+            <CheckCircleIcon
+              className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
+              aria-hidden="true"
+            />
+          )}
+          <div>
+            <p className={`font-semibold ${completionStyles.text}`}>
+              {wordCompletionContent.title}
+            </p>
+            <p className="text-sm text-foreground/80">{wordCompletionContent.description}</p>
           </div>
-        ) : null}
+        </div>
         <div className="divide-y divide-default-200 border-y border-default-200">
           {feedback.quizItem.hint ? (
             <AnswerRow label="Hint" value={feedback.quizItem.hint} />
           ) : null}
-          <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
+          {feedback.quizItem.reading ? (
+            <AnswerRow label="Reading" value={feedback.quizItem.reading} />
+          ) : null}
+          <AnswerRow
+            label="Your answer"
+            value={feedback.submittedAnswer.trim() || 'No answer'}
+            difference={answerDifference?.submitted}
+            differenceTone="incorrect"
+          />
           <AnswerRow
             label={languageLabels.correctAnswerRowLabel}
             value={feedback.quizItem.answer}
+            difference={answerDifference?.correct}
+            differenceTone="correct"
           />
+          {acceptedAlternatives.length > 0 ? (
+            <AnswerRow label="Also accepted" value={acceptedAlternatives.join(' · ')} />
+          ) : null}
+          {feedback.quizItem.notes ? (
+            <AnswerRow label="Notes" value={feedback.quizItem.notes} preserveWhitespace />
+          ) : null}
         </div>
       </div>
 
-      <footer className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <footer className="mt-5 space-y-3">
         {!feedback.isCorrect && onAcceptAnyway ? (
-          <Button variant="secondary" onPress={onAcceptAnyway} className="w-full sm:w-auto">
-            Accept anyway
-          </Button>
+          <p className="text-sm text-default-500 sm:text-right">
+            Accept anyway counts this response as correct once. It does not add a new accepted
+            answer.
+          </p>
         ) : null}
-        <Button
-          variant="primary"
-          onPress={onContinue}
-          className={`w-full sm:w-auto ${styles.button}`}
-        >
-          Continue
-        </Button>
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="hidden text-xs text-default-500 sm:block">
+            Press <kbd className="rounded border border-default-300 px-1.5 py-0.5">Enter</kbd> to
+            continue
+          </p>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
+            {!feedback.isCorrect && onAcceptAnyway ? (
+              <Button variant="secondary" onPress={onAcceptAnyway} className="w-full sm:w-auto">
+                Accept anyway
+              </Button>
+            ) : null}
+            <Button
+              variant="primary"
+              onPress={onContinue}
+              className={`w-full sm:w-auto ${styles.button}`}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
       </footer>
     </section>
   );

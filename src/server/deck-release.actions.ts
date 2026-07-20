@@ -36,6 +36,7 @@ function refresh(id: number) {
   revalidatePath('/decks');
   revalidatePath('/discover');
   revalidatePath('/dashboard');
+  revalidatePath('/progress');
   revalidatePath(`/decks/${id}`);
   revalidatePath(`/decks/${id}/edit`);
 }
@@ -113,6 +114,7 @@ export async function forkReleaseAction(releaseId: number, idempotencyKey: strin
     const forkDeckId = await forkRelease(release, await getCurrentUserId(), key);
     revalidatePath('/decks');
     revalidatePath('/dashboard');
+    revalidatePath('/progress');
     return forkDeckId;
   });
 }

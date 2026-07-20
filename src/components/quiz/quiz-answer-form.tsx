@@ -19,6 +19,9 @@ type Props = {
   keepAboveKeyboard?: boolean;
   onAnswerChange: (answer: string) => void;
   onSubmit: () => void;
+  onGiveUp?: () => void;
+  deckTitle?: string | null;
+  lessonTitle?: string | null;
 };
 
 export default function QuizAnswerForm({
@@ -33,6 +36,9 @@ export default function QuizAnswerForm({
   keepAboveKeyboard = true,
   onAnswerChange,
   onSubmit,
+  onGiveUp,
+  deckTitle,
+  lessonTitle,
 }: Props) {
   const answerInputRef = useRef<HTMLInputElement>(null);
   const answerCardRef = useRef<HTMLElement>(null);
@@ -81,6 +87,11 @@ export default function QuizAnswerForm({
       <form onSubmit={handleSubmit}>
         <div className="quiz-answer-content">
           <div role="note" aria-label={`${promptLabel} shown; ${answerInstruction.toLowerCase()}`}>
+            {deckTitle || lessonTitle ? (
+              <p className="mb-3 truncate text-center text-xs font-medium text-default-500">
+                {[deckTitle, lessonTitle].filter(Boolean).join(' · ')}
+              </p>
+            ) : null}
             <div className="quiz-answer-direction flex items-center justify-center gap-2 text-xs text-default-500 sm:text-sm">
               <strong className="font-medium text-default-700">{promptLabel}</strong>
               <ArrowRightIcon
@@ -121,15 +132,31 @@ export default function QuizAnswerForm({
           </div>
         </div>
 
-        <div className="quiz-answer-footer mt-5 flex justify-end">
-          <Button
-            type="submit"
-            variant="primary"
-            isDisabled={!hasAnswer}
-            className={`w-full sm:w-auto ${STUDY_TONE_STYLES[tone].button}`}
-          >
-            Submit answer
-          </Button>
+        <div className="quiz-answer-footer mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="hidden text-xs text-default-500 sm:block">
+            Press <kbd className="rounded border border-default-300 px-1.5 py-0.5">Enter</kbd> to
+            submit
+          </p>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
+            {onGiveUp ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full sm:w-auto"
+                onPress={onGiveUp}
+              >
+                I don&apos;t know
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              variant="primary"
+              isDisabled={!hasAnswer}
+              className={`w-full sm:w-auto ${STUDY_TONE_STYLES[tone].button}`}
+            >
+              Submit answer
+            </Button>
+          </div>
         </div>
       </form>
     </section>

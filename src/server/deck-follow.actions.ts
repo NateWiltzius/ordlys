@@ -20,6 +20,7 @@ export async function followDeckAction(deckId: number) {
     revalidatePath('/discover');
     revalidatePath(`/decks/${parsedDeckId}`);
     revalidatePath('/dashboard');
+    revalidatePath('/progress');
   });
 }
 
@@ -36,5 +37,6 @@ export async function unfollowDeckAction(deckId: number) {
     revalidatePath('/discover');
     revalidatePath(`/decks/${parsedDeckId}`);
     revalidatePath('/dashboard');
+    revalidatePath('/progress');
   });
 }

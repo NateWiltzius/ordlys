@@ -9,7 +9,7 @@ import ButtonLink from '@/components/shared/button-link';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
 import SessionSizePicker from '@/components/shared/session-size-picker';
-import { LEARN_SESSION_SIZES } from '@/lib/study-session-size';
+import { LEARN_SESSION_SIZE_COOKIE, LEARN_SESSION_SIZES } from '@/lib/study-session-size';
 
 type Props = {
   deckId: number;
@@ -27,11 +27,19 @@ export default function LearnPage({
   availableCount,
 }: Props) {
   const [mode, setMode] = useState<'learn' | 'quiz'>('learn');
+  // Learning answers also revalidate this route. Preserve the batch and progress
+  // that belong to this session until its completion summary has been shown.
+  const [startedSession, setStartedSession] = useState<{
+    learnItems: LearnItem[];
+    lessonProgress: LessonProgress[];
+    availableCount: number;
+  } | null>(null);
+  const session = startedSession ?? { learnItems, lessonProgress, availableCount };
 
-  if (learnItems.length === 0) {
-    const nextLockedLesson = lessonProgress.find(lesson => !lesson.isUnlocked);
+  if (session.learnItems.length === 0) {
+    const nextLockedLesson = session.lessonProgress.find(lesson => !lesson.isUnlocked);
     const previousLessons = nextLockedLesson
-      ? lessonProgress.slice(0, lessonProgress.indexOf(nextLockedLesson))
+      ? session.lessonProgress.slice(0, session.lessonProgress.indexOf(nextLockedLesson))
       : [];
     const previousLesson = previousLessons.findLast(lesson => lesson.totalWords > 0);
     const remainingRequired = previousLesson
@@ -71,19 +79,28 @@ export default function LearnPage({
           baseHref={`/decks/${deckId}/learn`}
           selectedSize={selectedSize}
           sizes={LEARN_SESSION_SIZES}
-          totalCount={availableCount}
+          totalCount={session.availableCount}
           noun="word"
           allowAll
+          preferenceCookieName={LEARN_SESSION_SIZE_COOKIE}
         />
       ) : null}
       {mode === 'learn' ? (
-        <LearnMode key={selectedSize} learnItems={learnItems} onStartQuiz={() => setMode('quiz')} />
+        <LearnMode
+          key={selectedSize}
+          learnItems={session.learnItems}
+          onStartQuiz={() => {
+            setStartedSession(current => current ?? session);
+            setMode('quiz');
+          }}
+        />
       ) : (
         <QuizMode
-          quizItems={learnItems}
+          quizItems={session.learnItems}
           tone="learning"
           studyMode="learn"
           completionHref={`/decks/${deckId}`}
+          reviewDeckId={deckId}
         />
       )}
     </StudySession>

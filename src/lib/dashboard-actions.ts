@@ -1,3 +1,5 @@
+import { QUICK_REVIEW_SESSION_SIZE } from './study-session-size';
+
 export type DashboardAction = 'review' | 'learn' | 'practice';
 
 type DashboardActionCounts = {
@@ -31,4 +33,14 @@ export function getDashboardReviewAction(reviewsDue: number, deckIds: number[]) 
   }
   if (deckIds.length > 1) return { href: undefined, shouldChooseDeck: true };
   return { href: '/review', shouldChooseDeck: false };
+}
+
+export function getDashboardQuickReviewAction(reviewsDue: number, deckIds: number[]) {
+  if (reviewsDue <= 0) return null;
+  const baseHref = deckIds.length === 1 ? `/decks/${deckIds[0]}/review` : '/review';
+
+  return {
+    href: `${baseHref}?size=${QUICK_REVIEW_SESSION_SIZE}`,
+    cardCount: Math.min(QUICK_REVIEW_SESSION_SIZE, reviewsDue),
+  };
 }

@@ -3,6 +3,7 @@
 import {
   getDueReviewsForDeck,
   getDueReviews,
+  getDueReviewDeckBreakdown,
   getLessonProgressForDeck,
   getNextReviewBatch,
   getNewVocabCountForDeck,
@@ -22,6 +23,7 @@ import {
   REVIEW_SESSION_SIZES,
 } from '@/lib/study-session-size';
 import { revalidatePath } from 'next/cache';
+import { getAccessibleDeckById } from '@/db/queries/deck.queries';
 
 export async function getLessonProgressForDeckAction(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -66,11 +68,18 @@ export async function getReviewPageDataAction(
         ? requestedLimit
         : DEFAULT_REVIEW_SESSION_SIZE;
   if (!(await getActiveReleaseId(deckId, userId))) return null;
-  const [dueReviews, nextReview] = await Promise.all([
+  const [deck, dueReviews, nextReview] = await Promise.all([
+    getAccessibleDeckById(deckId, userId),
     getDueReviewsForDeck(deckId, userId, limit),
     getNextReviewBatch(userId, [deckId]),
   ]);
-  return { dueReviews, nextReview, availableCount: Number(dueReviews[0]?.availableCount ?? 0) };
+  if (!deck) return null;
+  return {
+    deckTitle: deck.title,
+    dueReviews,
+    nextReview,
+    availableCount: Number(dueReviews[0]?.availableCount ?? 0),
+  };
 }
 
 export async function getAllReviewsPageDataAction(
@@ -83,11 +92,17 @@ export async function getAllReviewsPageDataAction(
       : REVIEW_SESSION_SIZES.includes(requestedLimit as (typeof REVIEW_SESSION_SIZES)[number])
         ? requestedLimit
         : DEFAULT_REVIEW_SESSION_SIZE;
-  const [dueReviews, nextReview] = await Promise.all([
+  const [dueReviews, nextReview, deckBreakdown] = await Promise.all([
     getDueReviews(userId, undefined, limit),
     getNextReviewBatch(userId),
+    getDueReviewDeckBreakdown(userId),
   ]);
-  return { dueReviews, nextReview, availableCount: Number(dueReviews[0]?.availableCount ?? 0) };
+  return {
+    dueReviews,
+    nextReview,
+    deckBreakdown,
+    availableCount: Number(dueReviews[0]?.availableCount ?? 0),
+  };
 }
 
 export async function getPlacementPageDataAction(deckIdInput: number, lessonIdInput: number) {
@@ -123,6 +138,7 @@ export async function saveQuizAttemptAction(input: SaveQuizAttemptInput) {
 
   if (result.transition && result.deckId) {
     revalidatePath('/dashboard');
+    revalidatePath('/progress');
     revalidatePath('/decks');
     revalidatePath(`/decks/${result.deckId}`);
     revalidatePath('/review');
@@ -140,4 +156,11 @@ export async function getRecentMistakesAction(limit = 25) {
 
 export async function getRecentMistakeCountAction() {
   return getRecentMistakeCount(await getCurrentUserId());
+}
+
+export async function getNextReviewBatchAction(deckIdInput?: number) {
+  const deckId = deckIdInput === undefined ? undefined : parsePositiveInteger(deckIdInput);
+  if (deckIdInput !== undefined && !deckId) throw new Error('Invalid deck ID.');
+
+  return getNextReviewBatch(await getCurrentUserId(), deckId ? [deckId] : undefined);
 }

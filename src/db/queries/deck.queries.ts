@@ -11,7 +11,7 @@ import {
 } from '@/db/schema';
 import { CreateDeck, Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
-import { eq, and, getTableColumns, count, sql, or, ne, inArray } from 'drizzle-orm';
+import { eq, and, getTableColumns, count, sql, or, inArray } from 'drizzle-orm';
 import { getNewVocabCountForDeck } from '@/db/queries/review.queries';
 import {
   activeReleaseIdExpression,
@@ -146,7 +146,7 @@ export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
     .where(eq(deckFollows.userId, userId));
 };
 
-export const getPublicDecks = async (userId: string) => {
+export const getPublicDecks = async () => {
   return db
     .select({
       ...getTableColumns(decks),
@@ -166,7 +166,6 @@ export const getPublicDecks = async (userId: string) => {
         eq(decks.visibility, 'public'),
         eq(decks.status, 'active'),
         eq(decks.catalogStatus, 'eligible'),
-        ne(decks.ownerId, userId),
       ),
     );
 };

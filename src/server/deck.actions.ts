@@ -120,7 +120,7 @@ export async function getDiscoverPageDataAction() {
   const userId = await getCurrentUserId();
   const [ownedDecks, publicDecks, learningDecks] = await Promise.all([
     getDecksByOwnerId(userId),
-    getPublicDecks(userId),
+    getPublicDecks(),
     getUserFollowedDecks(userId),
   ]);
   const libraryDeckIds = [...new Set([...ownedDecks, ...learningDecks].map(deck => deck.id))];
@@ -244,6 +244,7 @@ export async function deleteDeckAction(id: number) {
     revalidateTag(PUBLIC_DECK_SUMMARIES_CACHE_TAG);
     revalidatePath('/decks');
     revalidatePath('/dashboard');
+    revalidatePath('/progress');
     revalidatePath('/discover');
   });
 }

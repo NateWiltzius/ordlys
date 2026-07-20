@@ -3,11 +3,8 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { getReviewPageDataAction } from '@/server/review.actions';
 import type { Metadata } from 'next';
-import {
-  DEFAULT_REVIEW_SESSION_SIZE,
-  parseSessionSize,
-  REVIEW_SESSION_SIZES,
-} from '@/lib/study-session-size';
+import { parseReviewSessionSize, REVIEW_SESSION_SIZE_COOKIE } from '@/lib/study-session-size';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Review',
@@ -25,11 +22,9 @@ export default async function ReviewPage({ params, searchParams }: Props) {
   const { deckId } = await params;
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
-  const selectedSize = parseSessionSize(
+  const selectedSize = parseReviewSessionSize(
     (await searchParams).size,
-    REVIEW_SESSION_SIZES,
-    DEFAULT_REVIEW_SESSION_SIZE,
-    true,
+    (await cookies()).get(REVIEW_SESSION_SIZE_COOKIE)?.value,
   );
   const data = await getReviewPageDataAction(parsedDeckId, selectedSize);
   if (!data) notFound();
@@ -37,6 +32,7 @@ export default async function ReviewPage({ params, searchParams }: Props) {
   return (
     <ReviewMode
       deckId={parsedDeckId}
+      deckTitle={data.deckTitle}
       dueReviews={data.dueReviews}
       nextReview={data.nextReview}
       selectedSize={selectedSize}

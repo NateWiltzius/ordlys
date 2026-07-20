@@ -3,11 +3,8 @@ import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
 import { getLearnPageDataAction } from '@/server/review.actions';
 import type { Metadata } from 'next';
-import {
-  DEFAULT_LEARN_SESSION_SIZE,
-  LEARN_SESSION_SIZES,
-  parseSessionSize,
-} from '@/lib/study-session-size';
+import { LEARN_SESSION_SIZE_COOKIE, parseLearnSessionSize } from '@/lib/study-session-size';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Learn',
@@ -23,11 +20,9 @@ type Props = {
 
 export default async function Page({ params, searchParams }: Props) {
   const { deckId } = await params;
-  const selectedSize = parseSessionSize(
+  const selectedSize = parseLearnSessionSize(
     (await searchParams).size,
-    LEARN_SESSION_SIZES,
-    DEFAULT_LEARN_SESSION_SIZE,
-    true,
+    (await cookies()).get(LEARN_SESSION_SIZE_COOKIE)?.value,
   );
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();

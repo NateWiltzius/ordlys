@@ -1,4 +1,9 @@
-import { QuizQueueItem, QuizProgress, QuizSourceItem } from '@/types/quiz.types';
+import {
+  QuizFirstAttemptStats,
+  QuizQueueItem,
+  QuizProgress,
+  QuizSourceItem,
+} from '@/types/quiz.types';
 
 type QuizAttemptOutcomeInput = {
   isCorrect: boolean;
@@ -26,6 +31,20 @@ export function getQuizAttemptOutcome({
   };
 }
 
+export function addFirstAttempt(
+  stats: QuizFirstAttemptStats,
+  isCorrect: boolean,
+): QuizFirstAttemptStats {
+  const totalDirections = stats.totalDirections + 1;
+  const correctDirections = stats.correctDirections + Number(isCorrect);
+
+  return {
+    totalDirections,
+    correctDirections,
+    accuracyPercentage: Math.round((correctDirections / totalDirections) * 100),
+  };
+}
+
 export function buildQuizQueue(learnItems: QuizSourceItem[]): QuizQueueItem[] {
   return learnItems.flatMap(item => [
     {
@@ -37,6 +56,11 @@ export function buildQuizQueue(learnItems: QuizSourceItem[]): QuizQueueItem[] {
       acceptedAnswers: [item.front, ...item.frontAlternatives],
       frontLanguage: item.frontLanguage,
       backLanguage: item.backLanguage,
+      reading: item.reading,
+      notes: item.notes ?? null,
+      deckTitle: item.deckTitle ?? null,
+      lessonTitle: item.lessonTitle ?? null,
+      srsLevel: item.srsLevel ?? null,
     },
     {
       cardId: item.id,
@@ -47,6 +71,11 @@ export function buildQuizQueue(learnItems: QuizSourceItem[]): QuizQueueItem[] {
       acceptedAnswers: [item.back, ...item.backAlternatives],
       frontLanguage: item.frontLanguage,
       backLanguage: item.backLanguage,
+      reading: item.reading,
+      notes: item.notes ?? null,
+      deckTitle: item.deckTitle ?? null,
+      lessonTitle: item.lessonTitle ?? null,
+      srsLevel: item.srsLevel ?? null,
     },
   ]);
 }

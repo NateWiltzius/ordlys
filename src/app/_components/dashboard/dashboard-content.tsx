@@ -11,6 +11,7 @@ import { getRecentMistakeCountAction } from '@/server/review.actions';
 import DashboardSrsCard from '@/app/_components/dashboard/dashboard-srs-card';
 import DashboardLearningCard from '@/app/_components/dashboard/dashboard-learning-card';
 import { DashboardAction, getDashboardActionOrder } from '@/lib/dashboard-actions';
+import DashboardQuickReview from '@/app/_components/dashboard/dashboard-quick-review';
 
 export default async function DashboardContent() {
   const [dashboardData, recentMistakeCount] = await Promise.all([
@@ -51,12 +52,20 @@ export default async function DashboardContent() {
     ),
     practice: <DashboardRecentMistakesCard count={recentMistakeCount} />,
   };
+  const deckIdsWithReviews = activeDecks
+    .filter(deck => (deckStats[deck.id]?.reviewsDue ?? 0) > 0)
+    .map(deck => deck.id);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Today"
         description="Start what is ready now and keep your learning moving."
+      />
+
+      <DashboardQuickReview
+        reviewsDue={allDeckStats.reviewsDue}
+        deckIdsWithReviews={deckIdsWithReviews}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

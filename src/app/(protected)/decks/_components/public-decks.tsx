@@ -35,7 +35,7 @@ export default function PublicDecks({ decks, libraryDeckIds }: Props) {
         variant="flat"
         title={
           everyPublicDeckIsInLibrary
-            ? 'You have added every public deck'
+            ? 'You’ve already added every available public deck'
             : 'No public decks are available yet'
         }
         description={
