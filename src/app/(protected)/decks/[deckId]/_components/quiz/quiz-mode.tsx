@@ -8,6 +8,7 @@ import {
   shuffleArray,
   buildQuizQueue,
   buildQuizProgress,
+  getQuizAttemptOutcome,
   insertLater,
 } from '@/lib/quiz/quiz-helpers';
 import {
@@ -255,7 +256,11 @@ export default function QuizMode({
     continueHandledRef.current = true;
 
     const { quizItem } = feedback;
-    const isAccepted = feedback.isCorrect || acceptAnyway;
+    const { isAccepted, cardWasCorrect, shouldMarkMissed } = getQuizAttemptOutcome({
+      isCorrect: feedback.isCorrect,
+      wasOverridden: acceptAnyway,
+      failedEarlier: failedCardIds.has(quizItem.cardId),
+    });
     const currentProgress = quizProgress[quizItem.cardId];
     const nextProgressForCard: QuizProgressItem = {
       ...currentProgress,
@@ -265,7 +270,6 @@ export default function QuizMode({
     const wasAlreadyFullyPassed = currentProgress.btfPassed && currentProgress.ftbPassed;
     const isNowFullyPassed = nextProgressForCard.btfPassed && nextProgressForCard.ftbPassed;
     const completesCard = isAccepted && isNowFullyPassed && !wasAlreadyFullyPassed;
-    const cardWasCorrect = !failedCardIds.has(quizItem.cardId) && feedback.isCorrect;
 
     if (recordAttempts) {
       saveAttempt({
@@ -282,14 +286,14 @@ export default function QuizMode({
 
     attemptKeyRef.current = null;
 
-    if (!feedback.isCorrect) {
+    if (shouldMarkMissed) {
       setMissedCardIds(previous => new Set(previous).add(quizItem.cardId));
     }
 
     setAttemptStats(prev => ({
       totalAttempts: prev.totalAttempts + 1,
-      correctAttempts: prev.correctAttempts + Number(feedback.isCorrect),
-      incorrectAttempts: prev.incorrectAttempts + Number(!feedback.isCorrect),
+      correctAttempts: prev.correctAttempts + Number(isAccepted),
+      incorrectAttempts: prev.incorrectAttempts + Number(!isAccepted),
     }));
 
     if (isAccepted) {
@@ -307,8 +311,6 @@ export default function QuizMode({
           next.delete(quizItem.cardId);
           return next;
         });
-      } else if (!feedback.isCorrect) {
-        setFailedCardIds(prev => new Set(prev).add(quizItem.cardId));
       }
     } else {
       setFailedCardIds(prev => {

@@ -28,6 +28,7 @@ export async function getRecentMistakeVocabs(userId: string, limit = 25) {
       and(
         eq(reviewAttempts.userId, userId),
         eq(reviewAttempts.isCorrect, false),
+        eq(reviewAttempts.wasOverridden, false),
         gte(reviewAttempts.attemptedAt, cutoff),
       ),
     )
@@ -87,6 +88,7 @@ export async function getRecentMistakeCount(userId: string) {
       and(
         eq(reviewAttempts.userId, userId),
         eq(reviewAttempts.isCorrect, false),
+        eq(reviewAttempts.wasOverridden, false),
         gte(reviewAttempts.attemptedAt, recentMistakeCutoff()),
         studyDeckAccess(userId),
       ),
