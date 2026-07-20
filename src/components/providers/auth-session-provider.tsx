@@ -3,6 +3,9 @@
 import { createContext, type PropsWithChildren, useEffect, useState } from 'react';
 
 export const AuthSessionContext = createContext<boolean | null | undefined>(undefined);
+export const AuthSessionUpdateContext = createContext<((loggedIn: boolean) => void) | undefined>(
+  undefined,
+);
 
 export default function AuthSessionProvider({ children }: PropsWithChildren) {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -30,5 +33,9 @@ export default function AuthSessionProvider({ children }: PropsWithChildren) {
     return () => controller.abort();
   }, []);
 
-  return <AuthSessionContext value={loggedIn}>{children}</AuthSessionContext>;
+  return (
+    <AuthSessionContext value={loggedIn}>
+      <AuthSessionUpdateContext value={setLoggedIn}>{children}</AuthSessionUpdateContext>
+    </AuthSessionContext>
+  );
 }

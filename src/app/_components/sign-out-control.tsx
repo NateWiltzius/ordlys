@@ -1,6 +1,7 @@
 'use client';
 
 import { navigationItemClassName } from '@/app/_components/navigation-items';
+import { useAuthSessionUpdate } from '@/hooks/use-auth-session-state';
 import { clearPendingQuizAttempts } from '@/lib/quiz/pending-quiz-attempts';
 import { signOutAction } from '@/server/auth.actions';
 import { useRouter } from 'next/navigation';
@@ -13,6 +14,7 @@ type Props = {
 
 export default function SignOutControl({ variant, onSignedOut }: Props) {
   const router = useRouter();
+  const updateAuthSession = useAuthSessionUpdate();
   const [isPending, setIsPending] = useState(false);
   const [hasError, setHasError] = useState(false);
 
@@ -36,8 +38,8 @@ export default function SignOutControl({ variant, onSignedOut }: Props) {
       root.classList.toggle('dark', activeTheme === 'dark');
       root.style.colorScheme = activeTheme;
       onSignedOut?.();
+      updateAuthSession(false);
       router.replace('/');
-      router.refresh();
     } catch {
       setHasError(true);
       setIsPending(false);

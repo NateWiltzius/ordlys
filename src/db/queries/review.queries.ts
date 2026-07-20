@@ -465,7 +465,7 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
 export async function saveQuizAttempt(
   userId: string,
   input: SaveQuizAttemptInput,
-): Promise<{ saved: boolean; transition: SrsTransition | null }> {
+): Promise<{ saved: boolean; transition: SrsTransition | null; deckId: number | null }> {
   const now = new Date();
 
   return db.transaction(async tx => {
@@ -480,7 +480,7 @@ export async function saveQuizAttempt(
 
     // A deck can be removed or unfollowed while a quiz is open. That makes the
     // queued attempt obsolete rather than retryable forever.
-    if (!vocabAccess) return { saved: false, transition: null };
+    if (!vocabAccess) return { saved: false, transition: null, deckId: null };
 
     const insertedAttempt = await tx
       .insert(reviewAttempts)
@@ -497,8 +497,12 @@ export async function saveQuizAttempt(
       .onConflictDoNothing()
       .returning({ id: reviewAttempts.id });
 
-    if (insertedAttempt.length === 0) return { saved: false, transition: null };
-    if (!input.completesCard) return { saved: true, transition: null };
+    if (insertedAttempt.length === 0) {
+      return { saved: false, transition: null, deckId: vocabAccess.deckId };
+    }
+    if (!input.completesCard) {
+      return { saved: true, transition: null, deckId: vocabAccess.deckId };
+    }
 
     if (input.mode === 'learn') {
       const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
@@ -506,7 +510,7 @@ export async function saveQuizAttempt(
         lesson => lesson.lessonId === vocabAccess.lessonId && lesson.isUnlocked,
       );
       if (!lessonIsUnlocked) {
-        return { saved: true, transition: null };
+        return { saved: true, transition: null, deckId: vocabAccess.deckId };
       }
 
       const initialState = getInitialSrsState(now);
@@ -526,6 +530,7 @@ export async function saveQuizAttempt(
         transition: insertedState.length
           ? { previousLevel: null, nextLevel: initialState.srsLevel }
           : null,
+        deckId: vocabAccess.deckId,
       };
     }
 
@@ -545,7 +550,9 @@ export async function saveQuizAttempt(
       // Another tab or an earlier retry may already have advanced this card.
       // The directional attempt is still valid history, but the SRS transition
       // must not be applied twice.
-      if (!state) return { saved: true, transition: null };
+      if (!state) {
+        return { saved: true, transition: null, deckId: vocabAccess.deckId };
+      }
 
       const nextState = getNextSrsState({
         currentSrsLevel: state.srsLevel,
@@ -560,13 +567,14 @@ export async function saveQuizAttempt(
       return {
         saved: true,
         transition: { previousLevel: state.srsLevel, nextLevel: nextState.srsLevel },
+        deckId: vocabAccess.deckId,
       };
     }
 
     const lessonProgress = await getLessonProgressForDeck(vocabAccess.deckId, userId);
     const placementLesson = lessonProgress.find(lesson => lesson.lessonId === vocabAccess.lessonId);
     if (!placementLesson?.canTakePlacementTest) {
-      return { saved: true, transition: null };
+      return { saved: true, transition: null, deckId: vocabAccess.deckId };
     }
 
     const [existingState] = await tx
@@ -582,6 +590,7 @@ export async function saveQuizAttempt(
         transition: existingState
           ? { previousLevel: existingState.srsLevel, nextLevel: existingState.srsLevel }
           : { previousLevel: null, nextLevel: null },
+        deckId: vocabAccess.deckId,
       };
     }
 
@@ -612,6 +621,7 @@ export async function saveQuizAttempt(
         previousLevel: existingState?.srsLevel ?? null,
         nextLevel: Math.max(existingState?.srsLevel ?? 0, targetState.srsLevel),
       },
+      deckId: vocabAccess.deckId,
     };
   });
 }

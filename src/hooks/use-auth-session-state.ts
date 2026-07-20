@@ -1,6 +1,9 @@
 'use client';
 
-import { AuthSessionContext } from '@/components/providers/auth-session-provider';
+import {
+  AuthSessionContext,
+  AuthSessionUpdateContext,
+} from '@/components/providers/auth-session-provider';
 import { useContext } from 'react';
 
 export function useAuthSessionState(): boolean | null {
@@ -11,4 +14,14 @@ export function useAuthSessionState(): boolean | null {
   }
 
   return loggedIn;
+}
+
+export function useAuthSessionUpdate(): (loggedIn: boolean) => void {
+  const updateLoggedIn = useContext(AuthSessionUpdateContext);
+
+  if (updateLoggedIn === undefined) {
+    throw new Error('useAuthSessionUpdate must be used within AuthSessionProvider.');
+  }
+
+  return updateLoggedIn;
 }

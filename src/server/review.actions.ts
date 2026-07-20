@@ -21,6 +21,7 @@ import {
   LEARN_SESSION_SIZES,
   REVIEW_SESSION_SIZES,
 } from '@/lib/study-session-size';
+import { revalidatePath } from 'next/cache';
 
 export async function getLessonProgressForDeckAction(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -115,7 +116,21 @@ export async function saveQuizAttemptAction(input: SaveQuizAttemptInput) {
     throw new Error('Invalid review attempt.');
   }
 
-  return saveQuizAttempt(await getCurrentUserId(), { ...input, vocabId: parsedVocabId });
+  const result = await saveQuizAttempt(await getCurrentUserId(), {
+    ...input,
+    vocabId: parsedVocabId,
+  });
+
+  if (result.transition && result.deckId) {
+    revalidatePath('/dashboard');
+    revalidatePath('/decks');
+    revalidatePath(`/decks/${result.deckId}`);
+    revalidatePath('/review');
+    revalidatePath(`/decks/${result.deckId}/review`);
+    revalidatePath(`/decks/${result.deckId}/learn`);
+  }
+
+  return result;
 }
 
 export async function getRecentMistakesAction(limit = 25) {
