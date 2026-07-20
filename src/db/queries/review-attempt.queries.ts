@@ -106,6 +106,7 @@ export async function getProgressAttemptStats(userId: string, deckIds: number[],
     .select({
       deckId: decks.id,
       day,
+      wordsPracticed: countDistinct(reviewAttempts.vocabId),
       attempts: count(reviewAttempts.id),
       correctAttempts: sql<number>`
         count(${reviewAttempts.id}) filter (where ${reviewAttempts.isCorrect})
@@ -132,13 +133,22 @@ export async function getProgressAttemptStats(userId: string, deckIds: number[],
     .groupBy(decks.id, day)
     .orderBy(day);
 
-  const activityByDay = new Map<string, { attempts: number; correctAttempts: number }>();
+  const activityByDay = new Map<
+    string,
+    { wordsPracticed: number; attempts: number; correctAttempts: number }
+  >();
   const byDeck: Record<number, { attempts: number; correctAttempts: number }> = {};
 
   for (const row of rows) {
+    const wordsPracticed = Number(row.wordsPracticed);
     const attempts = Number(row.attempts);
     const correctAttempts = Number(row.correctAttempts);
-    const dayTotals = activityByDay.get(row.day) ?? { attempts: 0, correctAttempts: 0 };
+    const dayTotals = activityByDay.get(row.day) ?? {
+      wordsPracticed: 0,
+      attempts: 0,
+      correctAttempts: 0,
+    };
+    dayTotals.wordsPracticed += wordsPracticed;
     dayTotals.attempts += attempts;
     dayTotals.correctAttempts += correctAttempts;
     activityByDay.set(row.day, dayTotals);
@@ -152,6 +162,7 @@ export async function getProgressAttemptStats(userId: string, deckIds: number[],
   return {
     activity: Array.from(activityByDay, ([day, totals]) => ({
       day,
+      wordsPracticed: totals.wordsPracticed,
       attempts: totals.attempts,
       correctAttempts: totals.correctAttempts,
     })),

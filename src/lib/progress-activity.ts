@@ -1,7 +1,7 @@
 import type { ProgressActivityDay } from '@/types/progress.types';
 
 export const PROGRESS_ACTIVITY_WINDOW_DAYS = 28;
-export const PROGRESS_CHART_DAYS = 14;
+export const PROGRESS_CHART_DAYS = 7;
 
 function utcDayStart(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -29,7 +29,14 @@ export function buildProgressActivitySeries(
     const date = new Date(start);
     date.setUTCDate(start.getUTCDate() + index);
     const day = getProgressDayKey(date);
-    return rowsByDay.get(day) ?? { day, attempts: 0, correctAttempts: 0 };
+    return (
+      rowsByDay.get(day) ?? {
+        day,
+        wordsPracticed: 0,
+        attempts: 0,
+        correctAttempts: 0,
+      }
+    );
   });
 }
 

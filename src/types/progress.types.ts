@@ -2,6 +2,7 @@ import type { SrsCategoryCounts } from '@/lib/srs/srs-config';
 
 export type ProgressActivityDay = {
   day: string;
+  wordsPracticed: number;
   attempts: number;
   correctAttempts: number;
 };

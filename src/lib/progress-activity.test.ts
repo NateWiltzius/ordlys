@@ -11,14 +11,14 @@ describe('progress activity', () => {
   it('fills missing days through today', () => {
     expect(
       buildProgressActivitySeries(
-        [{ day: '2026-07-19', attempts: 6, correctAttempts: 5 }],
+        [{ day: '2026-07-19', wordsPracticed: 3, attempts: 6, correctAttempts: 5 }],
         3,
         today,
       ),
     ).toEqual([
-      { day: '2026-07-18', attempts: 0, correctAttempts: 0 },
-      { day: '2026-07-19', attempts: 6, correctAttempts: 5 },
-      { day: '2026-07-20', attempts: 0, correctAttempts: 0 },
+      { day: '2026-07-18', wordsPracticed: 0, attempts: 0, correctAttempts: 0 },
+      { day: '2026-07-19', wordsPracticed: 3, attempts: 6, correctAttempts: 5 },
+      { day: '2026-07-20', wordsPracticed: 0, attempts: 0, correctAttempts: 0 },
     ]);
   });
 
@@ -29,9 +29,9 @@ describe('progress activity', () => {
   it('summarizes accuracy, activity, and streaks', () => {
     const activity = buildProgressActivitySeries(
       [
-        { day: '2026-07-17', attempts: 4, correctAttempts: 3 },
-        { day: '2026-07-19', attempts: 3, correctAttempts: 2 },
-        { day: '2026-07-20', attempts: 3, correctAttempts: 3 },
+        { day: '2026-07-17', wordsPracticed: 2, attempts: 4, correctAttempts: 3 },
+        { day: '2026-07-19', wordsPracticed: 2, attempts: 3, correctAttempts: 2 },
+        { day: '2026-07-20', wordsPracticed: 2, attempts: 3, correctAttempts: 3 },
       ],
       4,
       today,
@@ -50,8 +50,8 @@ describe('progress activity', () => {
   it('keeps a streak alive through an inactive current day', () => {
     const activity = buildProgressActivitySeries(
       [
-        { day: '2026-07-18', attempts: 2, correctAttempts: 2 },
-        { day: '2026-07-19', attempts: 2, correctAttempts: 1 },
+        { day: '2026-07-18', wordsPracticed: 1, attempts: 2, correctAttempts: 2 },
+        { day: '2026-07-19', wordsPracticed: 1, attempts: 2, correctAttempts: 1 },
       ],
       3,
       today,

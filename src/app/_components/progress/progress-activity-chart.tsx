@@ -16,12 +16,12 @@ function formatDay(day: string, options: Intl.DateTimeFormatOptions) {
 export default function ProgressActivityChart({ activity }: Props) {
   const chartActivity = activity.slice(-PROGRESS_CHART_DAYS);
   const summary = getProgressActivitySummary(chartActivity);
-  const maxAttempts = Math.max(...chartActivity.map(day => day.attempts), 1);
+  const maxWordsPracticed = Math.max(...chartActivity.map(day => day.wordsPracticed), 1);
 
   return (
     <PageSection
       title="Study activity"
-      description={`Answers submitted over the last ${PROGRESS_CHART_DAYS} days.`}
+      description={`Distinct words practiced each day over the last ${PROGRESS_CHART_DAYS} days.`}
       action={
         <p className="pt-1 text-sm text-default-500">
           {summary.activeDays} active {summary.activeDays === 1 ? 'day' : 'days'}
@@ -29,53 +29,50 @@ export default function ProgressActivityChart({ activity }: Props) {
       }
     >
       <div
-        className="grid h-48 grid-cols-[repeat(14,minmax(0,1fr))] gap-1 border-b border-default-200 sm:h-56 sm:gap-2"
+        className="grid h-48 grid-cols-7 gap-2 border-b border-default-200 sm:h-56 sm:gap-3"
         aria-label={`Study activity over the last ${PROGRESS_CHART_DAYS} days`}
       >
-        {chartActivity.map((day, index) => {
+        {chartActivity.map(day => {
           const height =
-            day.attempts === 0 ? 2 : Math.max(8, Math.round((day.attempts / maxAttempts) * 100));
+            day.wordsPracticed === 0
+              ? 2
+              : Math.max(8, Math.round((day.wordsPracticed / maxWordsPracticed) * 100));
           const fullDate = formatDay(day.day, {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
           });
+          const activityLabel = `${fullDate}: ${day.wordsPracticed} ${
+            day.wordsPracticed === 1 ? 'word' : 'words'
+          } practiced, ${day.attempts} ${day.attempts === 1 ? 'answer' : 'answers'}, ${
+            day.correctAttempts
+          } correct`;
 
           return (
             <div
               key={day.day}
               className="flex min-w-0 flex-col items-center justify-end gap-2"
-              title={`${fullDate}: ${day.attempts} ${
-                day.attempts === 1 ? 'answer' : 'answers'
-              }, ${day.correctAttempts} correct`}
+              title={activityLabel}
             >
               <div className="relative flex h-36 w-full items-end sm:h-44">
-                {day.attempts > 0 ? (
+                {day.wordsPracticed > 0 ? (
                   <span
-                    className="absolute left-1/2 -translate-x-1/2 text-[9px] font-semibold tabular-nums text-foreground sm:text-xs"
+                    className="absolute left-1/2 -translate-x-1/2 text-xs font-semibold tabular-nums text-foreground"
                     style={{ bottom: `calc(${height}% + 0.2rem)` }}
                   >
-                    {day.attempts}
+                    {day.wordsPracticed}
                   </span>
                 ) : null}
                 <div
                   role="img"
-                  aria-label={`${fullDate}: ${day.attempts} ${
-                    day.attempts === 1 ? 'answer' : 'answers'
-                  }, ${day.correctAttempts} correct`}
+                  aria-label={activityLabel}
                   className={`w-full rounded-t-sm ${
-                    day.attempts > 0 ? STUDY_TONE_STYLES.learning.progress : 'bg-default-200'
+                    day.wordsPracticed > 0 ? STUDY_TONE_STYLES.learning.progress : 'bg-default-200'
                   }`}
                   style={{ height: `${height}%` }}
                 />
               </div>
-              <span
-                className={`h-4 whitespace-nowrap text-[9px] font-medium text-default-400 sm:text-xs ${
-                  index % 2 === 0 || index === chartActivity.length - 1
-                    ? ''
-                    : 'invisible sm:visible'
-                }`}
-              >
+              <span className="h-4 whitespace-nowrap text-xs font-medium text-default-400">
                 {formatDay(day.day, { weekday: 'narrow' })}
               </span>
             </div>
@@ -94,6 +91,10 @@ export default function ProgressActivityChart({ activity }: Props) {
             : `${summary.accuracyPercentage}% answer accuracy`}
         </p>
       </div>
+      <p className="mt-2 text-xs text-default-400">
+        A word can produce more than one answer because study sessions test both directions and
+        include retries.
+      </p>
     </PageSection>
   );
 }
