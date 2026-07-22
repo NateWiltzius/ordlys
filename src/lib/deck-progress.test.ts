@@ -51,6 +51,17 @@ describe('deck progress summary', () => {
     });
   });
 
+  it('tracks the newly unlocked lesson instead of an earlier incomplete milestone', () => {
+    const summary = summarizeDeckProgress([
+      lesson(1, 10, 10, 0, 8),
+      lesson(2, 10, 0, 0, 8),
+      lesson(3, 10, 0, 0, 8, false),
+    ]);
+
+    expect(summary.currentLesson?.lessonId).toBe(2);
+    expect(summary.nextLesson?.lessonId).toBe(3);
+  });
+
   it('returns an empty summary when the deck has no cards', () => {
     expect(summarizeDeckProgress([])).toMatchObject({
       totalCards: 0,

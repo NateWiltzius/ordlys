@@ -10,18 +10,24 @@ export type LessonProgressRow = {
 };
 
 export function buildLessonProgress(rows: LessonProgressRow[]): LessonProgress[] {
-  let previousNonEmptyLessonPassed = true;
+  let previousNonEmptyLessonAllowsProgression = true;
 
   return rows.map(row => {
     const totalWords = Number(row.totalWords);
     const introducedWords = Number(row.introducedWords);
     const learnedWords = Number(row.learnedWords);
     const requiredWords = Math.ceil(totalWords * LESSON_PROGRESSION_CONFIG.unlockRatio);
-    const isUnlocked = totalWords === 0 || previousNonEmptyLessonPassed;
+    // Once a learner has started a lesson, keep it unlocked even if an earlier
+    // lesson later falls below its milestone (for example after a lapse or a
+    // deck update). A fresh lesson becomes available after the preceding lesson
+    // is either strengthened or fully introduced.
+    const isUnlocked =
+      totalWords === 0 || introducedWords > 0 || previousNonEmptyLessonAllowsProgression;
     const canTakePlacementTest = totalWords > introducedWords && isUnlocked;
 
     if (totalWords > 0) {
-      previousNonEmptyLessonPassed = isUnlocked && learnedWords >= requiredWords;
+      previousNonEmptyLessonAllowsProgression =
+        isUnlocked && (learnedWords >= requiredWords || introducedWords >= totalWords);
     }
 
     return {

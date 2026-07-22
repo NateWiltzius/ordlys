@@ -23,10 +23,26 @@ describe('buildLessonProgress', () => {
     expect(progress[1]).toMatchObject({ isUnlocked: true, canTakePlacementTest: true });
   });
 
-  it('keeps the next lesson locked when too few preceding cards have reached Strong', () => {
-    const progress = buildLessonProgress([lesson(1, 10, 10, 7), lesson(2, 10, 0, 0)]);
+  it('keeps the next lesson locked while the preceding lesson is unfinished and below Strong', () => {
+    const progress = buildLessonProgress([lesson(1, 10, 9, 7), lesson(2, 10, 0, 0)]);
 
     expect(progress[1]).toMatchObject({ isUnlocked: false, canTakePlacementTest: false });
+  });
+
+  it('unlocks the next lesson after every word in the preceding lesson is introduced', () => {
+    const progress = buildLessonProgress([lesson(1, 10, 10, 0), lesson(2, 10, 0, 0)]);
+
+    expect(progress[1]).toMatchObject({ isUnlocked: true, canTakePlacementTest: true });
+  });
+
+  it('does not relock a lesson that the learner has already started', () => {
+    const progress = buildLessonProgress([
+      lesson(1, 10, 9, 7),
+      lesson(2, 10, 1, 0),
+      lesson(3, 10, 0, 0),
+    ]);
+
+    expect(progress.map(item => item.isUnlocked)).toEqual([true, true, false]);
   });
 
   it('does not let an empty lesson interrupt progression', () => {

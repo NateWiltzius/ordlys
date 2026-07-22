@@ -196,7 +196,7 @@ export default function LessonsAccordion({
                       </div>
                     ) : canStudy && lesson.totalWords > lesson.introducedWords ? (
                       <p className="mb-4 text-right text-sm text-muted">
-                        Strengthen at least{' '}
+                        Introduce every word in the previous lesson, or strengthen at least{' '}
                         {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}% of the previous
                         lesson&apos;s words to unlock this placement test.
                       </p>

@@ -24,11 +24,8 @@ export function summarizeDeckProgress(lessonProgress: LessonProgress[]): DeckPro
     lesson => lesson.introducedWords >= lesson.totalWords,
   ).length;
   const currentLesson =
-    lessons.find(
-      lesson =>
-        lesson.isUnlocked &&
-        (lesson.introducedWords < lesson.totalWords || lesson.learnedWords < lesson.requiredWords),
-    ) ??
+    lessons.find(lesson => lesson.isUnlocked && lesson.introducedWords < lesson.totalWords) ??
+    lessons.findLast(lesson => lesson.isUnlocked && lesson.learnedWords < lesson.requiredWords) ??
     lessons.findLast(lesson => lesson.isUnlocked) ??
     null;
   const currentLessonIndex = currentLesson

@@ -16,6 +16,9 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
   const remainingLearnedWords = currentLesson
     ? Math.max(0, currentLesson.requiredWords - currentLesson.learnedWords)
     : 0;
+  const remainingIntroducedWords = currentLesson
+    ? Math.max(0, currentLesson.totalWords - currentLesson.introducedWords)
+    : 0;
 
   return (
     <section className="border-t border-default-200 pt-6">
@@ -99,11 +102,19 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                 ? progress.nextLesson
                   ? `${progress.nextLesson.lessonTitle} unlocked`
                   : 'Final lesson milestone reached'
-                : `${remainingLearnedWords} more ${
-                    remainingLearnedWords === 1 ? 'word' : 'words'
-                  } to strengthen before you ${
-                    progress.nextLesson ? 'unlock the next lesson' : 'complete the final milestone'
-                  }`}
+                : progress.nextLesson && remainingIntroducedWords > 0
+                  ? `Introduce ${remainingIntroducedWords} more ${
+                      remainingIntroducedWords === 1 ? 'word' : 'words'
+                    }, or strengthen ${remainingLearnedWords} more, to unlock ${
+                      progress.nextLesson.lessonTitle
+                    }`
+                  : `${remainingLearnedWords} more ${
+                      remainingLearnedWords === 1 ? 'word' : 'words'
+                    } to strengthen before you ${
+                      progress.nextLesson
+                        ? 'unlock the next lesson'
+                        : 'complete the final milestone'
+                    }`}
             </p>
             <p className="text-xs text-default-500">
               {currentLesson.introducedWords} of {currentLesson.totalWords} words introduced in this
