@@ -155,14 +155,6 @@ export default function QuizMode({
   }, [saveAttempt]);
 
   useEffect(() => {
-    document.documentElement.dataset.quizActive = 'true';
-
-    return () => {
-      delete document.documentElement.dataset.quizActive;
-    };
-  }, []);
-
-  useEffect(() => {
     setHasMounted(true);
     setAnswer('');
     setFailedCardIds(new Set());

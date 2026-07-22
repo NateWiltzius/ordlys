@@ -18,7 +18,7 @@ export default function DecksLoading() {
         <div className="pt-4">
           <DeckDiscoveryControlsSkeleton compact />
           <div className="divide-y divide-default-200 border-b border-default-200">
-            {Array.from({ length: 6 }, (_, index) => (
+            {Array.from({ length: 3 }, (_, index) => (
               <DeckCardSkeleton key={index} layout="row" />
             ))}
           </div>

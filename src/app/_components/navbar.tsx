@@ -61,7 +61,10 @@ export default function Navbar() {
             {loggedIn ? <SignOutControl variant="desktop" /> : null}
           </>
         ) : (
-          <div className="h-9 w-44 animate-pulse rounded-lg bg-default-200" aria-hidden="true" />
+          <div
+            className="h-10 w-[543px] animate-pulse rounded-lg bg-default-200"
+            aria-hidden="true"
+          />
         )}
         <ThemeToggle />
       </div>

@@ -8,6 +8,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { OPEN_GRAPH_IMAGE, SITE_URL, TWITTER_IMAGE } from '@/lib/site';
 import AuthSessionProvider from '@/components/providers/auth-session-provider';
+import AppChromeState from '@/app/_components/app-chrome-state';
 
 const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
 const siteDescription =
@@ -67,6 +68,11 @@ export default function RootLayout({ children }: PropsWithChildren) {
       <head>
         <script
           dangerouslySetInnerHTML={{
+            __html: `(function(){var p=location.pathname;var active=p==='/review'||p==='/practice/recent-mistakes'||/^\\/decks\\/[^/]+\\/(?:learn|review)$/.test(p)||/^\\/decks\\/[^/]+\\/placement\\/[^/]+$/.test(p);if(active)document.documentElement.dataset.quizActive='true'})();`,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
             __html: `(function(){try{var saved=localStorage.getItem('theme');var dark=saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){}})();`,
           }}
         />
@@ -75,6 +81,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         className={`flex min-h-screen flex-col bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
       >
         <AuthSessionProvider>
+          <AppChromeState />
           <a
             href="#main-content"
             className="skip-link sr-only fixed top-3 left-3 z-[100] rounded-lg bg-background px-4 py-2 font-medium text-foreground shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
