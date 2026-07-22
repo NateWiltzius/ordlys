@@ -16,7 +16,7 @@ type Props = {
 
 export default function DashboardLearningCard({ decks, deckStats, newWordsAvailable }: Props) {
   const modalState = useOverlayState();
-  const decksWithNewWords = decks.filter(deck => (deckStats[deck.id]?.newWordsAvailable ?? 0) > 0);
+  const decksWithNewWords = decks.filter(deck => deckStats[deck.id].newWordsAvailable > 0);
   const hasNewWords = newWordsAvailable > 0;
 
   const learningCard = (
@@ -62,7 +62,7 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
               </p>
               <ul className="divide-y divide-default-200 rounded-lg border border-default-200">
                 {decksWithNewWords.map(deck => {
-                  const count = deckStats[deck.id]?.newWordsAvailable ?? 0;
+                  const count = deckStats[deck.id].newWordsAvailable;
 
                   return (
                     <li

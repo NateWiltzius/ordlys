@@ -1,6 +1,6 @@
 import type { LessonProgress } from '@/types/review.types';
 
-export type DeckProgressSummary = {
+type DeckProgressSummary = {
   lessons: LessonProgress[];
   totalCards: number;
   introducedCards: number;

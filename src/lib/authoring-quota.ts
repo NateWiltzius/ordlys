@@ -9,7 +9,7 @@ export type AuthoringUsage = {
   revisionsToday: number;
 };
 
-export type AuthoringCapacityRequest = Partial<Record<keyof AuthoringUsage, number>>;
+type AuthoringCapacityRequest = Partial<Record<keyof AuthoringUsage, number>>;
 
 type QuotaOverrides = Partial<Record<keyof AuthoringUsage, { code?: string; message?: string }>>;
 

@@ -9,7 +9,7 @@ type QuizCompletionInput = {
   missedCardCount: number;
 };
 
-export type QuizCompletionContent = {
+type QuizCompletionContent = {
   title: string;
   description: string;
   completedLabel: string;

@@ -10,7 +10,7 @@ const DEFAULT_SRS_INTERVALS_MINUTES = [
   180 * 24 * 60, // 6 months
 ] as const;
 
-export const SRS_LEVEL_LABELS = [
+const SRS_LEVEL_LABELS = [
   'Learning',
   'Learning',
   'Learning',

@@ -7,7 +7,7 @@ function utcDayStart(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-export function getProgressDayKey(date: Date) {
+function getProgressDayKey(date: Date) {
   return utcDayStart(date).toISOString().slice(0, 10);
 }
 

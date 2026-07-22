@@ -13,10 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function FeedbackPage() {
-  const [userId, contactEmail] = await Promise.all([
-    getCurrentUserIdOrNull(),
-    Promise.resolve(process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim()),
-  ]);
+  const userId = await getCurrentUserIdOrNull();
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
 
   return (
     <PageShell>

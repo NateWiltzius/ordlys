@@ -17,7 +17,7 @@ type Props = {
 
 export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Props) {
   const modalState = useOverlayState();
-  const decksWithReviews = decks.filter(deck => (deckStats[deck.id]?.reviewsDue ?? 0) > 0);
+  const decksWithReviews = decks.filter(deck => deckStats[deck.id].reviewsDue > 0);
   const hasReviewsDue = reviewsDue > 0;
   const singleDeck = decksWithReviews.length === 1 ? decksWithReviews[0] : null;
   const { href: directReviewHref, shouldChooseDeck } = getDashboardReviewAction(
@@ -39,7 +39,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
       icon={ClockIcon}
       tone="review"
       href={directReviewHref}
-      isModalTrigger={hasReviewsDue && shouldChooseDeck}
+      isModalTrigger={shouldChooseDeck}
       isDisabled={!hasReviewsDue}
       unavailableAction={
         <Button variant="secondary" size="lg" className="w-full" isDisabled>
@@ -87,7 +87,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
                   </ButtonLink>
                 </li>
                 {decksWithReviews.map(deck => {
-                  const count = deckStats[deck.id]?.reviewsDue ?? 0;
+                  const count = deckStats[deck.id].reviewsDue;
 
                   return (
                     <li

@@ -23,7 +23,7 @@ import { assertAuthoringCapacity } from '@/lib/authoring-quota';
 import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
 
 export const createDeck = async (deck: CreateDeck) => {
-  return await db.transaction(async tx => {
+  return db.transaction(async tx => {
     await lockAuthoringAccount(tx, deck.ownerId);
     assertAuthoringCapacity(await getAuthoringUsage(tx, deck.ownerId), { activeDecks: 1 });
     const [created] = await tx
@@ -220,7 +220,6 @@ export async function getDeckStudyCounts(deckId: number, userId: string): Promis
     db
       .select({
         totalWords: count(vocabs.id),
-        newWordsAvailable: sql<number>`0`,
         reviewsDue: sql<number>`
           count(${userVocabState.id}) filter (
             where ${userVocabState.dueAt} <= date_trunc('hour', now())
@@ -250,7 +249,7 @@ export async function getDeckStudyCounts(deckId: number, userId: string): Promis
   ]);
 
   return {
-    ...toReviewCounts(result),
+    ...toStudyCounts(result),
     newWordsAvailable,
   };
 }
@@ -301,11 +300,12 @@ export async function getDeckCardStudyCounts(
   );
 }
 
-function toReviewCounts(result?: ReviewCounts): ReviewCounts {
+type StudyCounts = Pick<ReviewCounts, 'totalWords' | 'reviewsDue' | 'wordsInReview'>;
+
+function toStudyCounts(result?: StudyCounts): StudyCounts {
   if (!result) {
     return {
       totalWords: 0,
-      newWordsAvailable: 0,
       reviewsDue: 0,
       wordsInReview: 0,
     };
@@ -313,7 +313,6 @@ function toReviewCounts(result?: ReviewCounts): ReviewCounts {
 
   return {
     totalWords: Number(result.totalWords),
-    newWordsAvailable: Number(result.newWordsAvailable),
     reviewsDue: Number(result.reviewsDue),
     wordsInReview: Number(result.wordsInReview),
   };

@@ -44,6 +44,7 @@ import {
 } from '@/db/queries/deck-release.queries';
 import { withExpectedError } from '@/lib/action-result';
 import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
+import type { ReviewCounts } from '@/types/review.types';
 
 export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
@@ -58,7 +59,7 @@ export async function getDashboardDataAction() {
       getSrsCategoryCountsForDecks(activeDeckIds, userId),
     ]);
 
-  const deckStats = Object.fromEntries(
+  const deckStats: Record<number, ReviewCounts> = Object.fromEntries(
     activeDeckIds.map(deckId => [
       deckId,
       {
@@ -69,12 +70,12 @@ export async function getDashboardDataAction() {
       },
     ]),
   );
-  const allDeckStats = activeDeckIds.reduce(
-    (totals, deckId) => ({
-      totalWords: totals.totalWords + (deckStudyCounts[deckId]?.totalWords ?? 0),
-      newWordsAvailable: totals.newWordsAvailable + (newVocabCounts[deckId] ?? 0),
-      reviewsDue: totals.reviewsDue + (deckStudyCounts[deckId]?.reviewsDue ?? 0),
-      wordsInReview: totals.wordsInReview + (deckStudyCounts[deckId]?.wordsInReview ?? 0),
+  const allDeckStats = Object.values(deckStats).reduce(
+    (totals, stats) => ({
+      totalWords: totals.totalWords + stats.totalWords,
+      newWordsAvailable: totals.newWordsAvailable + stats.newWordsAvailable,
+      reviewsDue: totals.reviewsDue + stats.reviewsDue,
+      wordsInReview: totals.wordsInReview + stats.wordsInReview,
     }),
     { totalWords: 0, newWordsAvailable: 0, reviewsDue: 0, wordsInReview: 0 },
   );

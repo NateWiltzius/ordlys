@@ -7,7 +7,7 @@ import {
 
 export const REVIEW_ACTIVE_WORD_LIMIT = 10;
 
-export type RollingReviewQueue = {
+type RollingReviewQueue = {
   queue: QuizQueueItem[];
   pendingItems: QuizSourceItem[];
 };
@@ -18,7 +18,7 @@ type QuizAttemptOutcomeInput = {
   failedEarlier: boolean;
 };
 
-export type QuizAttemptOutcome = {
+type QuizAttemptOutcome = {
   isAccepted: boolean;
   cardWasCorrect: boolean;
   shouldMarkMissed: boolean;

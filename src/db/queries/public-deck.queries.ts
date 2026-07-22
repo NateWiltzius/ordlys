@@ -55,7 +55,7 @@ const sharedDeckPredicate = and(
   isNull(decks.deletedAt),
 );
 
-export async function getPublicDeckSummaries(limit?: number, languages?: readonly string[]) {
+async function getPublicDeckSummaries(limit?: number, languages?: readonly string[]) {
   const languagePredicate =
     languages && languages.length > 0
       ? or(
@@ -77,12 +77,12 @@ export async function getPublicDeckSummaries(limit?: number, languages?: readonl
 }
 
 export const getCachedPublicDeckSummaries = unstable_cache(
-  async (limit?: number, languages?: readonly string[]) => getPublicDeckSummaries(limit, languages),
+  getPublicDeckSummaries,
   ['public-deck-summaries'],
   { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
 );
 
-export async function getPublicDeckSummaryById(deckId: number) {
+async function getPublicDeckSummaryById(deckId: number) {
   const [deck] = await db
     .select(publicDeckSummarySelection)
     .from(decks)
@@ -93,7 +93,7 @@ export async function getPublicDeckSummaryById(deckId: number) {
   return deck;
 }
 
-export async function getPublicDeckPageData(deckId: number) {
+async function getPublicDeckPageData(deckId: number) {
   const [deck, lessonRows, vocabularyPreview, provenance] = await Promise.all([
     getPublicDeckSummaryById(deckId),
     db
@@ -191,18 +191,18 @@ export async function getPublicDeckPageData(deckId: number) {
 }
 
 export const getCachedPublicDeckSummaryById = unstable_cache(
-  async (deckId: number) => getPublicDeckSummaryById(deckId),
+  getPublicDeckSummaryById,
   ['public-deck-summary'],
   { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
 );
 
 export const getCachedPublicDeckPageData = unstable_cache(
-  async (deckId: number) => getPublicDeckPageData(deckId),
+  getPublicDeckPageData,
   ['public-deck-page'],
   { revalidate: 3600, tags: [PUBLIC_DECK_SUMMARIES_CACHE_TAG] },
 );
 
-export async function getPublicDeckSitemapEntries() {
+async function getPublicDeckSitemapEntries() {
   return db.select({ id: decks.id }).from(decks).where(publicDeckPredicate).orderBy(asc(decks.id));
 }
 

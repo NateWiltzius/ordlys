@@ -3,7 +3,7 @@ import { UserFacingError } from '../action-result';
 import { CONTENT_LIMITS, optionalText, requiredText } from '../validation/content';
 import { isJsonValue } from '../validation/json';
 
-export type VocabContentInput = {
+type VocabContentInput = {
   front: string;
   back: string;
   frontAlternatives?: string[];
@@ -94,7 +94,7 @@ export function resolveVocabUpdate(
   };
 }
 
-export function normalizeAlternatives(
+function normalizeAlternatives(
   alternatives: string[] | undefined,
   canonicalAnswer: string,
 ): string[] {
@@ -131,7 +131,7 @@ export function normalizeAlternatives(
   return [...uniqueAlternatives.values()];
 }
 
-export function normalizeTags(tags: string[] | undefined): string[] {
+function normalizeTags(tags: string[] | undefined): string[] {
   if (tags === undefined) return [];
   if (!Array.isArray(tags)) {
     throw new UserFacingError('VALIDATION_ERROR', 'Tags must be a list of text values.');
@@ -158,7 +158,7 @@ export function normalizeTags(tags: string[] | undefined): string[] {
   return [...uniqueTags.values()];
 }
 
-export function normalizeMetadata(metadata: VocabMetadata | null | undefined): VocabMetadata {
+function normalizeMetadata(metadata: VocabMetadata | null | undefined): VocabMetadata {
   if (metadata === undefined || metadata === null) return {};
   if (!isPlainObject(metadata)) {
     throw new UserFacingError('VALIDATION_ERROR', 'Metadata must be an object.');

@@ -24,10 +24,10 @@ export default async function DashboardContent() {
     .sort((first, second) => {
       const firstStats = deckStats[first.id];
       const secondStats = deckStats[second.id];
-      const reviewDifference = (secondStats?.reviewsDue ?? 0) - (firstStats?.reviewsDue ?? 0);
+      const reviewDifference = secondStats.reviewsDue - firstStats.reviewsDue;
 
       if (reviewDifference !== 0) return reviewDifference;
-      return (secondStats?.newWordsAvailable ?? 0) - (firstStats?.newWordsAvailable ?? 0);
+      return secondStats.newWordsAvailable - firstStats.newWordsAvailable;
     })
     .slice(0, 3);
   const actionOrder = getDashboardActionOrder({
@@ -53,7 +53,7 @@ export default async function DashboardContent() {
     practice: <DashboardRecentMistakesCard count={recentMistakeCount} />,
   };
   const deckIdsWithReviews = activeDecks
-    .filter(deck => (deckStats[deck.id]?.reviewsDue ?? 0) > 0)
+    .filter(deck => deckStats[deck.id].reviewsDue > 0)
     .map(deck => deck.id);
 
   return (
@@ -103,18 +103,7 @@ export default async function DashboardContent() {
           />
         ) : (
           deckShortcuts.map(deck => (
-            <DashboardDeckRow
-              key={deck.id}
-              deck={deck}
-              stats={
-                deckStats[deck.id] ?? {
-                  totalWords: 0,
-                  newWordsAvailable: 0,
-                  reviewsDue: 0,
-                  wordsInReview: 0,
-                }
-              }
-            />
+            <DashboardDeckRow key={deck.id} deck={deck} stats={deckStats[deck.id]} />
           ))
         )}
       </PageSection>

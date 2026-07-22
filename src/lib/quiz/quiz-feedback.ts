@@ -4,7 +4,7 @@ import { getInitialSrsState, getNextSrsState, getSrsStateForLevel } from '../srs
 
 export type WordCompletion = 'clean' | 'recovered';
 
-export type WordCompletionContent = {
+type WordCompletionContent = {
   title: string;
   description: string;
   isWarning: boolean;

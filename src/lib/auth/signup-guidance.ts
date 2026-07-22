@@ -1,6 +1,6 @@
 export const MIN_SIGNUP_PASSWORD_LENGTH = 8;
 
-export type PasswordStrength = 'empty' | 'weak' | 'fair' | 'strong';
+type PasswordStrength = 'empty' | 'weak' | 'fair' | 'strong';
 
 type PasswordGuidance = {
   isValid: boolean;
