@@ -11,6 +11,8 @@ import {
   getQuizAttemptOutcome,
   insertLater,
   addFirstAttempt,
+  addReviewWordToQueue,
+  buildRollingReviewQueue,
 } from '@/lib/quiz/quiz-helpers';
 import {
   QuizQueueItem,
@@ -97,6 +99,8 @@ export default function QuizMode({
   const attemptedDirectionKeysRef = useRef<Set<string>>(new Set());
   const nextReviewFetchedRef = useRef(false);
   const sessionCardIdsRef = useRef(new Set(sessionQuizItems.map(item => item.id)));
+  const pendingReviewItemsRef = useRef<QuizSourceItem[]>([]);
+  const usesRollingReviewQueue = studyMode === 'review' && recordAttempts;
 
   const saveAttempt = useCallback((attempt: SaveQuizAttemptInput) => {
     pendingAttemptsRef.current.set(attempt.idempotencyKey, attempt);
@@ -164,7 +168,14 @@ export default function QuizMode({
     setFailedCardIds(new Set());
     setMissCounts({});
     setSrsTransitions({});
-    setQuizQueue(shuffleArray(buildQuizQueue(sessionQuizItems)));
+    if (usesRollingReviewQueue) {
+      const rollingQueue = buildRollingReviewQueue(sessionQuizItems);
+      pendingReviewItemsRef.current = rollingQueue.pendingItems;
+      setQuizQueue(rollingQueue.queue);
+    } else {
+      pendingReviewItemsRef.current = [];
+      setQuizQueue(shuffleArray(buildQuizQueue(sessionQuizItems)));
+    }
     setQuizProgress(buildQuizProgress(sessionQuizItems));
     setAttemptStats({
       totalAttempts: 0,
@@ -202,7 +213,7 @@ export default function QuizMode({
         saveAttempt(attempt);
       }
     }
-  }, [saveAttempt, sessionQuizItems]);
+  }, [saveAttempt, sessionQuizItems, usesRollingReviewQueue]);
 
   const sessionIsSaved =
     quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0 && !saveError;
@@ -385,7 +396,15 @@ export default function QuizMode({
       };
 
       setQuizProgress(nextQuizProgress);
-      setQuizQueue(prev => prev?.slice(1) ?? []);
+      const nextReviewItem =
+        completesCard && usesRollingReviewQueue ? pendingReviewItemsRef.current.shift() : undefined;
+
+      setQuizQueue(previous => {
+        const remainingQueue = previous?.slice(1) ?? [];
+        return nextReviewItem
+          ? addReviewWordToQueue(remainingQueue, nextReviewItem)
+          : remainingQueue;
+      });
 
       if (completesCard) {
         setFailedCardIds(prev => {

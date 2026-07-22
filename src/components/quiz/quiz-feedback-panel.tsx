@@ -12,7 +12,6 @@ import {
   getWordCompletionContent,
   WordCompletion,
 } from '@/lib/quiz/quiz-feedback';
-import { getAnswerDifference } from '@/lib/quiz/answer-difference';
 import { normalizeAnswer } from '@/lib/quiz/normalize';
 
 type Props = {
@@ -56,7 +55,6 @@ export default function QuizFeedbackPanel({
     feedback.quizItem.backLanguage,
   );
   const onContinueRef = useRef(onContinue);
-  const answerDifference = getAnswerDifference(feedback.submittedAnswer, feedback.quizItem.answer);
   const canonicalAnswer = normalizeAnswer(feedback.quizItem.answer);
   const acceptedAlternatives = [
     ...new Map(
@@ -202,17 +200,10 @@ export default function QuizFeedbackPanel({
           {feedback.quizItem.reading ? (
             <AnswerRow label="Reading" value={feedback.quizItem.reading} />
           ) : null}
-          <AnswerRow
-            label="Your answer"
-            value={feedback.submittedAnswer.trim() || 'No answer'}
-            difference={answerDifference?.submitted}
-            differenceTone="incorrect"
-          />
+          <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
           <AnswerRow
             label={languageLabels.correctAnswerRowLabel}
             value={feedback.quizItem.answer}
-            difference={answerDifference?.correct}
-            differenceTone="correct"
           />
           {acceptedAlternatives.length > 0 ? (
             <AnswerRow label="Also accepted" value={acceptedAlternatives.join(' · ')} />

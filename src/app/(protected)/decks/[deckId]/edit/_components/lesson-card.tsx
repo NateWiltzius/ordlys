@@ -205,7 +205,7 @@ export default function LessonCard({
       <Accordion.Heading>
         <Accordion.Trigger>
           <span className="flex min-w-0 flex-1 items-center justify-between gap-4 pr-2 text-left">
-            <span className="min-w-0 break-words font-medium">{lesson.title}</span>
+            <span className="min-w-0 break-words font-medium text-foreground">{lesson.title}</span>
             <Chip size="sm" variant="soft" className="shrink-0">
               {vocabCount} {vocabCount === 1 ? 'card' : 'cards'}
             </Chip>
@@ -218,7 +218,7 @@ export default function LessonCard({
         <Accordion.Body>
           <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-default-500">Manage the cards in this lesson.</p>
+              <p className="text-sm text-muted">Manage the cards in this lesson.</p>
               <div className="flex flex-wrap items-center gap-1">
                 <EditLessonModal lesson={lesson} />
                 <Button

@@ -18,6 +18,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.8,
     },
+    {
+      url: absoluteUrl('/how-to-use'),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
     ...publicDecks.map(deck => ({
       url: absoluteUrl(`/public/decks/${deck.id}`),
       changeFrequency: 'weekly' as const,

@@ -12,14 +12,14 @@ export default function VocabSide({ label, value, alternatives, children }: Prop
 
   return (
     <div className="min-w-0">
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-default-400 sm:hidden">
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted sm:hidden">
         {label}
       </p>
 
-      <p className="break-words text-sm font-medium text-default-800">{value}</p>
+      <p className="break-words text-sm font-medium text-foreground">{value}</p>
 
       {alternatives.length > 0 ? (
-        <p className="mt-1 break-words text-xs leading-relaxed text-default-500">
+        <p className="mt-1 break-words text-xs leading-relaxed text-muted">
           <span className="font-medium">Also accepts:</span> {alternatives.join(', ')}
         </p>
       ) : null}

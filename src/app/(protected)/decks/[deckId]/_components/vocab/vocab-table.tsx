@@ -9,7 +9,7 @@ type Props = {
   emptyTitle?: string;
   emptyDescription?: string;
   renderActions?: (vocab: Vocab, index: number) => ReactNode;
-  srsLevels?: Record<number, number>;
+  srsStates?: Record<number, { srsLevel: number; dueAt: string }>;
   showSrsLevels?: boolean;
   frontLabel?: string;
   backLabel?: string;
@@ -20,7 +20,7 @@ export default function VocabTable({
   emptyTitle = 'No words yet',
   emptyDescription,
   renderActions,
-  srsLevels = {},
+  srsStates = {},
   showSrsLevels = false,
   frontLabel = 'Front',
   backLabel = 'Back',
@@ -34,7 +34,7 @@ export default function VocabTable({
   return (
     <div className="overflow-hidden rounded-lg border border-default-200">
       <div
-        className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-default-500 sm:grid sm:items-center ${desktopColumns}`}
+        className={`hidden gap-4 border-b border-default-200 bg-default-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted sm:grid sm:items-center ${desktopColumns}`}
       >
         <span>#</span>
         <span>{frontLabel}</span>
@@ -49,7 +49,8 @@ export default function VocabTable({
             vocab={vocab}
             index={index + 1}
             actions={renderActions?.(vocab, index)}
-            srsLevel={srsLevels[vocab.id]}
+            srsLevel={srsStates[vocab.id]?.srsLevel}
+            reviewDueAt={srsStates[vocab.id]?.dueAt}
             showSrsLevel={showSrsLevels}
             frontLabel={frontLabel}
             backLabel={backLabel}

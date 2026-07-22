@@ -7,6 +7,11 @@ import { Button } from '@heroui/react';
 import { useCallback, useEffect, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
 
+type SrsState = {
+  srsLevel: number;
+  dueAt: string;
+};
+
 type Props = {
   deckId: number;
   lessonId: number;
@@ -23,7 +28,7 @@ export default function LessonVocabulary({
   backLabel,
 }: Props) {
   const [vocabs, setVocabs] = useState<Vocab[] | null>(null);
-  const [srsLevels, setSrsLevels] = useState<Record<number, number>>({});
+  const [srsStates, setSrsStates] = useState<Record<number, SrsState>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,7 +41,7 @@ export default function LessonVocabulary({
     try {
       const result = await getLessonVocabularyAction(deckId, lessonId);
       setVocabs(result.vocabs);
-      setSrsLevels(result.srsLevels);
+      setSrsStates(result.srsStates);
     } catch {
       setErrorMessage('Unable to load this lesson’s vocabulary. Please try again.');
     } finally {
@@ -55,7 +60,7 @@ export default function LessonVocabulary({
       <VocabTable
         vocabs={vocabs}
         emptyTitle="No vocabulary in this lesson"
-        srsLevels={srsLevels}
+        srsStates={srsStates}
         showSrsLevels
         frontLabel={frontLabel}
         backLabel={backLabel}
@@ -65,7 +70,7 @@ export default function LessonVocabulary({
 
   return (
     <div className="rounded-lg bg-default-100 px-4 py-5 text-center">
-      {!errorMessage ? <p className="text-sm text-default-500">Loading vocabulary...</p> : null}
+      {!errorMessage ? <p className="text-sm text-muted">Loading vocabulary...</p> : null}
       {errorMessage ? <StatusAlert status="danger">{errorMessage}</StatusAlert> : null}
       {errorMessage ? (
         <Button size="sm" variant="secondary" className="mt-3" onPress={loadVocabulary}>

@@ -331,6 +331,21 @@ export async function getReleaseLessonVocabs(releaseId: number, lessonId: number
     .orderBy(releaseVocabs.orderIndex, releaseVocabs.vocabId);
 }
 
+export async function getReleaseDeckVocabs(releaseId: number) {
+  return db
+    .select({
+      ...getTableColumns(vocabs),
+      ...vocabRevisionContentSelection,
+      lessonId: releaseVocabs.lessonId,
+      orderIndex: releaseVocabs.orderIndex,
+    })
+    .from(releaseVocabs)
+    .innerJoin(vocabs, eq(vocabs.id, releaseVocabs.vocabId))
+    .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
+    .where(eq(releaseVocabs.releaseId, releaseId))
+    .orderBy(releaseVocabs.lessonId, releaseVocabs.orderIndex, releaseVocabs.vocabId);
+}
+
 export async function followDeck(deckId: number, userId: string) {
   return db.transaction(async tx => {
     const [deck] = await tx.select().from(decks).where(eq(decks.id, deckId)).for('update').limit(1);

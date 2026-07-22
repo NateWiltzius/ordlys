@@ -23,6 +23,8 @@ import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 import ButtonLink from '@/components/shared/button-link';
 import type { DeckEditorTab } from '@/lib/deck-editor-tabs';
+import EditableVocabularySearch from './editable-vocabulary-search';
+import { getLanguageName } from '@/lib/languages';
 
 type Props = {
   lessons: EditLessonSummary[];
@@ -54,6 +56,7 @@ export default function EditPage({
   const [expandedLessonKeys, setExpandedLessonKeys] = useState<Set<string | number>>(new Set());
   const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [vocabularyQuery, setVocabularyQuery] = useState('');
 
   useEffect(() => {
     setOrderedLessons(lessons);
@@ -147,6 +150,7 @@ export default function EditPage({
           <PageSection
             title="Lessons"
             description="Group vocabulary into focused study sections."
+            contentClassName="space-y-4"
             action={
               <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                 <p className="text-sm text-default-500">
@@ -157,13 +161,24 @@ export default function EditPage({
               </div>
             }
           >
+            {orderedLessons.length > 0 ? (
+              <EditableVocabularySearch
+                deckId={parsedDeckId}
+                lessons={orderedLessons}
+                query={vocabularyQuery}
+                frontLabel={getLanguageName(deck.frontLanguage) ?? 'Word'}
+                backLabel={getLanguageName(deck.backLanguage) ?? 'Meaning'}
+                onQueryChange={setVocabularyQuery}
+              />
+            ) : null}
+
             {orderedLessons.length === 0 ? (
               <EmptyState
                 title="No lessons yet"
                 description="Create your first lesson to start adding vocabulary."
                 action={<CreateLessonModal deckId={parsedDeckId} />}
               />
-            ) : (
+            ) : vocabularyQuery.trim() ? null : (
               <Accordion
                 expandedKeys={expandedLessonKeys}
                 onExpandedChange={keys => setExpandedLessonKeys(new Set(keys))}

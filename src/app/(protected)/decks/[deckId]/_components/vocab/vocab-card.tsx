@@ -9,6 +9,7 @@ type Props = {
   index: number;
   actions?: ReactNode;
   srsLevel?: number;
+  reviewDueAt?: string;
   showSrsLevel?: boolean;
   frontLabel: string;
   backLabel: string;
@@ -19,6 +20,7 @@ export default function VocabCard({
   index,
   actions,
   srsLevel,
+  reviewDueAt,
   showSrsLevel = false,
   frontLabel,
   backLabel,
@@ -30,25 +32,23 @@ export default function VocabCard({
       className={`grid gap-4 bg-background px-4 py-4 transition-colors hover:bg-default-50 sm:items-start sm:py-3 ${desktopColumns}`}
     >
       <div className="flex items-center justify-between gap-3 sm:hidden">
-        <span className="text-xs font-semibold uppercase tracking-wide text-default-400">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">
           Word {index}
         </span>
-        {showSrsLevel ? <SrsLevelChip srsLevel={srsLevel} /> : null}
+        {showSrsLevel ? <SrsLevelChip srsLevel={srsLevel} reviewDueAt={reviewDueAt} /> : null}
       </div>
 
-      <span className="hidden pt-0.5 text-sm tabular-nums text-default-400 sm:block">{index}</span>
+      <span className="hidden pt-0.5 text-sm tabular-nums text-muted sm:block">{index}</span>
 
       <VocabSide label={frontLabel} value={vocab.front} alternatives={vocab.frontAlternatives}>
-        {vocab.reading ? (
-          <p className="text-xs text-default-500">Reading: {vocab.reading}</p>
-        ) : null}
+        {vocab.reading ? <p className="text-xs text-muted">Reading: {vocab.reading}</p> : null}
       </VocabSide>
 
       <VocabSide label={backLabel} value={vocab.back} alternatives={vocab.backAlternatives} />
 
       {showSrsLevel ? (
         <div className="hidden pt-0.5 sm:block">
-          <SrsLevelChip srsLevel={srsLevel} />
+          <SrsLevelChip srsLevel={srsLevel} reviewDueAt={reviewDueAt} />
         </div>
       ) : null}
 

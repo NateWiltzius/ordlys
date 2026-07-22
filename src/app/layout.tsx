@@ -95,6 +95,9 @@ export default function RootLayout({ children }: PropsWithChildren) {
             data-app-footer
             className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500"
           >
+            <Link href="/how-to-use" className="rounded-sm hover:text-primary hover:underline">
+              How to use
+            </Link>
             <Link href="/feedback" className="rounded-sm hover:text-primary hover:underline">
               Feedback
             </Link>

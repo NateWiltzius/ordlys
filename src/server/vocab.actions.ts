@@ -2,13 +2,15 @@
 
 import { getAccessibleDeckById, getOwnedDeckById } from '@/db/queries/deck.queries';
 import { getActiveReleaseId } from '@/db/queries/deck-access';
-import { getReleaseLessonVocabs } from '@/db/queries/deck-release.queries';
+import { getReleaseDeckVocabs, getReleaseLessonVocabs } from '@/db/queries/deck-release.queries';
 import { getLessonById } from '@/db/queries/lesson.queries';
 import {
   createVocab,
   deleteVocab,
+  getUserVocabStatesByDeckId,
+  getVocabByDeckId,
   getVocabByLessonId,
-  getUserVocabLevelsByLessonId,
+  getUserVocabStatesByLessonId,
   moveVocab,
   moveVocabToPosition,
   replaceVocab,
@@ -42,14 +44,19 @@ export async function getLessonVocabularyAction(deckId: number, lessonId: number
 
   const releaseId = await getActiveReleaseId(parsedDeckId, userId, true);
   if (!releaseId) throw new Error('Deck has no accessible release.');
-  const [lessonVocabs, userVocabLevels] = await Promise.all([
+  const [lessonVocabs, userVocabStates] = await Promise.all([
     getReleaseLessonVocabs(releaseId, parsedLessonId),
-    getUserVocabLevelsByLessonId(parsedLessonId, userId),
+    getUserVocabStatesByLessonId(parsedLessonId, userId),
   ]);
 
   return {
     vocabs: lessonVocabs,
-    srsLevels: Object.fromEntries(userVocabLevels.map(state => [state.vocabId, state.srsLevel])),
+    srsStates: Object.fromEntries(
+      userVocabStates.map(state => [
+        state.vocabId,
+        { srsLevel: state.srsLevel, dueAt: state.dueAt.toISOString() },
+      ]),
+    ),
   };
 }
 
@@ -71,6 +78,44 @@ export async function getEditableLessonVocabularyAction(deckId: number, lessonId
   }
 
   return getVocabByLessonId(parsedLessonId);
+}
+
+export async function getDeckVocabularyForSearchAction(deckId: number) {
+  const parsedDeckId = parsePositiveInteger(deckId);
+  if (!parsedDeckId) throw new Error('Invalid deck ID.');
+
+  const userId = await getCurrentUserId();
+  const deck = await getAccessibleDeckById(parsedDeckId, userId);
+  if (!deck) throw new Error('Deck not found or access denied.');
+
+  const releaseId = await getActiveReleaseId(parsedDeckId, userId, true);
+  if (!releaseId) throw new Error('Deck has no accessible release.');
+
+  const [vocabs, userVocabStates] = await Promise.all([
+    getReleaseDeckVocabs(releaseId),
+    getUserVocabStatesByDeckId(parsedDeckId, userId),
+  ]);
+
+  return {
+    vocabs,
+    srsStates: Object.fromEntries(
+      userVocabStates.map(state => [
+        state.vocabId,
+        { srsLevel: state.srsLevel, dueAt: state.dueAt.toISOString() },
+      ]),
+    ),
+  };
+}
+
+export async function getEditableDeckVocabularyForSearchAction(deckId: number) {
+  const parsedDeckId = parsePositiveInteger(deckId);
+  if (!parsedDeckId) throw new Error('Invalid deck ID.');
+
+  const userId = await getCurrentUserId();
+  const deck = await getOwnedDeckById(parsedDeckId, userId);
+  if (!deck) throw new Error('Deck not found or access denied.');
+
+  return getVocabByDeckId(parsedDeckId);
 }
 
 export async function createVocabAction(vocab: CreateVocab) {

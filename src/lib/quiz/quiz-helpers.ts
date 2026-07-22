@@ -5,6 +5,13 @@ import {
   QuizSourceItem,
 } from '@/types/quiz.types';
 
+export const REVIEW_ACTIVE_WORD_LIMIT = 10;
+
+export type RollingReviewQueue = {
+  queue: QuizQueueItem[];
+  pendingItems: QuizSourceItem[];
+};
+
 type QuizAttemptOutcomeInput = {
   isCorrect: boolean;
   wasOverridden: boolean;
@@ -90,6 +97,29 @@ export function buildQuizProgress(learnItems: QuizSourceItem[]): QuizProgress {
         ftbPassed: false,
       },
     ]),
+  );
+}
+
+export function buildRollingReviewQueue(
+  reviewItems: QuizSourceItem[],
+  activeWordLimit = REVIEW_ACTIVE_WORD_LIMIT,
+): RollingReviewQueue {
+  const randomizedItems = shuffleArray(reviewItems);
+  const activeItems = randomizedItems.slice(0, activeWordLimit);
+
+  return {
+    queue: shuffleArray(buildQuizQueue(activeItems)),
+    pendingItems: randomizedItems.slice(activeWordLimit),
+  };
+}
+
+export function addReviewWordToQueue(
+  queue: QuizQueueItem[],
+  reviewItem: QuizSourceItem,
+): QuizQueueItem[] {
+  return shuffleArray(buildQuizQueue([reviewItem])).reduce(
+    (nextQueue, queueItem) => insertLater(nextQueue, queueItem, 2),
+    queue,
   );
 }
 
