@@ -1,6 +1,6 @@
 'use client';
 
-import { getEstimatedReviewDuration, getSessionSizeChoices } from '@/lib/study-session-size';
+import { getEstimatedStudyDuration, getSessionSizeChoices } from '@/lib/study-session-size';
 import { buttonVariants } from '@heroui/react';
 import Link from 'next/link';
 
@@ -11,7 +11,6 @@ type Props = {
   totalCount: number;
   noun: string;
   allowAll?: boolean;
-  showDurationEstimate?: boolean;
   preferenceCookieName?: string;
 };
 
@@ -22,7 +21,6 @@ export default function SessionSizePicker({
   totalCount,
   noun,
   allowAll = false,
-  showDurationEstimate = false,
   preferenceCookieName,
 }: Props) {
   const selectedCount = selectedSize === 'all' ? totalCount : Math.min(selectedSize, totalCount);
@@ -30,7 +28,7 @@ export default function SessionSizePicker({
   const isAllSelected = selectedSize === 'all' || selectedCount === totalCount;
   const showAllChoice = allowAll && sizeChoices.length > 0;
 
-  if (sizeChoices.length === 0 && !showDurationEstimate) return null;
+  if (totalCount <= 0) return null;
 
   const rememberSize = (size: number | 'all') => {
     if (!preferenceCookieName) return;
@@ -43,16 +41,8 @@ export default function SessionSizePicker({
       <div>
         <p className="font-medium">Session size</p>
         <p className="text-sm text-default-500">
-          {showDurationEstimate ? (
-            <>
-              {selectedCount} {selectedCount === 1 ? noun : `${noun}s`} ·{' '}
-              {getEstimatedReviewDuration(selectedCount)}
-            </>
-          ) : (
-            <>
-              {selectedCount} of {totalCount} {totalCount === 1 ? noun : `${noun}s`} in this session
-            </>
-          )}
+          {selectedCount} of {totalCount} {totalCount === 1 ? noun : `${noun}s`} ·{' '}
+          {getEstimatedStudyDuration(selectedCount)}
         </p>
       </div>
       {sizeChoices.length > 0 ? (

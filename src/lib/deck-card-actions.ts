@@ -62,6 +62,7 @@ export function getDeckRowPrimaryAction(
   context: DeckCardContext,
   stats: { reviewsDue: number; newWordsAvailable: number },
 ): DeckRowPrimaryAction {
+  if (context === 'discover' && primary === 'review') return 'open';
   if (context !== 'learning' || primary !== 'review') return primary;
   if (stats.reviewsDue > 0) return 'review';
   if (stats.newWordsAvailable > 0) return 'learn';

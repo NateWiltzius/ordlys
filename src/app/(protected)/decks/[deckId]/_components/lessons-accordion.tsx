@@ -185,13 +185,17 @@ export default function LessonsAccordion({
                 <Accordion.Panel>
                   <Accordion.Body className="px-3 pb-4">
                     {canStudy && lesson.canTakePlacementTest ? (
-                      <div className="mb-4 flex justify-end">
+                      <div className="mb-4 flex flex-col items-end gap-2">
+                        <p className="max-w-md text-right text-sm text-default-500">
+                          Already know these words? Test both directions to place familiar words
+                          directly into review.
+                        </p>
                         <ButtonLink
                           href={`/decks/${deckId}/placement/${lesson.lessonId}`}
                           variant="secondary"
                           size="sm"
                         >
-                          Take placement test
+                          Test out of this lesson
                         </ButtonLink>
                       </div>
                     ) : canStudy && lesson.totalWords > lesson.introducedWords ? (

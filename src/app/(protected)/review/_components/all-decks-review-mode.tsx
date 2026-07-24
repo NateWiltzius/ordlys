@@ -3,6 +3,7 @@
 import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mode';
 import ButtonLink from '@/components/shared/button-link';
 import StudySession from '@/components/shared/layout/study-session';
+import StudySessionHeader from '@/components/shared/layout/study-session-header';
 import NextReviewText from '@/components/shared/next-review-text';
 import type { NextReviewBatch, ReviewDeckDueCount, ReviewItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
@@ -46,9 +47,16 @@ export default function AllDecksReviewMode({
   if (session.dueReviews.length === 0) {
     return (
       <StudySession>
+        <StudySessionHeader
+          title="Review due cards"
+          description="Across your active decks"
+          tone="review"
+          exitHref="/dashboard"
+          exitLabel="Exit to Today"
+        />
         <Card>
           <Card.Header>
-            <Card.Title render={props => <h1 {...props} />}>No reviews due</Card.Title>
+            <Card.Title render={props => <h2 {...props} />}>No reviews due</Card.Title>
             <Card.Description>
               <NextReviewText nextReview={session.nextReview} />
             </Card.Description>
@@ -62,14 +70,16 @@ export default function AllDecksReviewMode({
   }
 
   return (
-    <StudySession className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-success">Review due cards</h1>
-        <p className="mt-1 text-sm text-default-500">
-          Across your active decks · {availableCount} {availableCount === 1 ? 'review' : 'reviews'}{' '}
-          due
-        </p>
-      </header>
+    <StudySession>
+      <StudySessionHeader
+        title="Review due cards"
+        description={`Across your active decks · ${availableCount} ${
+          availableCount === 1 ? 'review' : 'reviews'
+        } due`}
+        tone="review"
+        exitHref="/dashboard"
+        exitLabel="Exit to Today"
+      />
       {!hasStarted ? (
         <>
           <SessionSizePicker
@@ -77,9 +87,8 @@ export default function AllDecksReviewMode({
             selectedSize={selectedSize}
             sizes={REVIEW_SESSION_SIZES}
             totalCount={session.availableCount}
-            noun="card"
+            noun="review"
             allowAll
-            showDurationEstimate
             preferenceCookieName={REVIEW_SESSION_SIZE_COOKIE}
           />
           <ReviewDeckBreakdown decks={session.deckBreakdown} />
@@ -91,6 +100,7 @@ export default function AllDecksReviewMode({
         tone="review"
         studyMode="review"
         completionHref="/dashboard"
+        showExitButton={false}
         onSessionStart={() => setStartedSession(current => current ?? session)}
       />
     </StudySession>

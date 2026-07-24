@@ -128,7 +128,7 @@ export default function MoveVocabModal({
                 isPending={isSubmitting}
                 isDisabled={!isValidPosition || position === currentPosition}
               >
-                Move card
+                Move word
               </Button>
             </Modal.Footer>
           </form>

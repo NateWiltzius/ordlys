@@ -6,12 +6,13 @@ import MobileNavigation from '@/app/_components/mobile-navigation';
 import { getNavigationItems } from '@/app/_components/navigation-items';
 import NavigationLink from '@/app/_components/navigation-link';
 import { useAuthSessionState } from '@/hooks/use-auth-session-state';
-import SignOutControl from '@/app/_components/sign-out-control';
+import ProfileMenu from '@/app/_components/profile-menu';
 
 export default function Navbar() {
   const loggedIn = useAuthSessionState();
   const authResolved = loggedIn !== null;
   const navigationItems = authResolved ? getNavigationItems(loggedIn) : [];
+  const mainNavigationItems = navigationItems.filter(item => item.section === 'main');
   const homeHref = loggedIn ? '/dashboard' : '/';
 
   return (
@@ -55,10 +56,16 @@ export default function Navbar() {
       <div className="hidden min-w-0 items-center gap-2 text-base md:flex">
         {authResolved ? (
           <>
-            {navigationItems.map(item => (
-              <NavigationLink key={item.href} {...item} variant="desktop" />
-            ))}
-            {loggedIn ? <SignOutControl variant="desktop" /> : null}
+            <div className="flex items-center gap-1">
+              {mainNavigationItems.map(item => (
+                <NavigationLink key={item.href} {...item} variant="desktop" />
+              ))}
+            </div>
+            {loggedIn ? (
+              <div className="ml-1 flex items-center gap-1 border-l border-default-200 pl-3">
+                <ProfileMenu />
+              </div>
+            ) : null}
           </>
         ) : (
           <div

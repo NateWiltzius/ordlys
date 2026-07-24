@@ -13,6 +13,7 @@ export default function RecentMistakesMode({ quizItems }: Props) {
       tone="practice"
       recordAttempts={false}
       completionHref="/dashboard"
+      showExitButton={false}
     />
   );
 }

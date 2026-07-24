@@ -1,10 +1,11 @@
 import { Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
-import { ProgressBar } from '@heroui/react';
 import Link from 'next/link';
 import { BookOpenIcon } from '@heroicons/react/24/outline';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import ButtonLink from '@/components/shared/button-link';
+import DeckCoverage from '@/components/shared/deck-coverage';
+import DeckWorkload from '@/components/shared/deck-workload';
 
 type Props = {
   deck: Deck;
@@ -15,8 +16,6 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
   const hasReviewsDue = stats.reviewsDue > 0;
   const hasNewWords = stats.newWordsAvailable > 0;
   const introducedCards = Math.min(stats.wordsInReview, stats.totalWords);
-  const progressPercentage =
-    stats.totalWords === 0 ? 0 : Math.round((introducedCards / stats.totalWords) * 100);
 
   return (
     <div className="py-4">
@@ -45,13 +44,14 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          <DeckWorkload reviewsDue={stats.reviewsDue} newWordsAvailable={stats.newWordsAvailable} />
           {hasReviewsDue ? (
             <ButtonLink
               href={`/decks/${deck.id}/review`}
               size="sm"
               className={STUDY_TONE_STYLES.review.button}
             >
-              Review {stats.reviewsDue}
+              Review
               <span className="sr-only"> in {deck.title}</span>
             </ButtonLink>
           ) : null}
@@ -61,7 +61,7 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
               size="sm"
               className={STUDY_TONE_STYLES.learning.button}
             >
-              Learn {stats.newWordsAvailable}
+              Learn
               <span className="sr-only"> in {deck.title}</span>
             </ButtonLink>
           ) : null}
@@ -73,21 +73,12 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
-        <ProgressBar
-          aria-label={`${deck.title}: ${introducedCards} of ${stats.totalWords} words started`}
-          value={progressPercentage}
-          size="sm"
-          className="min-w-0 flex-1"
-        >
-          <ProgressBar.Track>
-            <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
-          </ProgressBar.Track>
-        </ProgressBar>
-        <span className="shrink-0 text-xs font-medium tabular-nums text-default-500">
-          {progressPercentage}% started
-        </span>
-      </div>
+      <DeckCoverage
+        started={introducedCards}
+        total={stats.totalWords}
+        deckTitle={deck.title}
+        className="mt-3"
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { getDeckCardStudyCounts, getUserActiveDecks } from '@/db/queries/deck.queries';
 import { getProgressAttemptStats } from '@/db/queries/review-attempt.queries';
-import { getSrsCategoryCountsByDeck } from '@/db/queries/review.queries';
+import { getNewVocabCountsForDecks, getSrsCategoryCountsByDeck } from '@/db/queries/review.queries';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import {
   buildProgressActivitySeries,
@@ -18,8 +18,9 @@ export async function getProgressPageDataAction(): Promise<ProgressPageData> {
   const deckIds = decks.map(deck => deck.id);
   const now = new Date();
 
-  const [studyCounts, srsCountsByDeck, attemptStats] = await Promise.all([
+  const [studyCounts, newVocabCounts, srsCountsByDeck, attemptStats] = await Promise.all([
     getDeckCardStudyCounts(deckIds, userId),
+    getNewVocabCountsForDecks(deckIds, userId),
     getSrsCategoryCountsByDeck(deckIds, userId),
     getProgressAttemptStats(
       userId,
@@ -44,6 +45,7 @@ export async function getProgressPageDataAction(): Promise<ProgressPageData> {
       totalWords: counts?.totalWords ?? 0,
       startedWords: counts?.wordsInReview ?? 0,
       reviewsDue: counts?.reviewsDue ?? 0,
+      newWordsAvailable: newVocabCounts[deck.id] ?? 0,
       srsCategoryCounts: srsCountsByDeck[deck.id],
       recentAttempts: recentAttempts?.attempts ?? 0,
       recentCorrectAttempts: recentAttempts?.correctAttempts ?? 0,

@@ -13,6 +13,7 @@ export type ProgressDeck = {
   totalWords: number;
   startedWords: number;
   reviewsDue: number;
+  newWordsAvailable: number;
   srsCategoryCounts: SrsCategoryCounts;
   recentAttempts: number;
   recentCorrectAttempts: number;

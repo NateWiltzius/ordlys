@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DiscoverPage() {
-  const { publicDecks, libraryDeckIds } = await getDiscoverPageDataAction();
+  const { publicDecks, ownedDeckIds, followingDeckIds } = await getDiscoverPageDataAction();
 
   return (
     <div className="space-y-6">
@@ -17,7 +17,11 @@ export default async function DiscoverPage() {
         title="Discover"
         description="Find public decks to follow, or make an independent copy you can edit."
       />
-      <PublicDecks decks={publicDecks} libraryDeckIds={libraryDeckIds} />
+      <PublicDecks
+        decks={publicDecks}
+        ownedDeckIds={ownedDeckIds}
+        followingDeckIds={followingDeckIds}
+      />
     </div>
   );
 }

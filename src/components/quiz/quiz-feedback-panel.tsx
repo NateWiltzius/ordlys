@@ -130,7 +130,7 @@ export default function QuizFeedbackPanel({
             </h2>
             <p className="text-sm text-default-600">
               {feedback.isCorrect
-                ? 'Good answer. Continue to the next card.'
+                ? 'Good answer. Continue when you are ready.'
                 : 'Review the correct answer before continuing.'}
             </p>
           </div>

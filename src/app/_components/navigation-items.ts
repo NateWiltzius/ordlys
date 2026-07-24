@@ -1,6 +1,7 @@
 type NavigationItem = {
   href: string;
   label: string;
+  section: 'main' | 'utility';
 };
 
 const navigationItemBase = {
@@ -11,25 +12,36 @@ const navigationItemBase = {
 };
 
 export function navigationItemClassName(variant: 'desktop' | 'mobile', isActive = false) {
-  return `${navigationItemBase[variant]} ${
-    isActive ? 'bg-primary/10 font-medium text-primary' : 'text-foreground'
-  }`;
+  const activeClassName =
+    variant === 'desktop'
+      ? 'bg-default-100 font-semibold text-foreground shadow-sm'
+      : 'bg-default-100 font-semibold text-foreground';
+
+  return `${navigationItemBase[variant]} ${isActive ? activeClassName : 'text-foreground'}`;
 }
 
 const authenticatedItems: NavigationItem[] = [
-  { href: '/dashboard', label: 'Today' },
-  { href: '/progress', label: 'Progress' },
-  { href: '/decks', label: 'Library' },
-  { href: '/discover', label: 'Discover' },
-  { href: '/account', label: 'Account' },
+  { href: '/dashboard', label: 'Today', section: 'main' },
+  { href: '/decks', label: 'Library', section: 'main' },
+  { href: '/discover', label: 'Discover', section: 'main' },
+  { href: '/progress', label: 'Progress', section: 'main' },
+  { href: '/account', label: 'Account', section: 'utility' },
 ];
 
 const publicItems: NavigationItem[] = [
-  { href: '/public/decks', label: 'Discover' },
-  { href: '/auth/sign-in', label: 'Sign in' },
-  { href: '/auth/sign-up', label: 'Sign up' },
+  { href: '/public/decks', label: 'Discover', section: 'main' },
+  { href: '/auth/sign-in', label: 'Sign in', section: 'main' },
+  { href: '/auth/sign-up', label: 'Sign up', section: 'main' },
 ];
 
 export function getNavigationItems(loggedIn: boolean): NavigationItem[] {
   return loggedIn ? authenticatedItems : publicItems;
+}
+
+export function isNavigationItemActive(pathname: string, href: string) {
+  if (href === '/dashboard') {
+    return pathname === '/dashboard' || pathname === '/review' || pathname.startsWith('/practice/');
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
 }

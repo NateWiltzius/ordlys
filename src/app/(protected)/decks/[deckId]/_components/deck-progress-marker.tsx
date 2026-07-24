@@ -1,8 +1,8 @@
 import { TrophyIcon } from '@heroicons/react/24/outline';
 import { ProgressBar } from '@heroui/react';
 import { summarizeDeckProgress } from '@/lib/deck-progress';
-import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { LessonProgress } from '@/types/review.types';
+import DeckCoverage from '@/components/shared/deck-coverage';
 
 type Props = {
   lessonProgress: LessonProgress[];
@@ -22,7 +22,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
 
   return (
     <section className="border-t border-default-200 pt-6">
-      <div className="flex items-start justify-between gap-4">
+      <div>
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             {progress.lessonMilestonesComplete ? (
@@ -40,35 +40,19 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                   : 'Start learning to begin your journey.'}
           </p>
         </div>
-
-        <div className="shrink-0 text-right">
-          <p className={`text-2xl font-semibold ${STUDY_TONE_STYLES.learning.text}`}>
-            {progress.percentage}%
-          </p>
-          <p className="text-xs font-medium text-default-500">deck started</p>
-        </div>
       </div>
 
       <div className="mt-5">
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span className="font-medium text-default-700">
-              {progress.introducedCards} of {progress.totalCards} words started
-            </span>
-            <span className="text-default-500">
-              {progress.coveredLessons} of {progress.lessons.length} lessons covered
-            </span>
-          </div>
-          <ProgressBar
-            aria-label="Words started across this deck"
-            value={progress.introducedCards}
-            maxValue={progress.totalCards}
+          <DeckCoverage
+            started={progress.introducedCards}
+            total={progress.totalCards}
+            deckTitle="Deck journey"
             size="md"
-          >
-            <ProgressBar.Track>
-              <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
-            </ProgressBar.Track>
-          </ProgressBar>
+          />
+          <p className="text-sm text-default-500">
+            {progress.coveredLessons} of {progress.lessons.length} lessons covered
+          </p>
         </div>
 
         {currentLesson && !progress.lessonMilestonesComplete ? (

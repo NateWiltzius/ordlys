@@ -7,7 +7,8 @@ import { Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
 import { ClockIcon } from '@heroicons/react/24/outline';
 import { Button, Chip, Modal, useOverlayState } from '@heroui/react';
-import { getDashboardReviewAction } from '@/lib/dashboard-actions';
+import { getDashboardQuickReviewAction, getDashboardReviewAction } from '@/lib/dashboard-actions';
+import { getEstimatedReviewDuration, QUICK_REVIEW_SESSION_SIZE } from '@/lib/study-session-size';
 
 type Props = {
   decks: Pick<Deck, 'id' | 'title'>[];
@@ -24,6 +25,11 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
     reviewsDue,
     decksWithReviews.map(deck => deck.id),
   );
+  const quickReview = getDashboardQuickReviewAction(
+    reviewsDue,
+    decksWithReviews.map(deck => deck.id),
+  );
+  const shouldChooseReview = shouldChooseDeck || reviewsDue > QUICK_REVIEW_SESSION_SIZE;
 
   const reviewCard = (
     <StudyActionCard
@@ -38,8 +44,8 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
       actionLabel="Start review"
       icon={ClockIcon}
       tone="review"
-      href={directReviewHref}
-      isModalTrigger={shouldChooseDeck}
+      href={shouldChooseReview ? undefined : directReviewHref}
+      isModalTrigger={shouldChooseReview}
       isDisabled={!hasReviewsDue}
       unavailableAction={
         <Button variant="secondary" size="lg" className="w-full" isDisabled>
@@ -49,7 +55,7 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
     />
   );
 
-  if (!shouldChooseDeck) return reviewCard;
+  if (!shouldChooseReview) return reviewCard;
 
   return (
     <Modal state={modalState}>
@@ -69,9 +75,26 @@ export default function DashboardReviewCard({ decks, deckStats, reviewsDue }: Pr
             </Modal.Header>
             <Modal.Body>
               <p className="mb-3 text-sm text-default-600">
-                Review everything together or focus on one deck.
+                Choose a short session, review everything due, or focus on one deck.
               </p>
               <ul className="divide-y divide-default-200 rounded-lg border border-default-200">
+                {quickReview && reviewsDue > quickReview.cardCount ? (
+                  <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="font-medium text-default-900">Quick review</p>
+                      <p className="mt-1 text-sm text-default-500">
+                        {quickReview.cardCount} reviews ·{' '}
+                        {getEstimatedReviewDuration(quickReview.cardCount)}
+                      </p>
+                    </div>
+                    <ButtonLink
+                      href={quickReview.href}
+                      className={`w-full shrink-0 sm:w-auto ${STUDY_TONE_STYLES.review.button}`}
+                    >
+                      Review {quickReview.cardCount}
+                    </ButtonLink>
+                  </li>
+                ) : null}
                 <li className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-3">
                     <p className="truncate font-medium text-default-900">All decks</p>

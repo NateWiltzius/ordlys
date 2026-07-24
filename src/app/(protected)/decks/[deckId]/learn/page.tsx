@@ -28,11 +28,12 @@ export default async function Page({ params, searchParams }: Props) {
   if (!parsedDeckId) notFound();
   const data = await getLearnPageDataAction(parsedDeckId, selectedSize);
   if (!data) notFound();
-  const { learnItems, lessonProgress, availableCount } = data;
+  const { deckTitle, learnItems, lessonProgress, availableCount } = data;
 
   return (
     <LearnPage
       deckId={parsedDeckId}
+      deckTitle={deckTitle}
       learnItems={learnItems}
       lessonProgress={lessonProgress}
       selectedSize={selectedSize}

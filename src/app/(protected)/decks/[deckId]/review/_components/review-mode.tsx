@@ -4,8 +4,8 @@ import QuizMode from '@/app/(protected)/decks/[deckId]/_components/quiz/quiz-mod
 import { ReviewItem } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import ButtonLink from '@/components/shared/button-link';
-import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
+import StudySessionHeader from '@/components/shared/layout/study-session-header';
 import NextReviewText from '@/components/shared/next-review-text';
 import type { NextReviewBatch } from '@/types/review.types';
 import SessionSizePicker from '@/components/shared/session-size-picker';
@@ -47,9 +47,16 @@ export default function ReviewMode({
   if (session.dueReviews.length === 0) {
     return (
       <StudySession>
+        <StudySessionHeader
+          title="Review due cards"
+          description={deckTitle}
+          tone="review"
+          exitHref={`/decks/${deckId}`}
+          exitLabel="Exit to deck"
+        />
         <Card>
           <Card.Header>
-            <Card.Title render={props => <h1 {...props} />}>No reviews due</Card.Title>
+            <Card.Title render={props => <h2 {...props} />}>No reviews due</Card.Title>
             <Card.Description>
               <span className="block">{deckTitle}</span>
               <NextReviewText nextReview={session.nextReview} />
@@ -64,24 +71,24 @@ export default function ReviewMode({
   }
 
   return (
-    <StudySession className="space-y-6">
-      <header>
-        <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.review.text}`}>
-          Review due cards
-        </h1>
-        <p className="mt-1 text-sm text-default-500">
-          {deckTitle} · {availableCount} {availableCount === 1 ? 'review' : 'reviews'} due
-        </p>
-      </header>
+    <StudySession>
+      <StudySessionHeader
+        title="Review due cards"
+        description={`${deckTitle} · ${availableCount} ${
+          availableCount === 1 ? 'review' : 'reviews'
+        } due`}
+        tone="review"
+        exitHref={`/decks/${deckId}`}
+        exitLabel="Exit to deck"
+      />
       {!hasStarted ? (
         <SessionSizePicker
           baseHref={`/decks/${deckId}/review`}
           selectedSize={selectedSize}
           sizes={REVIEW_SESSION_SIZES}
           totalCount={session.availableCount}
-          noun="card"
+          noun="review"
           allowAll
-          showDurationEstimate
           preferenceCookieName={REVIEW_SESSION_SIZE_COOKIE}
         />
       ) : null}
@@ -92,6 +99,7 @@ export default function ReviewMode({
         studyMode="review"
         completionHref={`/decks/${deckId}`}
         reviewDeckId={deckId}
+        showExitButton={false}
         onSessionStart={() => setStartedSession(current => current ?? session)}
       />
     </StudySession>

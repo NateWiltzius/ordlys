@@ -105,7 +105,7 @@ export default function ImportDeckModal() {
                     </a>
                   </div>
                   <p className="mt-2 text-xs leading-5 text-default-600">
-                    The first row contains column names. Each following row becomes one card.{' '}
+                    The first row contains column names. Each following row becomes one word.{' '}
                     <code>front</code> and <code>back</code> are required; all other columns are
                     optional.
                   </p>

@@ -5,6 +5,7 @@ import {
   deckReleases,
   decks,
   lessons,
+  releaseLessons,
   releaseVocabs,
   userVocabState,
   vocabs,
@@ -157,6 +158,16 @@ export const getPublicDecks = async () => {
         select count(*)::int
         from ${deckFollows} follows
         where follows.deck_id = ${decks.id} and follows.status = 'active'
+      )`,
+      lessonCount: sql<number>`(
+        select count(*)::int
+        from ${releaseLessons}
+        where ${releaseLessons.releaseId} = ${decks.currentReleaseId}
+      )`,
+      wordCount: sql<number>`(
+        select count(*)::int
+        from ${releaseVocabs}
+        where ${releaseVocabs.releaseId} = ${decks.currentReleaseId}
       )`,
     })
     .from(decks)

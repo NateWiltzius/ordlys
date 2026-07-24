@@ -1,6 +1,9 @@
 'use client';
 
-import { navigationItemClassName } from '@/app/_components/navigation-items';
+import {
+  isNavigationItemActive,
+  navigationItemClassName,
+} from '@/app/_components/navigation-items';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -13,12 +16,7 @@ type Props = {
 
 export default function NavigationLink({ href, label, variant, onNavigate }: Props) {
   const pathname = usePathname();
-  const isTodayRoute =
-    href === '/dashboard' &&
-    (pathname === '/dashboard' || pathname === '/review' || pathname.startsWith('/practice/'));
-  const isActive =
-    isTodayRoute ||
-    (href !== '/dashboard' && (pathname === href || pathname.startsWith(`${href}/`)));
+  const isActive = isNavigationItemActive(pathname, href);
 
   return (
     <Link

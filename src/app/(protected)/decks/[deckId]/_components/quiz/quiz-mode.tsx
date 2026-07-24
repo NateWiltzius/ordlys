@@ -49,6 +49,7 @@ type Props = {
   recordAttempts?: boolean;
   onSessionStart?: () => void;
   reviewDeckId?: number;
+  showExitButton?: boolean;
 };
 
 export default function QuizMode({
@@ -60,6 +61,7 @@ export default function QuizMode({
   recordAttempts = true,
   onSessionStart,
   reviewDeckId,
+  showExitButton = true,
 }: Props) {
   // A server action can reconcile this route with fresh due-card data (for example when an
   // auth cookie is refreshed). Keep the cards that started this session so that reconciliation
@@ -261,7 +263,7 @@ export default function QuizMode({
   const currentSourceItem = currentQuizItem
     ? sessionQuizItems.find(item => item.id === currentQuizItem.cardId)
     : undefined;
-  const exitQuizButton = (
+  const exitQuizButton = showExitButton ? (
     <Button
       variant="tertiary"
       size="sm"
@@ -271,7 +273,7 @@ export default function QuizMode({
     >
       <HomeIcon className="size-5" aria-hidden="true" />
     </Button>
-  );
+  ) : null;
 
   const progressStats: QuizProgressStats = useMemo(() => {
     const progressItems = Object.values(quizProgress);
@@ -532,7 +534,12 @@ export default function QuizMode({
     <>
       {exitQuizButton}
       <div className="w-full space-y-4" data-study-tone={tone}>
-        <QuizStats progressStats={progressStats} attemptStats={attemptStats} tone={tone} />
+        <QuizStats
+          progressStats={progressStats}
+          attemptStats={attemptStats}
+          tone={tone}
+          studyMode={studyMode}
+        />
 
         {saveError ? (
           <StatusAlert status="danger" title="Progress not saved">

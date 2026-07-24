@@ -4,9 +4,9 @@ import SkeletonLine from '@/components/shared/skeleton/skeleton-line';
 export default function SrsDistributionSkeleton() {
   return (
     <section className="border-t border-default-200 pt-6">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <SkeletonLine className="h-5 w-36" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <SkeletonLine className="h-6 w-36" />
           <SkeletonLine className="h-4 w-72 max-w-full" />
         </div>
         <SkeletonLine className="h-4 w-16" />

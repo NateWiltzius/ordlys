@@ -1,4 +1,3 @@
-import { ProgressBar } from '@heroui/react';
 import Link from 'next/link';
 import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
@@ -7,6 +6,8 @@ import { SRS_CATEGORIES } from '@/lib/srs/srs-config';
 import { SRS_CATEGORY_STYLES } from '@/lib/srs/srs-styles';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { ProgressDeck } from '@/types/progress.types';
+import DeckCoverage from '@/components/shared/deck-coverage';
+import DeckWorkload from '@/components/shared/deck-workload';
 
 type Props = {
   decks: ProgressDeck[];
@@ -27,8 +28,6 @@ export default function ProgressDeckList({ decks }: Props) {
         />
       ) : (
         decks.map(deck => {
-          const startedPercentage =
-            deck.totalWords === 0 ? 0 : Math.round((deck.startedWords / deck.totalWords) * 100);
           const strongWords =
             deck.srsCategoryCounts.strong +
             deck.srsCategoryCounts.mature +
@@ -51,28 +50,18 @@ export default function ProgressDeckList({ decks }: Props) {
                         {deck.title}
                       </Link>
                     </h3>
-                    {deck.reviewsDue > 0 ? (
-                      <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                        {deck.reviewsDue} due
-                      </span>
-                    ) : null}
+                    <DeckWorkload
+                      reviewsDue={deck.reviewsDue}
+                      newWordsAvailable={deck.newWordsAvailable}
+                    />
                   </div>
 
-                  <div className="mt-3 flex items-center gap-3">
-                    <ProgressBar
-                      aria-label={`${deck.title}: ${deck.startedWords} of ${deck.totalWords} words started`}
-                      value={startedPercentage}
-                      size="sm"
-                      className="min-w-0 flex-1"
-                    >
-                      <ProgressBar.Track>
-                        <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
-                      </ProgressBar.Track>
-                    </ProgressBar>
-                    <span className="shrink-0 text-xs font-medium tabular-nums text-default-500">
-                      {startedPercentage}%
-                    </span>
-                  </div>
+                  <DeckCoverage
+                    started={deck.startedWords}
+                    total={deck.totalWords}
+                    deckTitle={deck.title}
+                    className="mt-3"
+                  />
 
                   {deck.startedWords > 0 ? (
                     <div
@@ -96,14 +85,7 @@ export default function ProgressDeckList({ decks }: Props) {
                   ) : null}
                 </div>
 
-                <dl className="grid grid-cols-3 gap-2 lg:w-[22rem]">
-                  <div className="rounded-lg bg-default-100 px-3 py-2">
-                    <dt className="text-xs text-default-500">Started</dt>
-                    <dd className="mt-1 font-semibold tabular-nums">
-                      {deck.startedWords}
-                      <span className="font-normal text-default-400">/{deck.totalWords}</span>
-                    </dd>
-                  </div>
+                <dl className="grid grid-cols-2 gap-2 lg:w-[15rem]">
                   <div className="rounded-lg bg-default-100 px-3 py-2">
                     <dt className="text-xs text-default-500">Strong+</dt>
                     <dd className="mt-1 font-semibold tabular-nums">{strongWords}</dd>
@@ -116,15 +98,35 @@ export default function ProgressDeckList({ decks }: Props) {
                   </div>
                 </dl>
 
-                <ButtonLink
-                  href={`/decks/${deck.id}`}
-                  variant="secondary"
-                  size="sm"
-                  className="w-full shrink-0 lg:w-auto"
-                >
-                  Open deck
-                  <span className="sr-only"> {deck.title}</span>
-                </ButtonLink>
+                {deck.reviewsDue > 0 ? (
+                  <ButtonLink
+                    href={`/decks/${deck.id}/review`}
+                    size="sm"
+                    className={`w-full shrink-0 lg:w-auto ${STUDY_TONE_STYLES.review.button}`}
+                  >
+                    Review
+                    <span className="sr-only"> in {deck.title}</span>
+                  </ButtonLink>
+                ) : deck.newWordsAvailable > 0 ? (
+                  <ButtonLink
+                    href={`/decks/${deck.id}/learn`}
+                    size="sm"
+                    className={`w-full shrink-0 lg:w-auto ${STUDY_TONE_STYLES.learning.button}`}
+                  >
+                    Learn
+                    <span className="sr-only"> in {deck.title}</span>
+                  </ButtonLink>
+                ) : (
+                  <ButtonLink
+                    href={`/decks/${deck.id}`}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full shrink-0 lg:w-auto"
+                  >
+                    Open deck
+                    <span className="sr-only"> {deck.title}</span>
+                  </ButtonLink>
+                )}
               </div>
             </article>
           );

@@ -64,3 +64,5 @@ export function getEstimatedReviewDuration(cardCount: number): string {
   const minutes = getEstimatedReviewMinutes(cardCount);
   return `about ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
 }
+
+export const getEstimatedStudyDuration = getEstimatedReviewDuration;

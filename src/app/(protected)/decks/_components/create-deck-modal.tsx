@@ -12,9 +12,13 @@ import { FormEvent, useState } from 'react';
 
 type CreateDeckModalProps = {
   triggerLabel?: string;
+  triggerVariant?: 'primary' | 'secondary';
 };
 
-export default function CreateDeckModal({ triggerLabel = 'Create deck' }: CreateDeckModalProps) {
+export default function CreateDeckModal({
+  triggerLabel = 'Create deck',
+  triggerVariant = 'primary',
+}: CreateDeckModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +57,7 @@ export default function CreateDeckModal({ triggerLabel = 'Create deck' }: Create
   return (
     <Modal state={modalState}>
       <Button
-        variant="secondary"
+        variant={triggerVariant}
         onPress={() => {
           setError(null);
           modalState.open();
@@ -68,7 +72,7 @@ export default function CreateDeckModal({ triggerLabel = 'Create deck' }: Create
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create deck</Modal.Heading>
               <p className="text-sm text-default-500">
-                Give your deck a name. You can add cards and publishing details next.
+                Give your deck a name. You can add words and publishing details next.
               </p>
             </Modal.Header>
             <form onSubmit={handleCreateDeck} className="flex min-h-0 flex-1 flex-col">

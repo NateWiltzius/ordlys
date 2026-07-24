@@ -41,7 +41,7 @@ export default function RemovedDraftItems({ items }: Props) {
   return (
     <PageSection
       title="Removed content"
-      description="Restore lessons or cards before the next publish while keeping existing learner progress connected."
+      description="Restore lessons or words before the next publish while keeping existing learner progress connected."
     >
       <div className="divide-y divide-default-200 border-y border-default-200">
         {items.map(item => (

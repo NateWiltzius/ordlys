@@ -6,13 +6,14 @@ import { LearnItem, LessonProgress } from '@/types/review.types';
 import { Card } from '@heroui/react';
 import { useState } from 'react';
 import ButtonLink from '@/components/shared/button-link';
-import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import StudySession from '@/components/shared/layout/study-session';
+import StudySessionHeader from '@/components/shared/layout/study-session-header';
 import SessionSizePicker from '@/components/shared/session-size-picker';
 import { LEARN_SESSION_SIZE_COOKIE, LEARN_SESSION_SIZES } from '@/lib/study-session-size';
 
 type Props = {
   deckId: number;
+  deckTitle: string;
   learnItems: LearnItem[];
   lessonProgress: LessonProgress[];
   selectedSize: number | 'all';
@@ -21,6 +22,7 @@ type Props = {
 
 export default function LearnPage({
   deckId,
+  deckTitle,
   learnItems,
   lessonProgress,
   selectedSize,
@@ -48,9 +50,16 @@ export default function LearnPage({
 
     return (
       <StudySession>
+        <StudySessionHeader
+          title="Learn new words"
+          description={deckTitle}
+          tone="learning"
+          exitHref={`/decks/${deckId}`}
+          exitLabel="Exit to deck"
+        />
         <Card>
           <Card.Header>
-            <Card.Title render={props => <h1 {...props} />}>
+            <Card.Title render={props => <h2 {...props} />}>
               {nextLockedLesson ? 'Keep reviewing to unlock more words' : 'All words introduced'}
             </Card.Title>
             <Card.Description>
@@ -70,10 +79,16 @@ export default function LearnPage({
   }
 
   return (
-    <StudySession className="space-y-6">
-      <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.learning.text}`}>
-        {mode === 'quiz' ? 'Learning quiz' : 'Learn new words'}
-      </h1>
+    <StudySession>
+      <StudySessionHeader
+        title={mode === 'quiz' ? 'Learning quiz' : 'Learn new words'}
+        description={`${deckTitle} · ${session.availableCount} new ${
+          session.availableCount === 1 ? 'word' : 'words'
+        } available`}
+        tone="learning"
+        exitHref={`/decks/${deckId}`}
+        exitLabel="Exit to deck"
+      />
       {mode === 'learn' ? (
         <SessionSizePicker
           baseHref={`/decks/${deckId}/learn`}
@@ -101,6 +116,7 @@ export default function LearnPage({
           studyMode="learn"
           completionHref={`/decks/${deckId}`}
           reviewDeckId={deckId}
+          showExitButton={false}
         />
       )}
     </StudySession>

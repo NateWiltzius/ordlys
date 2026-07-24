@@ -21,7 +21,6 @@ import type { RemovedDraftItem } from '@/db/queries/deck-release.queries';
 import RemovedDraftItems from './removed-draft-items';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
-import ButtonLink from '@/components/shared/button-link';
 import type { DeckEditorTab } from '@/lib/deck-editor-tabs';
 import EditableVocabularySearch from './editable-vocabulary-search';
 import { getLanguageName } from '@/lib/languages';
@@ -120,14 +119,8 @@ export default function EditPage({
       <PageHeader
         title={deck.title}
         description="Edit this deck's content, details, and publishing settings."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <ButtonLink href={`/decks/${parsedDeckId}`} variant="tertiary">
-              Back to deck
-            </ButtonLink>
-            <EditDeckModal deck={deck} />
-          </div>
-        }
+        backLink={{ href: `/decks/${parsedDeckId}`, label: 'Back to deck' }}
+        actions={<EditDeckModal deck={deck} />}
       />
 
       <Tabs className="w-full" selectedKey={selectedTab} onSelectionChange={handleTabChange}>
@@ -155,7 +148,7 @@ export default function EditPage({
               <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                 <p className="text-sm text-default-500">
                   {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
-                  {totalCardCount} {totalCardCount === 1 ? 'card' : 'cards'}
+                  {totalCardCount} {totalCardCount === 1 ? 'word' : 'words'}
                 </p>
                 <CreateLessonModal deckId={parsedDeckId} />
               </div>

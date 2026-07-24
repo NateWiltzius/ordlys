@@ -1,6 +1,7 @@
 import RecentMistakesMode from '@/app/(protected)/practice/recent-mistakes/_components/recent-mistakes-mode';
 import ButtonLink from '@/components/shared/button-link';
 import StudySession from '@/components/shared/layout/study-session';
+import StudySessionHeader from '@/components/shared/layout/study-session-header';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import { getRecentMistakesAction } from '@/server/review.actions';
 import type { Metadata } from 'next';
@@ -15,16 +16,14 @@ export default async function RecentMistakesPage() {
 
   if (quizItems.length === 0) {
     return (
-      <StudySession className="space-y-6">
-        <header className="space-y-2">
-          <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.practice.text}`}>
-            Extra practice
-          </h1>
-          <p className="text-sm text-default-500">
-            Optional practice from the last 24 hours. Answers here do not change your review
-            schedule.
-          </p>
-        </header>
+      <StudySession>
+        <StudySessionHeader
+          title="Extra practice"
+          description="Missed words from the last 24 hours · Review schedule unchanged"
+          tone="practice"
+          exitHref="/dashboard"
+          exitLabel="Exit to Today"
+        />
         <section className="space-y-5 border-y border-default-200 py-6">
           <div className="space-y-1">
             <h2 className="font-semibold">No extra practice right now</h2>
@@ -41,15 +40,14 @@ export default async function RecentMistakesPage() {
   }
 
   return (
-    <StudySession className="space-y-6">
-      <header className="space-y-2">
-        <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES.practice.text}`}>
-          Extra practice
-        </h1>
-        <p className="text-sm text-default-500">
-          Optional practice from the last 24 hours. Answers here do not change your review schedule.
-        </p>
-      </header>
+    <StudySession>
+      <StudySessionHeader
+        title="Extra practice"
+        description="Missed words from the last 24 hours · Review schedule unchanged"
+        tone="practice"
+        exitHref="/dashboard"
+        exitLabel="Exit to Today"
+      />
       <RecentMistakesMode quizItems={quizItems} />
     </StudySession>
   );

@@ -30,7 +30,6 @@ import {
   getNewVocabCountsForDecks,
   getNextReviewBatch,
   getReviewForecastCounts,
-  getSrsCategoryCountsForDecks,
 } from '@/db/queries/review.queries';
 import { buildReviewForecast } from '@/lib/review-forecast';
 import {
@@ -50,14 +49,12 @@ export async function getDashboardDataAction() {
   const userId = await getCurrentUserId();
   const activeDecks = await getUserActiveDecks(userId);
   const activeDeckIds = activeDecks.map(deck => deck.id);
-  const [deckStudyCounts, newVocabCounts, forecastCounts, nextReview, srsCategoryCounts] =
-    await Promise.all([
-      getDeckCardStudyCounts(activeDeckIds, userId),
-      getNewVocabCountsForDecks(activeDeckIds, userId),
-      getReviewForecastCounts(userId, activeDeckIds),
-      getNextReviewBatch(userId, activeDeckIds),
-      getSrsCategoryCountsForDecks(activeDeckIds, userId),
-    ]);
+  const [deckStudyCounts, newVocabCounts, forecastCounts, nextReview] = await Promise.all([
+    getDeckCardStudyCounts(activeDeckIds, userId),
+    getNewVocabCountsForDecks(activeDeckIds, userId),
+    getReviewForecastCounts(userId, activeDeckIds),
+    getNextReviewBatch(userId, activeDeckIds),
+  ]);
 
   const deckStats: Record<number, ReviewCounts> = Object.fromEntries(
     activeDeckIds.map(deckId => [
@@ -86,7 +83,6 @@ export async function getDashboardDataAction() {
     deckStats,
     reviewForecast: buildReviewForecast(forecastCounts),
     nextReview,
-    srsCategoryCounts,
   };
 }
 
@@ -124,8 +120,11 @@ export async function getDiscoverPageDataAction() {
     getPublicDecks(),
     getUserFollowedDecks(userId),
   ]);
-  const libraryDeckIds = [...new Set([...ownedDecks, ...learningDecks].map(deck => deck.id))];
-  return { publicDecks, libraryDeckIds };
+  return {
+    publicDecks,
+    ownedDeckIds: ownedDecks.map(deck => deck.id),
+    followingDeckIds: learningDecks.map(deck => deck.id),
+  };
 }
 
 export async function getDeckPageDataAction(id: number) {

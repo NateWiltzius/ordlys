@@ -12,7 +12,7 @@ import { Card, Chip } from '@heroui/react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import DeckBadge from '@/components/shared/deck-badge';
+import DeckIdentity from '@/components/shared/deck-identity';
 import PublicDeckActions from '@/app/public/decks/[deckId]/_components/public-deck-actions';
 import CollapsibleSection from '@/components/shared/collapsible-section';
 
@@ -81,14 +81,7 @@ export default async function PublicDeckPage({ params }: Props) {
       <header className="py-2 sm:py-4">
         <div className="flex flex-col items-start gap-6 sm:flex-row sm:justify-between">
           <div className="max-w-3xl space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <DeckBadge kind="public" />
-              {languagePair ? (
-                <Chip size="sm" variant="secondary">
-                  {languagePair}
-                </Chip>
-              ) : null}
-            </div>
+            <DeckIdentity badges={['public']} languagePair={languagePair} />
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{deck.title}</h1>
             <p className="text-base text-default-600 sm:text-lg">{deckDescription(deck)}</p>
             {deck.provenance ? (
@@ -110,7 +103,7 @@ export default async function PublicDeckPage({ params }: Props) {
             <dd className="text-2xl font-semibold">{deck.lessonCount}</dd>
           </div>
           <div>
-            <dt className="text-sm text-default-500">Vocabulary cards</dt>
+            <dt className="text-sm text-default-500">Vocabulary words</dt>
             <dd className="text-2xl font-semibold">{deck.wordCount}</dd>
           </div>
         </dl>
@@ -140,7 +133,7 @@ export default async function PublicDeckPage({ params }: Props) {
                   <h3 className="min-w-0 font-medium">{lesson.title}</h3>
                 </div>
                 <Chip size="sm" variant="soft" className="w-fit shrink-0">
-                  {lesson.wordCount} {lesson.wordCount === 1 ? 'card' : 'cards'}
+                  {lesson.wordCount} {lesson.wordCount === 1 ? 'word' : 'words'}
                 </Chip>
               </li>
             ))}
@@ -162,7 +155,7 @@ export default async function PublicDeckPage({ params }: Props) {
               Vocabulary preview
             </h2>
             <p className="mt-1 text-sm leading-6 text-default-500">
-              Showing {deck.vocabularyPreview.length} of {deck.wordCount} cards. Create an account
+              Showing {deck.vocabularyPreview.length} of {deck.wordCount} words. Create an account
               to study the deck with spaced repetition and save your progress.
             </p>
           </div>
@@ -252,6 +245,6 @@ function deckDescription(deck: {
 }) {
   return (
     deck.description ||
-    `Preview ${deck.wordCount} vocabulary cards across ${deck.lessonCount} lessons in this public Ordlys deck.`
+    `Preview ${deck.wordCount} vocabulary words across ${deck.lessonCount} lessons in this public Ordlys deck.`
   );
 }

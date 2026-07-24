@@ -14,10 +14,10 @@ export default async function DecksContent() {
         title="Library"
         description="Open decks you are learning or manage decks you own."
         actions={
-          <div className="flex gap-2">
+          <>
             <ImportDeckModal />
             <CreateDeckModal />
-          </div>
+          </>
         }
       />
       <DeckLibrary

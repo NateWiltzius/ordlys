@@ -41,7 +41,7 @@ export default function HowToUsePage() {
       <p className="mt-2">
         Review due cards regularly before adding lots of new material. Daily practice is helpful,
         but missing a day is not a failure. Just pick up where you left off. Over time, familiar
-        cards will appear less often while difficult ones return sooner.
+        words will appear less often while difficult ones return sooner.
       </p>
 
       <h2 className="mt-8 text-xl font-semibold">What to expect</h2>

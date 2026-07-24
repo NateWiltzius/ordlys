@@ -124,6 +124,15 @@ describe('getDeckCardActionPlan', () => {
 });
 
 describe('getDeckRowPrimaryAction', () => {
+  it('opens followed decks from discovery instead of starting a review blindly', () => {
+    expect(
+      getDeckRowPrimaryAction('review', 'discover', {
+        reviewsDue: 0,
+        newWordsAvailable: 0,
+      }),
+    ).toBe('open');
+  });
+
   it('prioritizes reviews, then learning, for learning rows', () => {
     expect(
       getDeckRowPrimaryAction('review', 'learning', {

@@ -147,7 +147,7 @@ export default function LessonCard({
     vocabId: number,
     position: number,
   ): Promise<string | null> => {
-    if (!orderedVocabs || movingVocabId !== null) return 'Another card is already being moved.';
+    if (!orderedVocabs || movingVocabId !== null) return 'Another word is already being moved.';
 
     const previousVocabs = orderedVocabs;
     const currentIndex = previousVocabs.findIndex(vocab => vocab.id === vocabId);
@@ -207,7 +207,7 @@ export default function LessonCard({
           <span className="flex min-w-0 flex-1 items-center justify-between gap-4 pr-2 text-left">
             <span className="min-w-0 break-words font-medium text-foreground">{lesson.title}</span>
             <Chip size="sm" variant="soft" className="shrink-0">
-              {vocabCount} {vocabCount === 1 ? 'card' : 'cards'}
+              {vocabCount} {vocabCount === 1 ? 'word' : 'words'}
             </Chip>
           </span>
           <Accordion.Indicator />
@@ -218,7 +218,7 @@ export default function LessonCard({
         <Accordion.Body>
           <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted">Manage the cards in this lesson.</p>
+              <p className="text-sm text-muted">Manage the words in this lesson.</p>
               <div className="flex flex-wrap items-center gap-1">
                 <EditLessonModal lesson={lesson} />
                 <Button

@@ -7,10 +7,9 @@ export default function ReviewForecastSkeleton() {
   return (
     <section className="border-t border-default-200 pt-6">
       <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start">
-        <div className="space-y-2">
-          <SkeletonLine className="h-5 w-36" />
+        <div className="space-y-1">
+          <SkeletonLine className="h-6 w-36" />
           <SkeletonLine className="h-4 w-64 max-w-full" />
-          <SkeletonLine className="h-4 w-44" />
         </div>
         <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-default-200 bg-default-50 px-3 py-2 sm:block sm:w-24 sm:text-right">
           <SkeletonLine className="h-3 w-14" />

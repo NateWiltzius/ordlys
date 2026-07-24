@@ -7,8 +7,9 @@ import FollowReleaseControls from './follow-release-controls';
 import RestoreDeckButton from './restore-deck-button';
 import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
 import ButtonLink from '@/components/shared/button-link';
-import DeckMetadataLine from '@/components/shared/deck-metadata-line';
 import { formatLanguagePair } from '@/lib/languages';
+import DeckIdentity from '@/components/shared/deck-identity';
+import type { DeckBadgeKind } from '@/components/shared/deck-badge';
 
 type Props = {
   deck: Deck;
@@ -31,33 +32,27 @@ export default function DeckHeader({
   canModerate,
   protectedFollowerCount,
 }: Props) {
-  const relationship = isOwned
-    ? deck.sourceReleaseId
-      ? 'Copy'
-      : 'Owned'
-    : isFollowing
-      ? 'Following'
-      : null;
-  const visibility =
-    deck.status === 'active'
-      ? `${deck.visibility[0].toUpperCase()}${deck.visibility.slice(1)}`
-      : isOwned
-        ? deck.status === 'deleted'
-          ? 'Deletion pending'
-          : 'Archived'
-        : deck.status === 'deleted'
-          ? 'Source deletion pending'
-          : 'Source archived';
-  const metadata = [
-    formatLanguagePair(deck.frontLanguage, deck.backLanguage),
-    relationship,
-    visibility,
-  ].filter((item): item is string => Boolean(item));
+  const identityBadges: DeckBadgeKind[] = [];
+  if (isOwned) identityBadges.push(deck.sourceReleaseId ? 'copy' : 'owned');
+  else if (isFollowing) identityBadges.push('following');
+
+  if (deck.status === 'active') {
+    identityBadges.push(deck.visibility);
+  } else if (isOwned) {
+    identityBadges.push(deck.status === 'deleted' ? 'deletion-pending' : 'archived');
+  } else {
+    identityBadges.push(deck.status === 'deleted' ? 'source-deletion-pending' : 'source-archived');
+  }
 
   return (
     <PageHeader
       title={deck.title}
       description={deck.description || 'No description provided.'}
+      backLink={
+        isOwned || isFollowing
+          ? { href: '/decks', label: 'Back to Library' }
+          : { href: '/discover', label: 'Back to Discover' }
+      }
       contentClassName="flex-col items-stretch gap-4"
       actions={
         <>
@@ -85,7 +80,10 @@ export default function DeckHeader({
         </>
       }
     >
-      <DeckMetadataLine rows={[metadata]} />
+      <DeckIdentity
+        badges={identityBadges}
+        languagePair={formatLanguagePair(deck.frontLanguage, deck.backLanguage)}
+      />
 
       {isOwned && deck.status === 'deleted' && deck.retentionUntil ? (
         <p className="text-sm text-default-500">

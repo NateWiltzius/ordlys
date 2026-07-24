@@ -45,13 +45,15 @@ export async function getLearnPageDataAction(
         : DEFAULT_LEARN_SESSION_SIZE;
   const userId = await getCurrentUserId();
   if (!(await getActiveReleaseId(deckId, userId))) return null;
-  const [lessonProgress, availableCount] = await Promise.all([
+  const [deck, lessonProgress, availableCount] = await Promise.all([
+    getAccessibleDeckById(deckId, userId),
     getLessonProgressForDeck(deckId, userId),
     getNewVocabCountForDeck(deckId, userId),
   ]);
+  if (!deck) return null;
   const limit = requestedSize === 'all' ? availableCount : requestedSize;
   const learnItems = limit > 0 ? await getNewVocabsForDeck(deckId, userId, limit) : [];
-  return { learnItems, lessonProgress, availableCount };
+  return { deckTitle: deck.title, learnItems, lessonProgress, availableCount };
 }
 
 export async function getReviewPageDataAction(

@@ -133,7 +133,7 @@ export default function Home() {
             <p className="text-sm font-semibold text-primary">03</p>
             <h3 className="mt-2 text-lg font-semibold">Review when it matters</h3>
             <p className="mt-2 text-sm leading-6 text-default-500">
-              Ordlys schedules each card and brings it back when it is worth reviewing.
+              Ordlys schedules each word and brings it back when it is worth reviewing.
             </p>
           </li>
         </ol>

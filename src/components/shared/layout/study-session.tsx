@@ -5,5 +5,5 @@ type Props = PropsWithChildren<{
 }>;
 
 export default function StudySession({ children, className = '' }: Props) {
-  return <div className={`mx-auto w-full md:max-w-xl ${className}`}>{children}</div>;
+  return <div className={`mx-auto w-full space-y-6 md:max-w-xl ${className}`}>{children}</div>;
 }

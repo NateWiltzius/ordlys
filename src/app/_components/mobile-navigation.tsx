@@ -15,6 +15,8 @@ export default function MobileNavigation({ loggedIn }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigationItems = getNavigationItems(loggedIn);
+  const mainNavigationItems = navigationItems.filter(item => item.section === 'main');
+  const utilityNavigationItems = navigationItems.filter(item => item.section === 'utility');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -58,7 +60,7 @@ export default function MobileNavigation({ loggedIn }: Props) {
           className="absolute top-full right-0 mt-2 w-44 rounded-xl border border-default-200 bg-background p-1 shadow-lg"
         >
           <div className="flex flex-col">
-            {navigationItems.map(item => (
+            {mainNavigationItems.map(item => (
               <NavigationLink
                 key={item.href}
                 {...item}
@@ -66,7 +68,19 @@ export default function MobileNavigation({ loggedIn }: Props) {
                 onNavigate={() => setIsOpen(false)}
               />
             ))}
-            {loggedIn && <SignOutControl variant="mobile" onSignedOut={() => setIsOpen(false)} />}
+            {loggedIn ? (
+              <div className="mt-1 flex flex-col border-t border-default-200 pt-1">
+                {utilityNavigationItems.map(item => (
+                  <NavigationLink
+                    key={item.href}
+                    {...item}
+                    variant="mobile"
+                    onNavigate={() => setIsOpen(false)}
+                  />
+                ))}
+                <SignOutControl variant="mobile" onSignedOut={() => setIsOpen(false)} />
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

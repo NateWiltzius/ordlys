@@ -6,14 +6,14 @@ import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actio
 import { forkReleaseAction, restoreDeckAction } from '@/server/deck-release.actions';
 import { Deck } from '@/types/deck.types';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
-import { Button, Card, ListBox, Popover, ProgressBar } from '@heroui/react';
+import { Button, Card, ListBox, Popover } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import { errorMessage } from '@/lib/validation/content';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
-import DeckBadge, { type DeckBadgeKind } from '@/components/shared/deck-badge';
+import { type DeckBadgeKind } from '@/components/shared/deck-badge';
 import Link from 'next/link';
 import ButtonLink from '@/components/shared/button-link';
 import {
@@ -26,6 +26,9 @@ import {
 import type { ReviewCounts } from '@/types/review.types';
 import { formatLanguagePair } from '@/lib/languages';
 import DeckMetadataLine from '@/components/shared/deck-metadata-line';
+import DeckCoverage from '@/components/shared/deck-coverage';
+import DeckIdentity from '@/components/shared/deck-identity';
+import DeckWorkload from '@/components/shared/deck-workload';
 
 type Props = {
   deck: Deck;
@@ -33,6 +36,8 @@ type Props = {
   relationship: DeckCardRelationship;
   isFollowing?: boolean;
   subscriberCount?: number;
+  lessonCount?: number;
+  wordCount?: number;
   layout?: 'card' | 'row';
   stats?: Pick<ReviewCounts, 'totalWords' | 'newWordsAvailable' | 'reviewsDue' | 'wordsInReview'>;
 };
@@ -43,6 +48,8 @@ export function DeckCard({
   relationship,
   isFollowing = false,
   subscriberCount,
+  lessonCount,
+  wordCount,
   layout = 'card',
   stats,
 }: Props) {
@@ -160,8 +167,15 @@ export function DeckCard({
     restorable: ['owned', deck.status === 'deleted' ? 'deletion-pending' : 'archived'],
   }[relationship] as DeckBadgeKind[];
 
-  if (following) relationshipBadges.push('following');
-  relationshipBadges.push(deck.visibility);
+  if (
+    following &&
+    relationship !== 'owned' &&
+    relationship !== 'copy' &&
+    relationship !== 'restorable'
+  ) {
+    relationshipBadges.push('following');
+  }
+  if (deck.status === 'active') relationshipBadges.push(deck.visibility);
 
   const studyStats = stats ?? {
     totalWords: 0,
@@ -171,35 +185,9 @@ export function DeckCard({
   };
   const rowPrimaryAction = getDeckRowPrimaryAction(actionPlan.primary, context, studyStats);
   const introducedCards = Math.min(studyStats.wordsInReview, studyStats.totalWords);
-  const progressPercentage =
-    studyStats.totalWords === 0 ? 0 : Math.round((introducedCards / studyStats.totalWords) * 100);
   const languagePair = formatLanguagePair(deck.frontLanguage, deck.backLanguage);
-  const relationshipLabel = {
-    owned: 'Owned',
-    copy: 'Copy',
-    following: 'Following',
-    discover: null,
-    restorable: deck.status === 'deleted' ? 'Deletion pending' : 'Archived',
-  }[relationship];
-  const identityMetadata = [
-    languagePair,
-    relationshipLabel,
-    context === 'created'
-      ? deck.currentReleaseId
-        ? `${deck.visibility[0].toUpperCase()}${deck.visibility.slice(1)}`
-        : 'Private draft'
-      : null,
-  ].filter((item): item is string => Boolean(item));
   const activityMetadata = [
-    studyStats.totalWords > 0
-      ? `${introducedCards} of ${studyStats.totalWords} started`
-      : deck.currentReleaseId
-        ? 'No cards'
-        : null,
-    studyStats.reviewsDue > 0
-      ? `${studyStats.reviewsDue} ${studyStats.reviewsDue === 1 ? 'review' : 'reviews'} due`
-      : null,
-    studyStats.newWordsAvailable > 0 ? `${studyStats.newWordsAvailable} new` : null,
+    studyStats.totalWords === 0 && deck.currentReleaseId ? 'No words' : null,
     context === 'created' && subscriberCount && subscriberCount > 0
       ? `${subscriberCount} ${subscriberCount === 1 ? 'follower' : 'followers'}`
       : null,
@@ -223,9 +211,7 @@ export function DeckCard({
         size="sm"
         className={`${primaryClassName} ${STUDY_TONE_STYLES.review.button}`}
       >
-        {layout === 'row' && studyStats.reviewsDue > 0
-          ? `Review ${studyStats.reviewsDue}`
-          : 'Review deck'}{' '}
+        {layout === 'row' ? 'Review' : 'Review deck'}{' '}
         <span className="sr-only">in {deck.title}</span>
       </ButtonLink>
     ) : rowPrimaryAction === 'learn' ? (
@@ -234,7 +220,7 @@ export function DeckCard({
         size="sm"
         className={`${primaryClassName} ${STUDY_TONE_STYLES.learning.button}`}
       >
-        Learn {studyStats.newWordsAvailable}
+        {layout === 'row' ? 'Learn' : `Learn ${studyStats.newWordsAvailable}`}
         <span className="sr-only"> in {deck.title}</span>
       </ButtonLink>
     ) : rowPrimaryAction === 'open' ? (
@@ -356,7 +342,7 @@ export function DeckCard({
       <article className="py-5">
         <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="min-w-0">
               <h3 className="min-w-0 text-lg font-semibold">
                 <Link
                   href={`/decks/${deck.id}`}
@@ -365,12 +351,16 @@ export function DeckCard({
                   {deck.title}
                 </Link>
               </h3>
-              {relationship === 'restorable' ? (
-                <DeckBadge kind={deck.status === 'deleted' ? 'deletion-pending' : 'archived'} />
-              ) : null}
             </div>
 
-            <DeckMetadataLine rows={[identityMetadata, activityMetadata]} className="mt-1" />
+            <DeckIdentity
+              badges={relationshipBadges}
+              languagePair={languagePair}
+              className="mt-1.5"
+            />
+            {activityMetadata.length > 0 ? (
+              <DeckMetadataLine rows={[activityMetadata]} className="mt-1" />
+            ) : null}
 
             {deck.description ? (
               <p className="mt-2 line-clamp-2 text-sm text-default-500 sm:line-clamp-1">
@@ -378,23 +368,17 @@ export function DeckCard({
               </p>
             ) : null}
 
-            {studyStats.totalWords > 0 ? (
-              <div className="mt-3 flex max-w-xl items-center gap-3">
-                <ProgressBar
-                  aria-label={`${deck.title}: ${introducedCards} of ${studyStats.totalWords} cards started`}
-                  value={progressPercentage}
-                  size="sm"
-                  className="min-w-0 flex-1"
-                >
-                  <ProgressBar.Track>
-                    <ProgressBar.Fill className={STUDY_TONE_STYLES.learning.progress} />
-                  </ProgressBar.Track>
-                </ProgressBar>
-                <span className="shrink-0 text-xs tabular-nums text-default-500">
-                  {progressPercentage}%
-                </span>
-              </div>
-            ) : null}
+            <DeckWorkload
+              reviewsDue={studyStats.reviewsDue}
+              newWordsAvailable={studyStats.newWordsAvailable}
+              className="mt-2"
+            />
+            <DeckCoverage
+              started={introducedCards}
+              total={studyStats.totalWords}
+              deckTitle={deck.title}
+              className="mt-3 max-w-xl"
+            />
 
             {mutationError ? (
               <StatusAlert status="danger" className="mt-3">
@@ -422,8 +406,8 @@ export function DeckCard({
 
   return (
     <Card className="flex h-full w-full flex-col">
-      <Card.Header className="flex items-start justify-between gap-3 pb-2">
-        <div className="min-w-0 flex-1 space-y-1">
+      <Card.Header className="pb-2">
+        <div className="min-w-0 space-y-1">
           <h3 className="break-words text-lg font-semibold">
             <Link
               href={`/decks/${deck.id}`}
@@ -441,21 +425,45 @@ export function DeckCard({
           >
             {deck.description || 'No description'}
           </p>
-        </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-1">
-          {relationshipBadges.map(kind => (
-            <DeckBadge key={kind} kind={kind} />
-          ))}
+          <DeckIdentity
+            badges={relationshipBadges}
+            languagePair={languagePair}
+            className="pt-1.5"
+          />
         </div>
       </Card.Header>
-      <div className="flex-1" />
+      <Card.Content className="flex-1 space-y-3">
+        {lessonCount !== undefined || wordCount !== undefined || subscriberCount !== undefined ? (
+          <dl className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-default-500">
+            {lessonCount !== undefined ? (
+              <div>
+                <dt className="sr-only">Lessons</dt>
+                <dd>
+                  {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}
+                </dd>
+              </div>
+            ) : null}
+            {wordCount !== undefined ? (
+              <div>
+                <dt className="sr-only">Words</dt>
+                <dd>
+                  {wordCount} {wordCount === 1 ? 'word' : 'words'}
+                </dd>
+              </div>
+            ) : null}
+            {subscriberCount !== undefined ? (
+              <div>
+                <dt className="sr-only">Followers</dt>
+                <dd>
+                  {subscriberCount} {subscriberCount === 1 ? 'follower' : 'followers'}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+        ) : null}
+      </Card.Content>
       <Card.Footer>
         <div className="flex w-full flex-col gap-2">
-          {relationship === 'discover' && subscriberCount !== undefined ? (
-            <p className="text-sm text-default-500">
-              {subscriberCount} {subscriberCount === 1 ? 'follower' : 'followers'}
-            </p>
-          ) : null}
           {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
           {relationship === 'restorable' && deck.status === 'deleted' ? (
             <p className="text-xs text-default-500">
