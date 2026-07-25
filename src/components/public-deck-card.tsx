@@ -7,9 +7,10 @@ import DeckIdentity from '@/components/shared/deck-identity';
 
 type Props = {
   deck: PublicDeckSummary;
+  showFollowerCount?: boolean;
 };
 
-export default function PublicDeckCard({ deck }: Props) {
+export default function PublicDeckCard({ deck, showFollowerCount = true }: Props) {
   const href = `/public/decks/${deck.id}`;
   const languagePair = formatLanguagePair(deck.frontLanguage, deck.backLanguage);
 
@@ -43,12 +44,14 @@ export default function PublicDeckCard({ deck }: Props) {
               {deck.wordCount} {deck.wordCount === 1 ? 'word' : 'words'}
             </dd>
           </div>
-          <div>
-            <dt className="sr-only">Followers</dt>
-            <dd>
-              {deck.subscriberCount} {deck.subscriberCount === 1 ? 'follower' : 'followers'}
-            </dd>
-          </div>
+          {showFollowerCount ? (
+            <div>
+              <dt className="sr-only">Followers</dt>
+              <dd>
+                {deck.subscriberCount} {deck.subscriberCount === 1 ? 'follower' : 'followers'}
+              </dd>
+            </div>
+          ) : null}
         </dl>
       </Card.Content>
 

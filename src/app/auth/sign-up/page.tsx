@@ -19,7 +19,11 @@ export default async function SignUpPage({ searchParams }: Props) {
   return (
     <AuthShell
       title="Create your account"
-      description="Start building decks and keep your learning progress."
+      description={
+        nextPath === '/decks/55'
+          ? 'Start Norwegian A1 and keep your learning progress.'
+          : 'Save your decks, review schedule, and learning progress.'
+      }
       footer={
         <p className="text-sm text-default-500">
           Already have an account?{' '}

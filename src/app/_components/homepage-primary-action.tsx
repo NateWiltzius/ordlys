@@ -13,8 +13,8 @@ export default function HomepagePrimaryAction() {
   }
 
   return (
-    <ButtonLink href={loggedIn ? '/dashboard' : '/auth/sign-up'} size="lg">
-      {loggedIn ? 'Continue learning' : 'Start learning Norwegian'}
+    <ButtonLink href={loggedIn ? '/dashboard' : '/auth/sign-up?next=%2Fdecks'} size="lg">
+      {loggedIn ? 'Continue learning' : 'Create your first deck'}
     </ButtonLink>
   );
 }
