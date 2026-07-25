@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Review due cards',
-  description: 'Review due vocabulary across every active deck.',
+  description: 'Review due cards across every active deck.',
 };
 
 type Props = { searchParams: Promise<{ size?: string | string[] }> };

@@ -33,7 +33,7 @@ export default function VocabCard({
     >
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-          Word {index}
+          Card {index}
         </span>
         {showSrsLevel ? <SrsLevelChip srsLevel={srsLevel} reviewDueAt={reviewDueAt} /> : null}
       </div>

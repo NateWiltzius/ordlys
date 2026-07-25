@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Discover',
-  description: 'Find public vocabulary decks to follow or copy.',
+  description: 'Find public flashcard decks to follow or copy.',
 };
 
 export default async function DiscoverPage() {

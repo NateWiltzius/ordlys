@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Progress',
-  description: 'Track vocabulary growth, memory strength, and recent study activity.',
+  description: 'Track card coverage, memory strength, and recent study activity.',
 };
 
 export default function ProgressPage() {

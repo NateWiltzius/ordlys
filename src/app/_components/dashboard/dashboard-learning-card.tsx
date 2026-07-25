@@ -21,10 +21,10 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
 
   const learningCard = (
     <StudyActionCard
-      title="Learn new words"
-      description="Choose a deck and start learning new vocabulary."
+      title="Learn new cards"
+      description="Choose a deck and start learning new material."
       count={newWordsAvailable}
-      countLabel="new words across your decks"
+      countLabel="new cards across your decks"
       actionLabel="Start learning"
       icon={AcademicCapIcon}
       tone="learning"
@@ -32,7 +32,7 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
       isDisabled={!hasNewWords}
       unavailableAction={
         <Button variant="secondary" size="lg" className="w-full" isDisabled>
-          No new words available
+          No new cards available
         </Button>
       }
     />
@@ -58,7 +58,7 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
             </Modal.Header>
             <Modal.Body>
               <p className="mb-3 text-sm text-default-600">
-                Choose a deck to start learning new words.
+                Choose a deck to start learning new cards.
               </p>
               <ul className="divide-y divide-default-200 rounded-lg border border-default-200">
                 {decksWithNewWords.map(deck => {

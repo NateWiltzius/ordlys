@@ -10,9 +10,10 @@ import { getLanguageName } from '@/lib/languages';
 
 type Props = {
   deckId: number;
+  autoFollow?: boolean;
 };
 
-export default async function DeckContent({ deckId }: Props) {
+export default async function DeckContent({ deckId, autoFollow = false }: Props) {
   const data = await getDeckPageDataAction(deckId);
   if (!data) notFound();
   const {
@@ -49,6 +50,7 @@ export default async function DeckContent({ deckId }: Props) {
           isOwned={isOwned}
           nextReview={nextReview}
           reviewForecast={reviewForecast}
+          autoFollow={autoFollow}
         />
       </Suspense>
 
@@ -56,8 +58,8 @@ export default async function DeckContent({ deckId }: Props) {
         <DeckLessons
           deckId={deck.id}
           canStudy={canStudy}
-          frontLabel={getLanguageName(deck.frontLanguage) ?? 'Word'}
-          backLabel={getLanguageName(deck.backLanguage) ?? 'Meaning'}
+          frontLabel={getLanguageName(deck.frontLanguage) ?? 'Front'}
+          backLabel={getLanguageName(deck.backLanguage) ?? 'Back'}
         />
       </Suspense>
     </div>

@@ -15,7 +15,7 @@ export default function PublicDecksAccountAction() {
       Open your library
     </ButtonLink>
   ) : (
-    <ButtonLink href="/auth/sign-up" size="sm">
+    <ButtonLink href="/auth/sign-up?next=%2Fdiscover" size="sm">
       Create an account
     </ButtonLink>
   );

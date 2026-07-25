@@ -18,16 +18,16 @@ export default function PrivacyPage() {
         this notice.
       </p>
       <p className="mt-4">
-        Ordlys stores your email address for authentication and your decks, followed decks,
-        vocabulary, and learning history to provide study and review features. If you submit
-        feedback, Ordlys also stores the message, category, related page, and any contact email you
-        choose to provide.
+        Ordlys stores your email address for authentication and your decks, followed decks, cards,
+        and learning history to provide study and review features. If you submit feedback, Ordlys
+        also stores the message, category, related page, and any contact email you choose to
+        provide.
       </p>
       <h2 className="mt-8 text-xl font-semibold">How data is used</h2>
       <p className="mt-2">
         We use this information only to operate, secure, and improve the service. Public deck
-        titles, descriptions, lesson outlines, and sample vocabulary can be viewed without an
-        account and may be indexed by search engines. Private decks are restricted to you.
+        titles, descriptions, lesson outlines, and sample cards can be viewed without an account and
+        may be indexed by search engines. Private decks are restricted to you.
       </p>
       <h2 className="mt-8 text-xl font-semibold">Service providers and analytics</h2>
       <p className="mt-2">
@@ -38,12 +38,12 @@ export default function PrivacyPage() {
       </p>
       <h2 className="mt-8 text-xl font-semibold">Retention and control</h2>
       <p className="mt-2">
-        Your data is retained while your account exists. You can delete individual vocabulary,
-        lessons, and decks using their corresponding controls, or permanently delete your account
-        from the account page. Account deletion removes your authentication account, follows,
-        reports, and learning history. Authored deck releases and their content may be retained
-        without your account identifier when needed to preserve release history, attribution chains,
-        or study material used by other learners.
+        Your data is retained while your account exists. You can delete individual cards, lessons,
+        and decks using their corresponding controls, or permanently delete your account from the
+        account page. Account deletion removes your authentication account, follows, reports, and
+        learning history. Authored deck releases and their content may be retained without your
+        account identifier when needed to preserve release history, attribution chains, or study
+        material used by other learners.
       </p>
       <p className="mt-2">
         You can download your account data from the account page and export any deck you own as a

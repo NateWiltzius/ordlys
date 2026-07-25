@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function QuizStats({ progressStats, attemptStats, tone, studyMode }: Props) {
-  const unit = studyMode === 'review' ? 'reviews' : 'words';
+  const unit = studyMode === 'review' ? 'reviews' : 'cards';
 
   return (
     <StudyProgress

@@ -24,7 +24,7 @@ export default function PublicDeckCard({ deck, showFollowerCount = true }: Props
             </Link>
           </h3>
           <p className="line-clamp-2 text-sm text-default-500">
-            {deck.description || 'A public vocabulary deck you can preview before signing up.'}
+            {deck.description || 'A public flashcard deck you can preview before signing up.'}
           </p>
           <DeckIdentity badges={['public']} languagePair={languagePair} className="pt-1.5" />
         </div>
@@ -39,12 +39,12 @@ export default function PublicDeckCard({ deck, showFollowerCount = true }: Props
             </dd>
           </div>
           <div>
-            <dt className="sr-only">Words</dt>
+            <dt className="sr-only">Cards</dt>
             <dd>
-              {deck.wordCount} {deck.wordCount === 1 ? 'word' : 'words'}
+              {deck.wordCount} {deck.wordCount === 1 ? 'card' : 'cards'}
             </dd>
           </div>
-          {showFollowerCount ? (
+          {showFollowerCount && deck.subscriberCount > 0 ? (
             <div>
               <dt className="sr-only">Followers</dt>
               <dd>
@@ -57,7 +57,7 @@ export default function PublicDeckCard({ deck, showFollowerCount = true }: Props
 
       <Card.Footer>
         <ButtonLink href={href} variant="secondary" className="w-full">
-          Preview deck <span className="sr-only">{deck.title}</span>
+          Preview cards <span className="sr-only">in {deck.title}</span>
         </ButtonLink>
       </Card.Footer>
     </Card>

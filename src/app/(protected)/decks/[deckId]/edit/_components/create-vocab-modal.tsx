@@ -14,7 +14,7 @@ type CreateVocabModalProps = {
 };
 
 export default function CreateVocabModal({
-  triggerLabel = 'New vocab',
+  triggerLabel = 'New card',
   lessonId,
   onCreated,
 }: CreateVocabModalProps) {
@@ -64,7 +64,7 @@ export default function CreateVocabModal({
       form.reset();
       modalState.close();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not create the vocabulary.');
+      setError(cause instanceof Error ? cause.message : 'Could not create the card.');
     } finally {
       setIsSubmitting(false);
     }
@@ -88,9 +88,9 @@ export default function CreateVocabModal({
           <Modal.Dialog className="min-h-0 sm:max-w-xl">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
-              <Modal.Heading>Create vocabulary</Modal.Heading>
+              <Modal.Heading>Create card</Modal.Heading>
               <p className="text-sm text-default-500">
-                Add a new word and configure how it appears during quizzes.
+                Add a front and back, then configure how the card appears during quizzes.
               </p>
             </Modal.Header>
             <form onSubmit={handleCreateVocab} className="mt-2 flex min-h-0 flex-1 flex-col">
@@ -109,7 +109,7 @@ export default function CreateVocabModal({
                   Cancel
                 </Button>
                 <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
-                  Create vocabulary
+                  Create card
                 </Button>
               </Modal.Footer>
             </form>

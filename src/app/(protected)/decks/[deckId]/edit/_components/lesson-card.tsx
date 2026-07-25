@@ -78,7 +78,7 @@ export default function LessonCard({
         setOrderedVocabs(await getEditableLessonVocabularyAction(deckId, lesson.id));
       } catch (error) {
         setMutationError(
-          error instanceof Error ? error.message : 'Could not load this lesson’s vocabulary.',
+          error instanceof Error ? error.message : 'Could not load this lesson’s cards.',
         );
       } finally {
         if (showLoading) setIsLoading(false);
@@ -137,7 +137,7 @@ export default function LessonCard({
       }
     } catch (error) {
       setOrderedVocabs(previousVocabs);
-      setMutationError(error instanceof Error ? error.message : 'Could not reorder vocabulary.');
+      setMutationError(error instanceof Error ? error.message : 'Could not reorder cards.');
     } finally {
       setMovingVocabId(null);
     }
@@ -147,7 +147,7 @@ export default function LessonCard({
     vocabId: number,
     position: number,
   ): Promise<string | null> => {
-    if (!orderedVocabs || movingVocabId !== null) return 'Another word is already being moved.';
+    if (!orderedVocabs || movingVocabId !== null) return 'Another card is already being moved.';
 
     const previousVocabs = orderedVocabs;
     const currentIndex = previousVocabs.findIndex(vocab => vocab.id === vocabId);
@@ -167,7 +167,7 @@ export default function LessonCard({
       }
       return null;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not reorder vocabulary.';
+      const message = error instanceof Error ? error.message : 'Could not reorder cards.';
       setOrderedVocabs(previousVocabs);
       setMutationError(message);
       return message;
@@ -187,7 +187,7 @@ export default function LessonCard({
       }
       setOrderedVocabs(current => current?.filter(item => item.id !== vocab.id) ?? null);
     } catch (error) {
-      setMutationError(error instanceof Error ? error.message : 'Could not delete vocabulary.');
+      setMutationError(error instanceof Error ? error.message : 'Could not delete the card.');
     } finally {
       setDeletingVocabId(null);
     }
@@ -207,7 +207,7 @@ export default function LessonCard({
           <span className="flex min-w-0 flex-1 items-center justify-between gap-4 pr-2 text-left">
             <span className="min-w-0 break-words font-medium text-foreground">{lesson.title}</span>
             <Chip size="sm" variant="soft" className="shrink-0">
-              {vocabCount} {vocabCount === 1 ? 'word' : 'words'}
+              {vocabCount} {vocabCount === 1 ? 'card' : 'cards'}
             </Chip>
           </span>
           <Accordion.Indicator />
@@ -218,7 +218,7 @@ export default function LessonCard({
         <Accordion.Body>
           <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted">Manage the words in this lesson.</p>
+              <p className="text-sm text-muted">Manage the cards in this lesson.</p>
               <div className="flex flex-wrap items-center gap-1">
                 <EditLessonModal lesson={lesson} />
                 <Button
@@ -251,7 +251,7 @@ export default function LessonCard({
             ) : orderedVocabs ? (
               <VocabTable
                 vocabs={orderedVocabs}
-                emptyDescription="Add vocabulary to start building this lesson."
+                emptyDescription="Add cards to start building this lesson."
                 renderActions={(vocab, index) => (
                   <div className="flex items-center gap-1">
                     <Button
@@ -349,7 +349,7 @@ export default function LessonCard({
               onMove={position =>
                 moveTarget
                   ? handleMoveVocabToPosition(moveTarget.id, position)
-                  : Promise.resolve('Vocabulary is no longer available.')
+                  : Promise.resolve('The card is no longer available.')
               }
             />
             <ConfirmationDialog
@@ -364,10 +364,10 @@ export default function LessonCard({
               }
               description={
                 deleteTarget === 'lesson'
-                  ? 'The lesson and all of its vocabulary will be deleted.'
-                  : 'This vocabulary item will be permanently deleted. This cannot be undone.'
+                  ? 'The lesson and all of its cards will be deleted.'
+                  : 'This card will be permanently deleted. This cannot be undone.'
               }
-              confirmLabel={deleteTarget === 'lesson' ? 'Delete lesson' : 'Delete vocabulary'}
+              confirmLabel={deleteTarget === 'lesson' ? 'Delete lesson' : 'Delete card'}
               isPending={isDeleting || deletingVocabId !== null}
               onConfirm={async () => {
                 const target = deleteTarget;

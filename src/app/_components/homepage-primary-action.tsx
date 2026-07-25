@@ -13,7 +13,10 @@ export default function HomepagePrimaryAction() {
   }
 
   return (
-    <ButtonLink href={loggedIn ? '/dashboard' : '/auth/sign-up?next=%2Fdecks'} size="lg">
+    <ButtonLink
+      href={loggedIn ? '/dashboard' : '/auth/sign-up?next=%2Fdecks%3Fcreate%3D1'}
+      size="lg"
+    >
       {loggedIn ? 'Continue learning' : 'Create your first deck'}
     </ButtonLink>
   );

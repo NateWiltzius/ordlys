@@ -29,12 +29,12 @@ export default function DeckCoverage({
         }`}
       >
         <span className="font-medium text-default-700">
-          {boundedStarted} of {total} words started
+          {boundedStarted} of {total} cards started
         </span>
         <span className="shrink-0 tabular-nums text-default-500">{percentage}%</span>
       </div>
       <ProgressBar
-        aria-label={`${deckTitle}: ${boundedStarted} of ${total} words started`}
+        aria-label={`${deckTitle}: ${boundedStarted} of ${total} cards started`}
         value={percentage}
         size={size}
       >

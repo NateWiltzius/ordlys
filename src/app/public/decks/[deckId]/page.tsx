@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import DeckIdentity from '@/components/shared/deck-identity';
 import PublicDeckActions from '@/app/public/decks/[deckId]/_components/public-deck-actions';
+import PublicDeckCardPreview from '@/app/public/decks/[deckId]/_components/public-deck-card-preview';
 import CollapsibleSection from '@/components/shared/collapsible-section';
 
 type Props = {
@@ -103,16 +104,22 @@ export default async function PublicDeckPage({ params }: Props) {
             <dd className="text-2xl font-semibold">{deck.lessonCount}</dd>
           </div>
           <div>
-            <dt className="text-sm text-default-500">Vocabulary words</dt>
+            <dt className="text-sm text-default-500">Cards</dt>
             <dd className="text-2xl font-semibold">{deck.wordCount}</dd>
           </div>
         </dl>
       </header>
 
+      <PublicDeckCardPreview
+        cards={deck.vocabularyPreview}
+        frontLanguage={deck.frontLanguage}
+        backLanguage={deck.backLanguage}
+      />
+
       <CollapsibleSection
         id="lesson-outline"
         title="Lesson outline"
-        description="Open to see how the vocabulary is organized."
+        description="Open to see how the cards are organized."
         summary={
           <Chip size="sm" variant="soft">
             {deck.lessonCount} {deck.lessonCount === 1 ? 'lesson' : 'lessons'}
@@ -133,7 +140,7 @@ export default async function PublicDeckPage({ params }: Props) {
                   <h3 className="min-w-0 font-medium">{lesson.title}</h3>
                 </div>
                 <Chip size="sm" variant="soft" className="w-fit shrink-0">
-                  {lesson.wordCount} {lesson.wordCount === 1 ? 'word' : 'words'}
+                  {lesson.wordCount} {lesson.wordCount === 1 ? 'card' : 'cards'}
                 </Chip>
               </li>
             ))}
@@ -147,15 +154,15 @@ export default async function PublicDeckPage({ params }: Props) {
 
       {deck.vocabularyPreview.length > 0 ? (
         <section
-          aria-labelledby="vocabulary-preview-heading"
+          aria-labelledby="card-preview-heading"
           className="border-t border-default-200 pt-6"
         >
           <div>
-            <h2 id="vocabulary-preview-heading" className="text-lg font-semibold">
-              Vocabulary preview
+            <h2 id="card-preview-heading" className="text-lg font-semibold">
+              Card preview
             </h2>
             <p className="mt-1 text-sm leading-6 text-default-500">
-              Showing {deck.vocabularyPreview.length} of {deck.wordCount} words. Create an account
+              Showing {deck.vocabularyPreview.length} of {deck.wordCount} cards. Create an account
               to study the deck with spaced repetition and save your progress.
             </p>
           </div>
@@ -165,10 +172,10 @@ export default async function PublicDeckPage({ params }: Props) {
               <thead className="bg-default-50 text-sm text-default-500">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">
-                    Word
+                    Front
                   </th>
                   <th scope="col" className="px-4 py-3 font-medium">
-                    Translation
+                    Back
                   </th>
                   <th scope="col" className="hidden px-4 py-3 font-medium sm:table-cell">
                     Lesson
@@ -245,6 +252,6 @@ function deckDescription(deck: {
 }) {
   return (
     deck.description ||
-    `Preview ${deck.wordCount} vocabulary words across ${deck.lessonCount} lessons in this public Ordlys deck.`
+    `Preview ${deck.wordCount} cards across ${deck.lessonCount} lessons in this public Ordlys deck.`
   );
 }

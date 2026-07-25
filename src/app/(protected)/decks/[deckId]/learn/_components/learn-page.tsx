@@ -51,7 +51,7 @@ export default function LearnPage({
     return (
       <StudySession>
         <StudySessionHeader
-          title="Learn new words"
+          title="Learn new cards"
           description={deckTitle}
           tone="learning"
           exitHref={`/decks/${deckId}`}
@@ -60,14 +60,14 @@ export default function LearnPage({
         <Card>
           <Card.Header>
             <Card.Title render={props => <h2 {...props} />}>
-              {nextLockedLesson ? 'Keep reviewing to unlock more words' : 'All words introduced'}
+              {nextLockedLesson ? 'Keep reviewing to unlock more cards' : 'All cards introduced'}
             </Card.Title>
             <Card.Description>
               {nextLockedLesson && previousLesson
                 ? `${remainingRequired} more ${
-                    remainingRequired === 1 ? 'word needs' : 'words need'
+                    remainingRequired === 1 ? 'card needs' : 'cards need'
                   } stronger recall in ${previousLesson.lessonTitle}.`
-                : 'You have added every word in this deck to your review queue.'}
+                : 'You have added every card in this deck to your review queue.'}
             </Card.Description>
           </Card.Header>
           <Card.Footer>
@@ -81,9 +81,9 @@ export default function LearnPage({
   return (
     <StudySession>
       <StudySessionHeader
-        title={mode === 'quiz' ? 'Learning quiz' : 'Learn new words'}
+        title={mode === 'quiz' ? 'Learning quiz' : 'Learn new cards'}
         description={`${deckTitle} · ${session.availableCount} new ${
-          session.availableCount === 1 ? 'word' : 'words'
+          session.availableCount === 1 ? 'card' : 'cards'
         } available`}
         tone="learning"
         exitHref={`/decks/${deckId}`}
@@ -95,7 +95,7 @@ export default function LearnPage({
           selectedSize={selectedSize}
           sizes={LEARN_SESSION_SIZES}
           totalCount={session.availableCount}
-          noun="word"
+          noun="card"
           allowAll
           preferenceCookieName={LEARN_SESSION_SIZE_COOKIE}
         />

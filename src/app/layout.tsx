@@ -9,10 +9,11 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { OPEN_GRAPH_IMAGE, SITE_URL, TWITTER_IMAGE } from '@/lib/site';
 import AuthSessionProvider from '@/components/providers/auth-session-provider';
 import AppChromeState from '@/app/_components/app-chrome-state';
+import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 
-const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Language Learning';
+const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Any Subject';
 const siteDescription =
-  'Build vocabulary decks, learn with active recall, and review words at the right time with Ordlys spaced repetition flashcards.';
+  'Create or follow flashcard decks for any subject, practise active recall, and review each card at the right time.';
 const enableVercelTelemetry = process.env.NODE_ENV === 'production';
 
 export const metadata: Metadata = {
@@ -62,7 +63,9 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: PropsWithChildren) {
+export default async function RootLayout({ children }: PropsWithChildren) {
+  const initialLoggedIn = (await getCurrentUserIdOrNull()) !== null;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -80,7 +83,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
       <body
         className={`flex min-h-screen flex-col bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
       >
-        <AuthSessionProvider>
+        <AuthSessionProvider initialLoggedIn={initialLoggedIn}>
           <AppChromeState />
           <a
             href="#main-content"

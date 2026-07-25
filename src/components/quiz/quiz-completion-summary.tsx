@@ -137,7 +137,7 @@ export default function QuizCompletionSummary({
                 aria-hidden="true"
               />
               <div>
-                <h3 className="font-semibold text-danger">Words to revisit</h3>
+                <h3 className="font-semibold text-danger">Cards to revisit</h3>
                 <p className="text-sm text-default-600">
                   These needed the most help during this session.
                 </p>
@@ -177,7 +177,7 @@ export default function QuizCompletionSummary({
                   size="sm"
                   className="w-full sm:w-auto"
                 >
-                  Practice missed words
+                  Practice missed cards
                 </ButtonLink>
               </div>
             ) : null}

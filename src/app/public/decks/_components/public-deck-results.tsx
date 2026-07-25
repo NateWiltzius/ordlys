@@ -13,7 +13,8 @@ export default async function PublicDeckResults() {
             Available decks
           </h2>
           <p className="mt-1 text-sm text-default-500">
-            Preview any deck without an account. An account is required to study and save progress.
+            Open any deck to try a card and see how the material is organized. Follow it when you
+            are ready to save progress.
           </p>
         </div>
         <PublicDecksAccountAction />
@@ -24,7 +25,7 @@ export default async function PublicDeckResults() {
     <section className="rounded-xl border border-default-200 bg-default-50 px-6 py-10 text-center">
       <h2 className="text-xl font-semibold">Public decks are coming soon</h2>
       <p className="mt-2 text-default-500">
-        Create an account to build your own vocabulary decks in the meantime.
+        Create an account to build your own flashcard decks in the meantime.
       </p>
       <div className="mt-5 flex justify-center">
         <PublicDecksAccountAction />

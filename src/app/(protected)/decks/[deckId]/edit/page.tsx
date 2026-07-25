@@ -7,7 +7,7 @@ import { parseDeckEditorTab } from '@/lib/deck-editor-tabs';
 
 export const metadata: Metadata = {
   title: 'Manage deck',
-  description: 'Manage deck lessons, vocabulary, and publishing.',
+  description: 'Manage deck lessons, cards, and publishing.',
 };
 
 type Props = {

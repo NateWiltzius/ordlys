@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'Ordlys spaced repetition flashcards for language learning';
+export const alt = 'Ordlys spaced repetition flashcards for any subject';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -33,10 +33,10 @@ export default function OpenGraphImage() {
               marginTop: 26,
             }}
           >
-            Learn words today. Remember them tomorrow.
+            Learn cards today. Remember them tomorrow.
           </div>
           <div style={{ color: '#dbeafe', display: 'flex', fontSize: 31, marginTop: 28 }}>
-            Active recall and spaced repetition for language learning
+            Active recall and spaced repetition for any subject
           </div>
         </div>
       </div>

@@ -44,7 +44,7 @@ export default function EditableVocabularySearch({
     try {
       setVocabs(await getEditableDeckVocabularyForSearchAction(deckId));
     } catch {
-      setError('Unable to search this deck’s vocabulary. Please try again.');
+      setError('Unable to search this deck’s cards. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +94,8 @@ export default function EditableVocabularySearch({
 
       {hasQuery && vocabs && matches.length === 0 ? (
         <EmptyState
-          title="No vocabulary matches your search"
-          description="Try a different word, meaning, reading, or tag."
+          title="No cards match your search"
+          description="Try different front or back text, a reading, or a tag."
         />
       ) : null}
 

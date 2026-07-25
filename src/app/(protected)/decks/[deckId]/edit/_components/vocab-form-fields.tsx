@@ -9,7 +9,7 @@ export default function VocabFormFields({ vocab }: Props) {
   return (
     <div className="space-y-6">
       <fieldset className="space-y-4">
-        <legend className="mb-1 text-sm font-semibold text-default-900">Vocabulary</legend>
+        <legend className="mb-1 text-sm font-semibold text-default-900">Card content</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="front">
@@ -42,7 +42,8 @@ export default function VocabFormFields({ vocab }: Props) {
 
         <div className="form-field">
           <Label className="text-sm text-default-600" htmlFor="reading">
-            Reading
+            Reading or pronunciation{' '}
+            <span className="font-normal text-default-400">(optional)</span>
           </Label>
           <Input
             id="reading"

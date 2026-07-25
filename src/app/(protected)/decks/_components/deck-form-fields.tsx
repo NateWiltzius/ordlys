@@ -24,7 +24,8 @@ export default function DeckFormFields({
 }: Props) {
   const titleId = `${idPrefix}-title`;
   const descriptionId = `${idPrefix}-description`;
-  const languagesHeadingId = `${idPrefix}-languages-heading`;
+  const languagesHeadingId = `${idPrefix}-card-side-languages-heading`;
+  const hasLanguageDefaults = Boolean(defaults?.frontLanguage || defaults?.backLanguage);
 
   return (
     <div className="space-y-5">
@@ -35,7 +36,7 @@ export default function DeckFormFields({
         <Input
           id={titleId}
           name="title"
-          placeholder="e.g. Norwegian vocabulary"
+          placeholder="e.g. Biology terms, Spanish verbs, AWS certification"
           defaultValue={defaults?.title}
           required
           maxLength={CONTENT_LIMITS.deckTitle}
@@ -64,31 +65,36 @@ export default function DeckFormFields({
         />
       </div>
 
-      <section className="border-t border-default-200 pt-5" aria-labelledby={languagesHeadingId}>
-        <div className="form-field__label-row">
-          <h3 id={languagesHeadingId} className="text-sm font-medium text-default-700">
-            Languages
-          </h3>
-          <span className="text-xs text-default-400">Optional</span>
-        </div>
-        <p className="mt-1 text-xs leading-5 text-default-500">
-          Label the prompt and answer sides, or leave them unspecified for mixed-language decks.
+      <details
+        className="group border-t border-default-200 pt-5"
+        open={hasLanguageDefaults}
+        aria-labelledby={languagesHeadingId}
+      >
+        <summary
+          id={languagesHeadingId}
+          className="cursor-pointer text-sm font-medium text-default-700 marker:text-default-400"
+        >
+          Card-side languages <span className="font-normal text-default-400">(optional)</span>
+        </summary>
+        <p className="mt-2 text-xs leading-5 text-default-500">
+          For language-learning decks, label the language used on each side. Leave these blank for
+          other subjects.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <DeckLanguageSelect
             name="frontLanguage"
-            label="Front language"
+            label="Front-side language"
             defaultValue={defaults?.frontLanguage}
             isDisabled={isDisabled}
           />
           <DeckLanguageSelect
             name="backLanguage"
-            label="Back language"
+            label="Back-side language"
             defaultValue={defaults?.backLanguage}
             isDisabled={isDisabled}
           />
         </div>
-      </section>
+      </details>
     </div>
   );
 }

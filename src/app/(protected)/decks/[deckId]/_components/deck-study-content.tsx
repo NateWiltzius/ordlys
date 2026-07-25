@@ -18,6 +18,7 @@ type Props = {
   isOwned: boolean;
   nextReview: NextReviewBatch | null;
   reviewForecast: ReviewForecast;
+  autoFollow?: boolean;
 };
 
 export default async function DeckStudyContent({
@@ -26,6 +27,7 @@ export default async function DeckStudyContent({
   isOwned,
   nextReview,
   reviewForecast,
+  autoFollow = false,
 }: Props) {
   const [counts, lessonProgress] = await Promise.all([
     getDeckStudyCountsAction(deck.id),
@@ -41,7 +43,7 @@ export default async function DeckStudyContent({
             counts.reviewsDue === 0 && canStudy ? (
               <NextReviewText nextReview={nextReview} />
             ) : (
-              'Practice words that are ready for review and keep your memory fresh.'
+              'Practice cards that are ready for review and keep your memory fresh.'
             )
           }
           count={counts.reviewsDue}
@@ -59,8 +61,8 @@ export default async function DeckStudyContent({
         />
 
         <StudyActionCard
-          title="Learn new words"
-          description="Learn new vocabulary now and review it again at the right time."
+          title="Learn new cards"
+          description="Learn new material now and review it again at the right time."
           count={counts.newWordsAvailable}
           countLabel="ready to learn"
           actionLabel="Start learning"
@@ -71,7 +73,7 @@ export default async function DeckStudyContent({
           unavailableAction={
             canStudy ? (
               <Button variant="secondary" size="lg" className="w-full" isDisabled>
-                No words to learn
+                No cards to learn
               </Button>
             ) : isOwned && !deck.currentReleaseId && deck.status === 'active' ? (
               <ButtonLink
@@ -87,7 +89,7 @@ export default async function DeckStudyContent({
                 Restore deck to start learning
               </Button>
             ) : (
-              <FollowDeckButton deckId={deck.id} />
+              <FollowDeckButton deckId={deck.id} autoFollow={autoFollow} />
             )
           }
         />

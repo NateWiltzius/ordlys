@@ -10,6 +10,7 @@ type Props = {
 
 export default function PublicDeckActions({ appDeckPath, placement }: Props) {
   const loggedIn = useAuthSessionState();
+  const followDeckPath = `${appDeckPath}?follow=1`;
 
   if (placement === 'footer') {
     if (loggedIn === null) return null;
@@ -22,7 +23,7 @@ export default function PublicDeckActions({ appDeckPath, placement }: Props) {
           progress in sync.
         </p>
         <ButtonLink
-          href={`/auth/sign-up?next=${encodeURIComponent(appDeckPath)}`}
+          href={`/auth/sign-up?next=${encodeURIComponent(followDeckPath)}`}
           size="lg"
           className="mt-5"
         >
@@ -46,7 +47,7 @@ export default function PublicDeckActions({ appDeckPath, placement }: Props) {
     );
   }
 
-  const nextQuery = encodeURIComponent(appDeckPath);
+  const nextQuery = encodeURIComponent(followDeckPath);
   return (
     <>
       <ButtonLink href={`/auth/sign-up?next=${nextQuery}`} size="lg" className="w-full">

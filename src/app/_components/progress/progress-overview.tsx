@@ -49,10 +49,10 @@ export default function ProgressOverview({ data }: Props) {
     <section aria-label="Progress overview">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <OverviewStat
-          label="Words started"
+          label="Cards started"
           value={data.startedWords}
           detail={`${startedPercentage}% of ${data.totalWords} available ${
-            data.totalWords === 1 ? 'word' : 'words'
+            data.totalWords === 1 ? 'card' : 'cards'
           }`}
           icon={BookOpenIcon}
           iconClassName="bg-blue-500/10 text-blue-600 dark:text-blue-400"
@@ -60,7 +60,7 @@ export default function ProgressOverview({ data }: Props) {
         <OverviewStat
           label="Strong or better"
           value={strongWords}
-          detail={`${strongPercentage}% of the words you have started`}
+          detail={`${strongPercentage}% of the cards you have started`}
           icon={SparklesIcon}
           iconClassName="bg-violet-500/10 text-violet-600 dark:text-violet-400"
         />

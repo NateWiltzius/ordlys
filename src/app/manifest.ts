@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Ordlys – Norwegian Vocabulary',
+    name: 'Ordlys – Spaced Repetition Flashcards',
     short_name: 'Ordlys',
-    description: 'Learn Norwegian vocabulary with active recall and spaced repetition.',
+    description: 'Learn any subject with active recall and spaced repetition.',
     id: '/',
     start_url: '/dashboard',
     scope: '/',

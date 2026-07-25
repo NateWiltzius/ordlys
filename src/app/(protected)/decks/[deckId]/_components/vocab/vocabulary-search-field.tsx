@@ -23,15 +23,15 @@ export default function VocabularySearchField({
     <div className="rounded-lg border border-default-200 bg-default-50 p-3 sm:p-4">
       <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
         <Label htmlFor={id} className="font-medium text-foreground">
-          Search vocabulary
+          Search cards
         </Label>
         <p className="text-xs text-muted sm:text-sm" aria-live="polite">
           {!hasQuery
             ? 'Across every lesson in this deck'
             : isLoading
-              ? 'Loading vocabulary…'
+              ? 'Loading cards…'
               : resultCount === null
-                ? 'Vocabulary could not be searched'
+                ? 'Cards could not be searched'
                 : `${resultCount} ${resultCount === 1 ? 'match' : 'matches'}`}
         </p>
       </div>
@@ -41,7 +41,7 @@ export default function VocabularySearchField({
           type="search"
           value={query}
           onChange={event => onQueryChange(event.target.value)}
-          placeholder="Search words, meanings, readings, or tags"
+          placeholder="Search front or back text, readings, or tags"
           variant="secondary"
           fullWidth
         />

@@ -12,7 +12,7 @@ export default function TermsPage() {
       <h1 className="text-3xl font-semibold">Terms of use</h1>
       <p className="mt-4">
         Use Ordlys lawfully and do not upload content you lack the right to share. You remain
-        responsible for decks and vocabulary you create.
+        responsible for decks and cards you create.
       </p>
       <h2 className="mt-8 text-xl font-semibold">Service availability</h2>
       <p className="mt-2">

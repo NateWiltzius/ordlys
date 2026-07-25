@@ -49,7 +49,7 @@ export default function MoveVocabModal({
       }
       modalState.close();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not reorder vocabulary.');
+      setError(cause instanceof Error ? cause.message : 'Could not reorder the card.');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +61,7 @@ export default function MoveVocabModal({
         <Modal.Dialog className="min-h-0 sm:max-w-md">
           <Modal.CloseTrigger />
           <Modal.Header className="space-y-1">
-            <Modal.Heading>Move vocabulary</Modal.Heading>
+            <Modal.Heading>Move card</Modal.Heading>
             <p className="text-sm text-default-500">
               {vocab ? (
                 <>
@@ -128,7 +128,7 @@ export default function MoveVocabModal({
                 isPending={isSubmitting}
                 isDisabled={!isValidPosition || position === currentPosition}
               >
-                Move word
+                Move card
               </Button>
             </Modal.Footer>
           </form>

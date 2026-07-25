@@ -16,7 +16,7 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
       <StudySessionHeader
         title="Test out of this lesson"
         description={`${placementItems[0].lessonTitle} · ${placementItems.length} ${
-          placementItems.length === 1 ? 'word' : 'words'
+          placementItems.length === 1 ? 'card' : 'cards'
         }`}
         tone="neutral"
         exitHref={`/decks/${deckId}`}
@@ -26,8 +26,8 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
         <Card.Header>
           <SemanticCardTitle level={2}>How placement works</SemanticCardTitle>
           <Card.Description>
-            Pass each word in both directions without a mistake to mark its memory strength as
-            Strong, where it counts as learned. Missed words remain Not started and will appear in
+            Pass each card in both directions without a mistake to mark its memory strength as
+            Strong, where it counts as learned. Missed cards remain Not started and will appear in
             the normal learning flow. Existing progress will not be reduced.
           </Card.Description>
         </Card.Header>

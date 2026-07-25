@@ -60,7 +60,7 @@ export default function EditLessonModal({ lesson }: Props) {
             <Modal.Header className="space-y-1">
               <Modal.Heading>Rename lesson</Modal.Heading>
               <p className="text-sm text-default-500">
-                Update the lesson name without changing its vocabulary or learner progress.
+                Update the lesson name without changing its cards or learner progress.
               </p>
             </Modal.Header>
             <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">

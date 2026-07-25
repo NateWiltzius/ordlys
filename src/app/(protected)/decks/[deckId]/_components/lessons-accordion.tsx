@@ -52,7 +52,7 @@ export default function LessonsAccordion({
       setSearchVocabs(result.vocabs);
       setSearchSrsStates(result.srsStates);
     } catch {
-      setSearchError('Unable to search this deck’s vocabulary. Please try again.');
+      setSearchError('Unable to search this deck’s cards. Please try again.');
     } finally {
       setIsSearchLoading(false);
     }
@@ -109,8 +109,8 @@ export default function LessonsAccordion({
 
       {hasQuery && searchVocabs && matches.length === 0 ? (
         <EmptyState
-          title="No vocabulary matches your search"
-          description="Try a different word, meaning, reading, or tag."
+          title="No cards match your search"
+          description="Try different front or back text, a reading, or a tag."
         />
       ) : null}
 
@@ -171,7 +171,7 @@ export default function LessonsAccordion({
                       ) : lesson.isUnlocked ? (
                         <Chip size="sm" variant="soft" color="success" className="shrink-0">
                           {Math.min(lesson.learnedWords, lesson.requiredWords)} of{' '}
-                          {lesson.requiredWords} words strengthened
+                          {lesson.requiredWords} cards strengthened
                         </Chip>
                       ) : (
                         <Chip size="sm" variant="soft" className="shrink-0">
@@ -187,7 +187,7 @@ export default function LessonsAccordion({
                     {canStudy && lesson.canTakePlacementTest ? (
                       <div className="mb-4 flex flex-col items-end gap-2">
                         <p className="max-w-md text-right text-sm text-default-500">
-                          Already know these words? Test both directions to place familiar words
+                          Already know these cards? Test both directions to place familiar cards
                           directly into review.
                         </p>
                         <ButtonLink
@@ -200,9 +200,9 @@ export default function LessonsAccordion({
                       </div>
                     ) : canStudy && lesson.totalWords > lesson.introducedWords ? (
                       <p className="mb-4 text-right text-sm text-muted">
-                        Introduce every word in the previous lesson, or strengthen at least{' '}
+                        Introduce every card in the previous lesson, or strengthen at least{' '}
                         {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}% of the previous
-                        lesson&apos;s words to unlock this placement test.
+                        lesson&apos;s cards to unlock this placement test.
                       </p>
                     ) : null}
                     {lesson.totalWords > 0 ? (

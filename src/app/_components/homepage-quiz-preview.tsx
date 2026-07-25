@@ -154,7 +154,7 @@ export default function HomepageQuizPreview() {
             This preview is not saved. Use the same study flow with cards you create or follow.
           </p>
           <ButtonLink
-            href={loggedIn ? '/decks' : '/auth/sign-up?next=%2Fdecks'}
+            href={loggedIn ? '/decks?create=1' : '/auth/sign-up?next=%2Fdecks%3Fcreate%3D1'}
             className="shrink-0"
           >
             {loggedIn ? 'Open your library' : 'Create a deck'}

@@ -187,7 +187,7 @@ export function DeckCard({
   const introducedCards = Math.min(studyStats.wordsInReview, studyStats.totalWords);
   const languagePair = formatLanguagePair(deck.frontLanguage, deck.backLanguage);
   const activityMetadata = [
-    studyStats.totalWords === 0 && deck.currentReleaseId ? 'No words' : null,
+    studyStats.totalWords === 0 && deck.currentReleaseId ? 'No cards' : null,
     context === 'created' && subscriberCount && subscriberCount > 0
       ? `${subscriberCount} ${subscriberCount === 1 ? 'follower' : 'followers'}`
       : null,
@@ -445,13 +445,13 @@ export function DeckCard({
             ) : null}
             {wordCount !== undefined ? (
               <div>
-                <dt className="sr-only">Words</dt>
+                <dt className="sr-only">Cards</dt>
                 <dd>
-                  {wordCount} {wordCount === 1 ? 'word' : 'words'}
+                  {wordCount} {wordCount === 1 ? 'card' : 'cards'}
                 </dd>
               </div>
             ) : null}
-            {subscriberCount !== undefined ? (
+            {subscriberCount !== undefined && subscriberCount > 0 ? (
               <div>
                 <dt className="sr-only">Followers</dt>
                 <dd>

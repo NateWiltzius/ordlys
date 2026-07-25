@@ -63,7 +63,7 @@ export default function EditDeckModal({ deck }: Props) {
             <Modal.Header className="space-y-1">
               <Modal.Heading>Edit deck</Modal.Heading>
               <p className="text-sm text-default-500">
-                Keep the deck details and language labels clear for learners.
+                Keep the deck title, description, and optional card-side labels clear.
               </p>
             </Modal.Header>
             <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">

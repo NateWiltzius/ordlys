@@ -5,20 +5,33 @@ import { languageFormValue } from '@/app/(protected)/decks/_components/deck-lang
 import { importCsvDeckAction } from '@/server/deck-import.actions';
 import { Button, Label, Modal, Spinner, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 
 const CSV_TEMPLATE = `front,back,lesson,reading,front_alternatives,back_alternatives,front_to_back_quiz_hint,back_to_front_quiz_hint
-hei,hello,Greetings,,hallo|heisann,,,
-"å spise","to eat",Verbs,,,,,`;
+Mitochondrion,Produces ATP,Cell biology,,,,,
+"Ohm's law","V = I * R",Physics,,,,,`;
 
-export default function ImportDeckModal() {
+type Props = {
+  autoOpen?: boolean;
+};
+
+export default function ImportDeckModal({ autoOpen = false }: Props) {
   const modalState = useOverlayState();
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submissionLocked = useRef(false);
+  const handledAutoOpen = useRef(false);
+
+  useEffect(() => {
+    if (!autoOpen || handledAutoOpen.current) return;
+
+    handledAutoOpen.current = true;
+    modalState.open();
+    router.replace('/decks', { scroll: false });
+  }, [autoOpen, modalState, router]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,7 +78,7 @@ export default function ImportDeckModal() {
             <Modal.Header className="space-y-1">
               <Modal.Heading>Import a CSV deck</Modal.Heading>
               <p className="text-sm text-default-500">
-                Create a private deck from a structured vocabulary file.
+                Create a private deck from a structured flashcard file.
               </p>
             </Modal.Header>
             <form
@@ -78,7 +91,7 @@ export default function ImportDeckModal() {
                 <div className="rounded-lg border border-default-200 bg-default-50 p-3 text-sm">
                   <p className="font-medium text-default-700">Starts private</p>
                   <p className="mt-1 text-xs leading-5 text-default-500">
-                    Review the imported vocabulary before publishing or choosing sharing options.
+                    Review the imported cards before publishing or choosing sharing options.
                   </p>
                 </div>
                 <div className="form-field">
@@ -105,7 +118,7 @@ export default function ImportDeckModal() {
                     </a>
                   </div>
                   <p className="mt-2 text-xs leading-5 text-default-600">
-                    The first row contains column names. Each following row becomes one word.{' '}
+                    The first row contains column names. Each following row becomes one card.{' '}
                     <code>front</code> and <code>back</code> are required; all other columns are
                     optional.
                   </p>
@@ -115,7 +128,7 @@ export default function ImportDeckModal() {
                   <p className="mt-2 text-xs leading-5 text-default-500">
                     Use <code>|</code> between alternatives. Values containing commas must be
                     wrapped in double quotes. Save files as UTF-8. Blank lessons are placed in
-                    “Imported vocabulary.”
+                    “Imported cards.”
                   </p>
                 </div>
                 {pending ? (

@@ -21,7 +21,7 @@ export default function ProgressActivityChart({ activity }: Props) {
   return (
     <PageSection
       title="Study activity"
-      description={`Distinct words practiced each day over the last ${PROGRESS_CHART_DAYS} days.`}
+      description={`Distinct cards practiced each day over the last ${PROGRESS_CHART_DAYS} days.`}
       action={
         <p className="pt-1 text-sm text-default-500">
           {summary.activeDays} active {summary.activeDays === 1 ? 'day' : 'days'}
@@ -43,7 +43,7 @@ export default function ProgressActivityChart({ activity }: Props) {
             day: 'numeric',
           });
           const activityLabel = `${fullDate}: ${day.wordsPracticed} ${
-            day.wordsPracticed === 1 ? 'word' : 'words'
+            day.wordsPracticed === 1 ? 'card' : 'cards'
           } practiced, ${day.attempts} ${day.attempts === 1 ? 'answer' : 'answers'}, ${
             day.correctAttempts
           } correct`;
@@ -92,7 +92,7 @@ export default function ProgressActivityChart({ activity }: Props) {
         </p>
       </div>
       <p className="mt-2 text-xs text-default-400">
-        A word can produce more than one answer because study sessions test both directions and
+        A card can produce more than one answer because study sessions test both directions and
         include retries.
       </p>
     </PageSection>

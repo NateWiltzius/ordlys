@@ -8,10 +8,18 @@ export const metadata: Metadata = {
   description: 'Open decks you are learning or manage decks you own.',
 };
 
-export default function DeckPage() {
+type Props = {
+  searchParams: Promise<{ create?: string; import?: string }>;
+};
+
+export default async function DeckPage({ searchParams }: Props) {
+  const query = await searchParams;
+  const initialAction =
+    query.create === '1' ? 'create' : query.import === '1' ? 'import' : undefined;
+
   return (
     <Suspense fallback={<DecksLoading />}>
-      <DecksContent />
+      <DecksContent initialAction={initialAction} />
     </Suspense>
   );
 }

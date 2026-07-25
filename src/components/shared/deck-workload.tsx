@@ -12,7 +12,7 @@ export default function DeckWorkload({ reviewsDue, newWordsAvailable, className 
   return (
     <div
       className={`flex flex-wrap items-center gap-1.5 ${className}`}
-      aria-label={`${reviewsDue} reviews due, ${newWordsAvailable} new words available`}
+      aria-label={`${reviewsDue} reviews due, ${newWordsAvailable} new cards available`}
     >
       {reviewsDue > 0 ? (
         <Chip size="sm" variant="soft" color="success">

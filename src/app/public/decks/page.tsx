@@ -5,9 +5,9 @@ import { OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
-const title = 'Public language-learning flashcard decks';
+const title = 'Find a deck to start learning';
 const description =
-  'Browse public vocabulary decks, preview their lessons and words, and create an Ordlys account when you are ready to study.';
+  'Explore ready-made flashcards, try a real card, and choose a deck that fits what you want to learn.';
 
 export const metadata: Metadata = {
   title,

@@ -43,7 +43,7 @@ export default function LessonVocabulary({
       setVocabs(result.vocabs);
       setSrsStates(result.srsStates);
     } catch {
-      setErrorMessage('Unable to load this lesson’s vocabulary. Please try again.');
+      setErrorMessage('Unable to load this lesson’s cards. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +59,7 @@ export default function LessonVocabulary({
     return (
       <VocabTable
         vocabs={vocabs}
-        emptyTitle="No vocabulary in this lesson"
+        emptyTitle="No cards in this lesson"
         srsStates={srsStates}
         showSrsLevels
         frontLabel={frontLabel}
@@ -70,7 +70,7 @@ export default function LessonVocabulary({
 
   return (
     <div className="rounded-lg bg-default-100 px-4 py-5 text-center">
-      {!errorMessage ? <p className="text-sm text-muted">Loading vocabulary...</p> : null}
+      {!errorMessage ? <p className="text-sm text-muted">Loading cards...</p> : null}
       {errorMessage ? <StatusAlert status="danger">{errorMessage}</StatusAlert> : null}
       {errorMessage ? (
         <Button size="sm" variant="secondary" className="mt-3" onPress={loadVocabulary}>

@@ -8,21 +8,32 @@ import { createDeckAction } from '@/server/deck.actions';
 import { CreateDeckInput } from '@/types/deck.types';
 import { Button, Modal, useOverlayState } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
 type CreateDeckModalProps = {
   triggerLabel?: string;
   triggerVariant?: 'primary' | 'secondary';
+  autoOpen?: boolean;
 };
 
 export default function CreateDeckModal({
   triggerLabel = 'Create deck',
   triggerVariant = 'primary',
+  autoOpen = false,
 }: CreateDeckModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const handledAutoOpen = useRef(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!autoOpen || handledAutoOpen.current) return;
+
+    handledAutoOpen.current = true;
+    modalState.open();
+    router.replace('/decks', { scroll: false });
+  }, [autoOpen, modalState, router]);
 
   const handleCreateDeck = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,7 +83,7 @@ export default function CreateDeckModal({
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create deck</Modal.Heading>
               <p className="text-sm text-default-500">
-                Give your deck a name. You can add words and publishing details next.
+                Give your deck a name. You can add cards and publishing details next.
               </p>
             </Modal.Header>
             <form onSubmit={handleCreateDeck} className="flex min-h-0 flex-1 flex-col">

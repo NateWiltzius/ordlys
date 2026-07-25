@@ -66,7 +66,7 @@ export default function ProgressDeckList({ decks }: Props) {
                   {deck.startedWords > 0 ? (
                     <div
                       className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-default-100"
-                      aria-label={`Memory strength across ${deck.startedWords} words in ${deck.title}`}
+                      aria-label={`Memory strength across ${deck.startedWords} cards in ${deck.title}`}
                     >
                       {SRS_CATEGORIES.map(category => {
                         const count = deck.srsCategoryCounts[category.key];

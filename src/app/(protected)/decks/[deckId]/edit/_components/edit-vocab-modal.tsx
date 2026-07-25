@@ -63,7 +63,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
       await onSaved();
       modalState.close();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save the vocabulary.');
+      setError(cause instanceof Error ? cause.message : 'Could not save the card.');
     } finally {
       setIsSubmitting(false);
     }
@@ -75,9 +75,9 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
         <Modal.Dialog className="min-h-0 sm:max-w-xl">
           <Modal.CloseTrigger />
           <Modal.Header className="space-y-1">
-            <Modal.Heading>Edit vocabulary</Modal.Heading>
+            <Modal.Heading>Edit card</Modal.Heading>
             <p className="text-sm text-default-500">
-              Update the word, quiz hints, and accepted answers.
+              Update the card, quiz hints, and accepted answers.
             </p>
           </Modal.Header>
           <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
@@ -112,7 +112,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
                 Cancel
               </Button>
               <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
-                {replaceIdentity ? 'Replace vocabulary' : 'Save changes'}
+                {replaceIdentity ? 'Replace card' : 'Save changes'}
               </Button>
             </Modal.Footer>
           </form>

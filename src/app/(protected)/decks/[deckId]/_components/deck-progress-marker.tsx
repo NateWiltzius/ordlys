@@ -34,7 +34,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
             {progress.lessonMilestonesComplete
               ? 'Every lesson milestone is complete.'
               : progress.allCardsIntroduced
-                ? 'You have started every word. Keep strengthening your recall.'
+                ? 'You have started every card. Keep strengthening your recall.'
                 : currentLesson
                   ? `Currently working through ${currentLesson.lessonTitle}.`
                   : 'Start learning to begin your journey.'}
@@ -67,7 +67,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
               </div>
               <p className="text-sm font-medium text-default-700">
                 {Math.min(currentLesson.learnedWords, currentLesson.requiredWords)} of{' '}
-                {currentLesson.requiredWords} words strengthened
+                {currentLesson.requiredWords} cards strengthened
               </p>
             </div>
             <ProgressBar
@@ -88,12 +88,12 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                   : 'Final lesson milestone reached'
                 : progress.nextLesson && remainingIntroducedWords > 0
                   ? `Introduce ${remainingIntroducedWords} more ${
-                      remainingIntroducedWords === 1 ? 'word' : 'words'
+                      remainingIntroducedWords === 1 ? 'card' : 'cards'
                     }, or strengthen ${remainingLearnedWords} more, to unlock ${
                       progress.nextLesson.lessonTitle
                     }`
                   : `${remainingLearnedWords} more ${
-                      remainingLearnedWords === 1 ? 'word' : 'words'
+                      remainingLearnedWords === 1 ? 'card' : 'cards'
                     } to strengthen before you ${
                       progress.nextLesson
                         ? 'unlock the next lesson'
@@ -101,7 +101,7 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                     }`}
             </p>
             <p className="text-xs text-default-500">
-              {currentLesson.introducedWords} of {currentLesson.totalWords} words introduced in this
+              {currentLesson.introducedWords} of {currentLesson.totalWords} cards introduced in this
               lesson
             </p>
           </div>

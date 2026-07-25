@@ -4,7 +4,11 @@ import ImportDeckModal from '@/app/(protected)/decks/_components/import-deck-mod
 import PageHeader from '@/components/shared/layout/page-header';
 import { getLibraryPageDataAction } from '@/server/deck.actions';
 
-export default async function DecksContent() {
+type Props = {
+  initialAction?: 'create' | 'import';
+};
+
+export default async function DecksContent({ initialAction }: Props) {
   const { ownedDecks, learningDecks, restorableDecks, deckStats } =
     await getLibraryPageDataAction();
 
@@ -15,8 +19,8 @@ export default async function DecksContent() {
         description="Open decks you are learning or manage decks you own."
         actions={
           <>
-            <ImportDeckModal />
-            <CreateDeckModal />
+            <ImportDeckModal autoOpen={initialAction === 'import'} />
+            <CreateDeckModal autoOpen={initialAction === 'create'} />
           </>
         }
       />

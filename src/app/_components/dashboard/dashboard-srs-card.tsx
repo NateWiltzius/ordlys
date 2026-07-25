@@ -19,10 +19,10 @@ export default function DashboardSrsCard({ counts }: Props) {
   return (
     <PageSection
       title="Memory strength"
-      description="How well you remember words across your active decks."
+      description="How well you remember cards across your active decks."
       action={
         <p className="pt-1 text-sm text-default-500">
-          {total} {total === 1 ? 'word' : 'words'}
+          {total} {total === 1 ? 'card' : 'cards'}
         </p>
       }
       contentClassName="space-y-4"
@@ -31,7 +31,7 @@ export default function DashboardSrsCard({ counts }: Props) {
         {total > 0 ? (
           <div
             className="flex h-3 w-full overflow-hidden rounded-full bg-default-100"
-            aria-label={`Memory strength across ${total} words`}
+            aria-label={`Memory strength across ${total} cards`}
           >
             {SRS_CATEGORIES.map(category => {
               const count = counts[category.key];

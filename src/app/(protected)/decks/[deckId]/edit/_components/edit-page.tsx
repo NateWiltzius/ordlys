@@ -142,13 +142,13 @@ export default function EditPage({
 
           <PageSection
             title="Lessons"
-            description="Group vocabulary into focused study sections."
+            description="Group cards into focused study sections."
             contentClassName="space-y-4"
             action={
               <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                 <p className="text-sm text-default-500">
                   {orderedLessons.length} {orderedLessons.length === 1 ? 'lesson' : 'lessons'} ·{' '}
-                  {totalCardCount} {totalCardCount === 1 ? 'word' : 'words'}
+                  {totalCardCount} {totalCardCount === 1 ? 'card' : 'cards'}
                 </p>
                 <CreateLessonModal deckId={parsedDeckId} />
               </div>
@@ -159,8 +159,8 @@ export default function EditPage({
                 deckId={parsedDeckId}
                 lessons={orderedLessons}
                 query={vocabularyQuery}
-                frontLabel={getLanguageName(deck.frontLanguage) ?? 'Word'}
-                backLabel={getLanguageName(deck.backLanguage) ?? 'Meaning'}
+                frontLabel={getLanguageName(deck.frontLanguage) ?? 'Front'}
+                backLabel={getLanguageName(deck.backLanguage) ?? 'Back'}
                 onQueryChange={setVocabularyQuery}
               />
             ) : null}
@@ -168,7 +168,7 @@ export default function EditPage({
             {orderedLessons.length === 0 ? (
               <EmptyState
                 title="No lessons yet"
-                description="Create your first lesson to start adding vocabulary."
+                description="Create your first lesson to start adding cards."
                 action={<CreateLessonModal deckId={parsedDeckId} />}
               />
             ) : vocabularyQuery.trim() ? null : (

@@ -18,7 +18,7 @@ export default function HowToUsePage() {
 
       <h2 className="mt-8 text-xl font-semibold">Start small</h2>
       <p className="mt-2">
-        Choose one useful deck and learn a manageable number of new words at a time. Adding too much
+        Choose one useful deck and learn a manageable number of new cards at a time. Adding too much
         at once creates a large review queue later. A short session you can repeat is more useful
         than a long session that leaves you exhausted.
       </p>
@@ -27,13 +27,13 @@ export default function HowToUsePage() {
       <p className="mt-2">
         Pause and make a real attempt, even when you are unsure. The effort of pulling an answer
         from memory is part of what makes it stick. Practising both directions also helps you move
-        from simply recognizing a word to being able to use it yourself.
+        from simply recognizing an answer to being able to recall it yourself.
       </p>
 
       <h2 className="mt-8 text-xl font-semibold">Be honest when you forget</h2>
       <p className="mt-2">
         Getting something wrong is normal. It tells the app to show that card sooner, which is
-        exactly what you want. There is no need to protect a score or rush a word into a higher
+        exactly what you want. There is no need to protect a score or rush a card into a higher
         level.
       </p>
 
@@ -41,7 +41,7 @@ export default function HowToUsePage() {
       <p className="mt-2">
         Review due cards regularly before adding lots of new material. Daily practice is helpful,
         but missing a day is not a failure. Just pick up where you left off. Over time, familiar
-        words will appear less often while difficult ones return sooner.
+        cards will appear less often while difficult ones return sooner.
       </p>
 
       <h2 className="mt-8 text-xl font-semibold">What to expect</h2>

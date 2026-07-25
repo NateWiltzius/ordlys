@@ -18,7 +18,7 @@ type Props = {
 
 export default function PublicDecks({ decks, ownedDeckIds, followingDeckIds }: Props) {
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<DeckDiscoverySort>('name');
+  const [sort, setSort] = useState<DeckDiscoverySort>('recommended');
   const ownedIds = useMemo(() => new Set(ownedDeckIds), [ownedDeckIds]);
   const followingIds = useMemo(() => new Set(followingDeckIds), [followingDeckIds]);
   const visibleDecks = useMemo(() => filterAndSortDecks(decks, query, sort), [decks, query, sort]);
@@ -49,6 +49,7 @@ export default function PublicDecks({ decks, ownedDeckIds, followingDeckIds }: P
         sort={sort}
         visibleCount={visibleDecks.length}
         totalCount={decks.length}
+        includeRecommended
         onQueryChange={setQuery}
         onSortChange={setSort}
       />

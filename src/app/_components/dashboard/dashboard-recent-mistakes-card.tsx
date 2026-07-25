@@ -10,9 +10,9 @@ export default function DashboardRecentMistakesCard({ count }: Props) {
   return (
     <StudyActionCard
       title="Extra practice"
-      description="Revisit recently missed words without changing their review schedule."
+      description="Revisit recently missed cards without changing their review schedule."
       count={count}
-      countLabel={`recent ${count === 1 ? 'word' : 'words'} to revisit`}
+      countLabel={`recent ${count === 1 ? 'card' : 'cards'} to revisit`}
       actionLabel="Start practice"
       icon={ArrowPathRoundedSquareIcon}
       tone="practice"

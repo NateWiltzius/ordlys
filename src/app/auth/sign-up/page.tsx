@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Create account',
-  description: 'Create an Ordlys account and start learning vocabulary.',
+  description: 'Create an Ordlys account and start learning with flashcards.',
 };
 
 type Props = {
@@ -22,7 +22,11 @@ export default async function SignUpPage({ searchParams }: Props) {
       description={
         nextPath === '/decks/55'
           ? 'Start Norwegian A1 and keep your learning progress.'
-          : 'Save your decks, review schedule, and learning progress.'
+          : nextPath === '/decks?create=1'
+            ? 'Create your first deck and keep its review schedule in sync.'
+            : nextPath.includes('follow=1')
+              ? 'Follow this deck and start studying with saved progress.'
+              : 'Save your decks, review schedule, and learning progress.'
       }
       footer={
         <p className="text-sm text-default-500">

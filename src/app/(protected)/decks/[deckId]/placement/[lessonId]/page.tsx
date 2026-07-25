@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Placement test',
-  description: 'Test existing vocabulary knowledge and place words into review.',
+  description: 'Test existing knowledge and place familiar cards into review.',
 };
 
 type Props = {

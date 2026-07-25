@@ -17,7 +17,7 @@ type Props = {
 
 export default function VocabTable({
   vocabs,
-  emptyTitle = 'No words yet',
+  emptyTitle = 'No cards yet',
   emptyDescription,
   renderActions,
   srsStates = {},

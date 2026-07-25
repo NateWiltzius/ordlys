@@ -3,8 +3,14 @@
 import { Input, Label, ListBox, Select } from '@heroui/react';
 import type { DeckDiscoverySort } from '@/lib/deck-discovery';
 
-const sortOptions: Array<{ id: DeckDiscoverySort; label: string }> = [
+const standardSortOptions: Array<{ id: DeckDiscoverySort; label: string }> = [
   { id: 'popular', label: 'Most popular' },
+  { id: 'newest', label: 'Newest' },
+  { id: 'name', label: 'Name' },
+];
+
+const recommendedSortOptions: Array<{ id: DeckDiscoverySort; label: string }> = [
+  { id: 'recommended', label: 'Recommended' },
   { id: 'newest', label: 'Newest' },
   { id: 'name', label: 'Name' },
 ];
@@ -16,6 +22,7 @@ type Props = {
   visibleCount: number;
   totalCount: number;
   compact?: boolean;
+  includeRecommended?: boolean;
   onQueryChange: (query: string) => void;
   onSortChange: (sort: DeckDiscoverySort) => void;
 };
@@ -27,10 +34,12 @@ export default function DeckDiscoveryControls({
   visibleCount,
   totalCount,
   compact = false,
+  includeRecommended = false,
   onQueryChange,
   onSortChange,
 }: Props) {
   const searchId = `${idPrefix}-search`;
+  const sortOptions = includeRecommended ? recommendedSortOptions : standardSortOptions;
 
   return (
     <div className={compact ? '' : 'space-y-2'}>

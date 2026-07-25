@@ -56,10 +56,10 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
       />
 
       <article className="border-y border-default-200 px-1 py-7 sm:px-4 sm:py-9">
-        <h2 className="sr-only">New vocabulary</h2>
+        <h2 className="sr-only">New cards</h2>
         <div>
           <WordSide
-            label="Word"
+            label="Front"
             language={frontLanguage}
             value={currentItem.front}
             reading={currentItem.reading}
@@ -67,7 +67,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
             primary
           />
           <WordSide
-            label="Meaning"
+            label="Back"
             language={backLanguage}
             value={currentItem.back}
             alternatives={currentItem.backAlternatives}
@@ -85,7 +85,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
               ) : null}
 
               {currentItem.tags.length > 0 ? (
-                <div className="flex flex-wrap gap-2" aria-label="Vocabulary tags">
+                <div className="flex flex-wrap gap-2" aria-label="Card tags">
                   {currentItem.tags.map(tag => (
                     <Chip key={tag} size="sm" variant="soft">
                       {tag}
@@ -113,7 +113,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
             className={`w-full ${STUDY_TONE_STYLES.learning.button}`}
             onPress={nextItemHandler}
           >
-            {isLastItem ? 'Start quiz' : 'Next word'}
+            {isLastItem ? 'Start quiz' : 'Next card'}
           </Button>
         </div>
       </div>

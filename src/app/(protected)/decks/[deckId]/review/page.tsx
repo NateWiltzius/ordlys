@@ -8,7 +8,7 @@ import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Review',
-  description: 'Review vocabulary that is ready for practice.',
+  description: 'Review cards that are ready for practice.',
 };
 
 type Props = {

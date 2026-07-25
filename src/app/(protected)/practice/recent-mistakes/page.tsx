@@ -8,7 +8,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Extra practice',
-  description: 'Optionally revisit vocabulary missed during the last 24 hours.',
+  description: 'Optionally revisit cards missed during the last 24 hours.',
 };
 
 export default async function RecentMistakesPage() {
@@ -19,7 +19,7 @@ export default async function RecentMistakesPage() {
       <StudySession>
         <StudySessionHeader
           title="Extra practice"
-          description="Missed words from the last 24 hours · Review schedule unchanged"
+          description="Missed cards from the last 24 hours · Review schedule unchanged"
           tone="practice"
           exitHref="/dashboard"
           exitLabel="Exit to Today"
@@ -28,7 +28,7 @@ export default async function RecentMistakesPage() {
           <div className="space-y-1">
             <h2 className="font-semibold">No extra practice right now</h2>
             <p className="text-sm text-default-500">
-              Words you miss during study appear here for 24 hours.
+              Cards you miss during study appear here for 24 hours.
             </p>
           </div>
           <ButtonLink href="/dashboard" className={STUDY_TONE_STYLES.practice.button}>
@@ -43,7 +43,7 @@ export default async function RecentMistakesPage() {
     <StudySession>
       <StudySessionHeader
         title="Extra practice"
-        description="Missed words from the last 24 hours · Review schedule unchanged"
+        description="Missed cards from the last 24 hours · Review schedule unchanged"
         tone="practice"
         exitHref="/dashboard"
         exitLabel="Exit to Today"

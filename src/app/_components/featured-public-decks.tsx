@@ -15,7 +15,7 @@ export default async function FeaturedPublicDecks() {
       <div className="rounded-xl border border-default-200 bg-default-50 px-6 py-8 text-center">
         <h3 className="text-lg font-semibold">Be among the first to share a Norwegian deck</h3>
         <p className="mt-1 text-default-500">
-          Create an account to build a vocabulary collection and help the community library grow.
+          Create an account to build a flashcard collection and help the community library grow.
         </p>
       </div>
     );

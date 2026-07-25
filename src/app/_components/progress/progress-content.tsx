@@ -12,7 +12,7 @@ export default async function ProgressContent() {
     <div className="space-y-6">
       <PageHeader
         title="Progress"
-        description="See how your vocabulary, recall, and study habits are developing over time."
+        description="See how your cards, recall, and study habits are developing over time."
       />
       <ProgressOverview data={data} />
       <ProgressActivityChart activity={data.activity} />

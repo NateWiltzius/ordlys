@@ -14,7 +14,7 @@ type Props = {
 
 export default function PublicDeckBrowser({ decks }: Props) {
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<DeckDiscoverySort>('name');
+  const [sort, setSort] = useState<DeckDiscoverySort>('recommended');
   const visibleDecks = useMemo(() => filterAndSortDecks(decks, query, sort), [decks, query, sort]);
 
   return (
@@ -24,6 +24,7 @@ export default function PublicDeckBrowser({ decks }: Props) {
         sort={sort}
         visibleCount={visibleDecks.length}
         totalCount={decks.length}
+        includeRecommended
         onQueryChange={setQuery}
         onSortChange={setSort}
       />

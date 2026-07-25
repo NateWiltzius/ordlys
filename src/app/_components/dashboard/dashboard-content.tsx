@@ -71,7 +71,7 @@ export default async function DashboardContent() {
 
       <PageSection
         title="Deck shortcuts"
-        description="Your most relevant decks based on reviews and new words available."
+        description="Your most relevant decks based on reviews and new cards available."
         action={
           activeDecks.length > 0 ? (
             <ButtonLink href="/decks" variant="tertiary" size="sm">
