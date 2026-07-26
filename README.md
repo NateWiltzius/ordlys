@@ -2,18 +2,6 @@
 
 Ordlys is a spaced-repetition flashcard app for building vocabulary, learning new words, and reviewing them on schedule.
 
-## Product planning
-
-The phased plan for focusing Ordlys commercially on Norwegian while preserving generic flashcards
-is documented in [docs/norwegian-wedge-plan.md](docs/norwegian-wedge-plan.md).
-
-## Feature flags
-
-Norwegian wedge functionality is disabled by default and controlled by the server-side flags listed
-in `.env.example`. Configure flags with the exact values `true` or `false`; ambiguous values fail
-fast. Resolve flags through `src/config/feature-flags.ts` and pass individual booleans to client
-components rather than reading environment variables in UI code.
-
 ## Local development
 
 Requirements:
