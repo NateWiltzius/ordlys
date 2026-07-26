@@ -5,11 +5,11 @@ import {
   SrsDistributionSkeleton,
 } from '@/components/shared/skeleton';
 
-export default function ProgressLoading() {
+export default function ProgressLoading({ showHeader = true }: { showHeader?: boolean }) {
   return (
     <div className="space-y-6" role="status" aria-label="Loading progress" aria-busy="true">
       <span className="sr-only">Loading progress…</span>
-      <PageHeaderSkeleton actionCount={0} descriptionLines={2} />
+      {showHeader ? <PageHeaderSkeleton actionCount={0} descriptionLines={2} /> : null}
       <section aria-label="Loading progress overview">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (

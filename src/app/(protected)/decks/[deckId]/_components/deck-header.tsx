@@ -1,37 +1,24 @@
 import PageHeader from '@/components/shared/layout/page-header';
-import type { getDeckFollowState, inspectReleaseChanges } from '@/db/queries/deck-release.queries';
-import type { DeckRelease } from '@/types/deck-release.types';
 import type { Deck } from '@/types/deck.types';
-import DeckSafetyControls from './deck-safety-controls';
-import FollowReleaseControls from './follow-release-controls';
 import RestoreDeckButton from './restore-deck-button';
-import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
 import ButtonLink from '@/components/shared/button-link';
 import { formatLanguagePair } from '@/lib/languages';
 import DeckIdentity from '@/components/shared/deck-identity';
 import type { DeckBadgeKind } from '@/components/shared/deck-badge';
+import {
+  DeckHeaderSafetyControls,
+  DeckHeaderStatusDetails,
+} from '@/app/(protected)/decks/[deckId]/_components/deck-header-server-content';
+import { Suspense } from 'react';
+import { SkeletonBlock } from '@/components/shared/skeleton';
 
 type Props = {
   deck: Deck;
   isOwned: boolean;
   isFollowing: boolean;
-  followState: Awaited<ReturnType<typeof getDeckFollowState>>;
-  releases: DeckRelease[];
-  releaseChanges: Awaited<ReturnType<typeof inspectReleaseChanges>> | null;
-  canModerate: boolean;
-  protectedFollowerCount: number | null;
 };
 
-export default function DeckHeader({
-  deck,
-  isOwned,
-  isFollowing,
-  followState,
-  releases,
-  releaseChanges,
-  canModerate,
-  protectedFollowerCount,
-}: Props) {
+export default function DeckHeader({ deck, isOwned, isFollowing }: Props) {
   const identityBadges: DeckBadgeKind[] = [];
   if (isOwned) identityBadges.push(deck.sourceReleaseId ? 'copy' : 'owned');
   else if (isFollowing) identityBadges.push('following');
@@ -66,17 +53,9 @@ export default function DeckHeader({
             <RestoreDeckButton deckId={deck.id} />
           ) : null}
 
-          <DeckSafetyControls
-            deckId={deck.id}
-            deckTitle={deck.title}
-            status={deck.status}
-            retentionUntil={deck.retentionUntil}
-            isOwned={isOwned}
-            isFollowing={isFollowing}
-            canFollow={!isFollowing && deck.status === 'active' && deck.currentReleaseId !== null}
-            canModerate={canModerate}
-            protectedFollowerCount={protectedFollowerCount}
-          />
+          <Suspense fallback={<SkeletonBlock className="size-10 shrink-0 rounded-lg" />}>
+            <DeckHeaderSafetyControls deckId={deck.id} />
+          </Suspense>
         </>
       }
     >
@@ -85,24 +64,9 @@ export default function DeckHeader({
         languagePair={formatLanguagePair(deck.frontLanguage, deck.backLanguage)}
       />
 
-      {isOwned && deck.status === 'deleted' && deck.retentionUntil ? (
-        <p className="text-sm text-default-500">
-          {protectedFollowerCount !== null &&
-          canFinalizeDeckDeletion(protectedFollowerCount, deck.retentionUntil)
-            ? 'Ready for permanent deletion.'
-            : `Recoverable until ${deck.retentionUntil.toLocaleDateString()}.`}
-        </p>
-      ) : null}
-
-      {isFollowing && !isOwned && followState ? (
-        <FollowReleaseControls
-          deckId={deck.id}
-          deckTitle={deck.title}
-          followState={followState}
-          releases={releases}
-          releaseChanges={releaseChanges}
-        />
-      ) : null}
+      <Suspense fallback={null}>
+        <DeckHeaderStatusDetails deckId={deck.id} />
+      </Suspense>
     </PageHeader>
   );
 }

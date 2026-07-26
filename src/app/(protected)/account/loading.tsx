@@ -1,10 +1,10 @@
 import { PageHeaderSkeleton, SkeletonBlock, SkeletonLine } from '@/components/shared/skeleton';
 
-export default function AccountLoading() {
+export default function AccountLoading({ showHeader = true }: { showHeader?: boolean }) {
   return (
     <div className="space-y-6" role="status" aria-label="Loading account" aria-busy="true">
       <span className="sr-only">Loading account…</span>
-      <PageHeaderSkeleton actionCount={0} />
+      {showHeader ? <PageHeaderSkeleton actionCount={0} /> : null}
       <section className="border-t border-default-200 pt-6">
         <div className="space-y-4">
           <div className="space-y-2">

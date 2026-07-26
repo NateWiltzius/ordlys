@@ -13,9 +13,7 @@ const navigationItemBase = {
 
 export function navigationItemClassName(variant: 'desktop' | 'mobile', isActive = false) {
   const activeClassName =
-    variant === 'desktop'
-      ? 'bg-default-100 font-semibold text-foreground shadow-sm'
-      : 'bg-default-100 font-semibold text-foreground';
+    variant === 'desktop' ? 'text-foreground' : 'bg-default-100 font-semibold text-foreground';
 
   return `${navigationItemBase[variant]} ${isActive ? activeClassName : 'text-foreground'}`;
 }

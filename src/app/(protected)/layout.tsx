@@ -1,7 +1,4 @@
-import { redirect } from 'next/navigation';
-
 import PageShell from '@/components/shared/layout/page-shell';
-import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -16,10 +13,6 @@ interface ProtectedLayoutProps {
   children: React.ReactNode;
 }
 
-export default async function ProtectedLayout({ children }: ProtectedLayoutProps) {
-  if (!(await getCurrentUserIdOrNull())) {
-    redirect('/auth/sign-in');
-  }
-
+export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   return <PageShell>{children}</PageShell>;
 }

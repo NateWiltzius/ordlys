@@ -1,4 +1,3 @@
-import PageHeader from '@/components/shared/layout/page-header';
 import PageSection from '@/components/shared/layout/page-section';
 import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
@@ -51,11 +50,6 @@ export default async function DashboardContent() {
   };
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Today"
-        description="Start what is ready now and keep your learning moving."
-      />
-
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {actionOrder.map((action, index) => (
           <div

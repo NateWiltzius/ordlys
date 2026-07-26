@@ -9,7 +9,6 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { OPEN_GRAPH_IMAGE, SITE_URL, TWITTER_IMAGE } from '@/lib/site';
 import AuthSessionProvider from '@/components/providers/auth-session-provider';
 import AppChromeState from '@/app/_components/app-chrome-state';
-import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 
 const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Any Subject';
 const siteDescription =
@@ -63,9 +62,7 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({ children }: PropsWithChildren) {
-  const initialLoggedIn = (await getCurrentUserIdOrNull()) !== null;
-
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -83,7 +80,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       <body
         className={`flex min-h-screen flex-col bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
       >
-        <AuthSessionProvider initialLoggedIn={initialLoggedIn}>
+        <AuthSessionProvider>
           <AppChromeState />
           <a
             href="#main-content"

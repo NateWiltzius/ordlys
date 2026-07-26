@@ -1,7 +1,6 @@
 import SignOutControl from '@/app/_components/sign-out-control';
 import DeleteAccountModal from '@/app/(protected)/account/_components/delete-account-modal';
 import ButtonLink from '@/components/shared/button-link';
-import PageHeader from '@/components/shared/layout/page-header';
 import PageSection from '@/components/shared/layout/page-section';
 import { createClient } from '@/lib/supabase/server';
 
@@ -12,8 +11,6 @@ export default async function AccountContent() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Account" description="View and manage your Ordlys account." />
-
       <PageSection title="Profile" description="Your account details.">
         <dl>
           <div className="space-y-1">

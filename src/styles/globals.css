@@ -18,6 +18,10 @@
   --font-sans: 'font', sans-serif;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 /*
  * HeroUI's default dark field background matches its card and modal surfaces.
  * Keep the component-native hover, focus, invalid, and disabled states while

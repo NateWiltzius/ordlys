@@ -5,11 +5,11 @@ import {
   StudyActionCardSkeleton,
 } from '@/components/shared/skeleton';
 
-export default function DashboardLoading() {
+export default function DashboardLoading({ showHeader = true }: { showHeader?: boolean }) {
   return (
     <div className="space-y-6" role="status" aria-label="Loading Today" aria-busy="true">
       <span className="sr-only">Loading Today…</span>
-      <PageHeaderSkeleton actionCount={0} descriptionLines={2} />
+      {showHeader ? <PageHeaderSkeleton actionCount={0} descriptionLines={2} /> : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <StudyActionCardSkeleton descriptionLines={2} />
         <StudyActionCardSkeleton descriptionLines={2} />

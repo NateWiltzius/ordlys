@@ -2,10 +2,8 @@
 
 import {
   createDeck,
-  getAccessibleDeckById,
   getDeckCardStudyCounts,
   getDecksByOwnerId,
-  getDeckStudyCounts,
   getOwnedDeckById,
   getPublicDecks,
   getRestorableDecksByOwnerId,
@@ -16,7 +14,7 @@ import {
 import { changeDeckStatus } from '@/db/queries/deck-release.queries';
 import { CreateDeck, CreateDeckInput } from '@/types/deck.types';
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { currentUserCanModerate, getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
 import {
   CONTENT_LIMITS,
   optionalLanguageTag,
@@ -25,7 +23,6 @@ import {
 } from '@/lib/validation/content';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { getEditLessonSummaries } from '@/db/queries/lesson.queries';
-import { getActiveReleaseId } from '@/db/queries/deck-access';
 import {
   getNewVocabCountsForDecks,
   getNextReviewBatch,
@@ -33,12 +30,9 @@ import {
 } from '@/db/queries/review.queries';
 import { buildReviewForecast } from '@/lib/review-forecast';
 import {
-  getDeckFollowState,
-  getProtectedDeckFollowerCount,
   getDeckProvenance,
   getRemovedDraftItems,
   hasUnpublishedDraftChanges,
-  inspectReleaseChanges,
   listReleaseHistory,
 } from '@/db/queries/deck-release.queries';
 import { withExpectedError } from '@/lib/action-result';
@@ -127,46 +121,6 @@ export async function getDiscoverPageDataAction() {
   };
 }
 
-export async function getDeckPageDataAction(id: number) {
-  const deckId = parsePositiveInteger(id);
-  if (!deckId) throw new Error('Invalid deck ID.');
-  const userId = await getCurrentUserId();
-  const [deck, forecastCounts, nextReview, followState, releases, canModerate, activeReleaseId] =
-    await Promise.all([
-      getAccessibleDeckById(deckId, userId),
-      getReviewForecastCounts(userId, [deckId]),
-      getNextReviewBatch(userId, [deckId]),
-      getDeckFollowState(deckId, userId),
-      listReleaseHistory(deckId),
-      currentUserCanModerate(),
-      getActiveReleaseId(deckId, userId),
-    ]);
-  if (!deck) return null;
-  const isOwned = deck.ownerId === userId;
-  const protectedFollowerCount =
-    isOwned && deck.status === 'deleted' ? await getProtectedDeckFollowerCount(deckId) : null;
-  const isFollowing = followState?.status === 'active' || followState?.status === 'frozen';
-  const releaseChanges =
-    followState?.currentRelease &&
-    followState.studiedRelease &&
-    followState.currentRelease.id !== followState.studiedRelease.id
-      ? await inspectReleaseChanges(followState.currentRelease.id, followState.studiedRelease.id)
-      : null;
-  return {
-    deck,
-    isOwned,
-    isFollowing,
-    canStudy: Boolean(activeReleaseId),
-    reviewForecast: buildReviewForecast(forecastCounts),
-    nextReview,
-    followState,
-    releases,
-    releaseChanges,
-    canModerate,
-    protectedFollowerCount,
-  };
-}
-
 export async function getEditDeckPageDataAction(id: number) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
@@ -189,12 +143,6 @@ export async function getEditDeckPageDataAction(id: number) {
     provenance,
     removedDraftItems,
   };
-}
-
-export async function getDeckStudyCountsAction(id: number) {
-  const deckId = parsePositiveInteger(id);
-  if (!deckId) throw new Error('Invalid deck ID.');
-  return getDeckStudyCounts(deckId, await getCurrentUserId());
 }
 
 export async function createDeckAction(deck: CreateDeckInput) {

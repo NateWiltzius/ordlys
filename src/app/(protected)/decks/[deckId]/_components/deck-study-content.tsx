@@ -1,38 +1,27 @@
 import { getCachedLessonProgress } from '@/app/(protected)/decks/[deckId]/_lib/get-cached-lesson-progress';
+import { getCachedDeckStudyData } from '@/app/(protected)/decks/[deckId]/_lib/get-cached-deck-study-data';
 import DeckProgressMarker from '@/app/(protected)/decks/[deckId]/_components/deck-progress-marker';
-import { getDeckStudyCountsAction } from '@/server/deck.actions';
 import { Deck } from '@/types/deck.types';
 import { Button } from '@heroui/react';
 import FollowDeckButton from '@/app/(protected)/decks/[deckId]/_components/follow-deck-button';
 import { ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import StudyActionCard from '@/app/(protected)/decks/[deckId]/_components/study-action-card';
 import NextReviewText from '@/components/shared/next-review-text';
-import type { NextReviewBatch } from '@/types/review.types';
 import ButtonLink from '@/components/shared/button-link';
 import ReviewForecastCard from '@/components/shared/review-forecast-card';
-import type { ReviewForecast } from '@/types/review.types';
 
 type Props = {
   deck: Deck;
-  canStudy: boolean;
   isOwned: boolean;
-  nextReview: NextReviewBatch | null;
-  reviewForecast: ReviewForecast;
   autoFollow?: boolean;
 };
 
-export default async function DeckStudyContent({
-  deck,
-  canStudy,
-  isOwned,
-  nextReview,
-  reviewForecast,
-  autoFollow = false,
-}: Props) {
-  const [counts, lessonProgress] = await Promise.all([
-    getDeckStudyCountsAction(deck.id),
+export default async function DeckStudyContent({ deck, isOwned, autoFollow = false }: Props) {
+  const [studyData, lessonProgress] = await Promise.all([
+    getCachedDeckStudyData(deck.id),
     getCachedLessonProgress(deck.id),
   ]);
+  const { counts, canStudy, nextReview, reviewForecast } = studyData;
 
   return (
     <div className="space-y-6">

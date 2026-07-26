@@ -2,6 +2,7 @@ import AccountContent from '@/app/(protected)/account/_components/account-conten
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import AccountLoading from '@/app/(protected)/account/loading';
+import PageHeader from '@/components/shared/layout/page-header';
 
 export const metadata: Metadata = {
   title: 'Account',
@@ -10,8 +11,11 @@ export const metadata: Metadata = {
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<AccountLoading />}>
-      <AccountContent />
-    </Suspense>
+    <div className="space-y-6">
+      <PageHeader title="Account" description="View and manage your Ordlys account." />
+      <Suspense fallback={<AccountLoading showHeader={false} />}>
+        <AccountContent />
+      </Suspense>
+    </div>
   );
 }

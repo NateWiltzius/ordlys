@@ -12,6 +12,7 @@ export const config = {
     '/decks/:path*',
     '/discover/:path*',
     '/practice/:path*',
+    '/progress/:path*',
     '/review/:path*',
   ],
 };
