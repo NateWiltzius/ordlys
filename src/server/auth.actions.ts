@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { deleteAccountData } from '@/db/queries/account.queries';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
-import { redirect } from 'next/navigation';
 import { revalidateTag } from 'next/cache';
 import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 
@@ -32,5 +31,4 @@ export async function deleteAccountAction(confirmation: string) {
 
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: 'local' });
-  redirect('/');
 }

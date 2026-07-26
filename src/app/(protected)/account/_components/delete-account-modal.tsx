@@ -4,9 +4,14 @@ import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import { FormEvent, useState } from 'react';
 import { deleteAccountAction } from '@/server/auth.actions';
 import StatusAlert from '@/components/shared/status-alert';
+import { useAuthSessionUpdate } from '@/hooks/use-auth-session-state';
+import { clearPendingQuizAttempts } from '@/lib/quiz/pending-quiz-attempts';
+import { useRouter } from 'next/navigation';
 
 export default function DeleteAccountModal() {
   const modalState = useOverlayState();
+  const router = useRouter();
+  const updateAuthSession = useAuthSessionUpdate();
   const [confirmation, setConfirmation] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +31,9 @@ export default function DeleteAccountModal() {
 
     try {
       await deleteAccountAction(confirmation);
+      clearPendingQuizAttempts();
+      updateAuthSession(false);
+      router.replace('/');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not delete your account.');
       setPending(false);
