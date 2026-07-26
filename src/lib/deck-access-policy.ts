@@ -38,6 +38,34 @@ type ResolveAccessibleReleaseInput = {
   allowPublic: boolean;
 };
 
+type CanAccessReleaseInput = Omit<ResolveAccessibleReleaseInput, 'allowPublic'> & {
+  releaseId: number;
+  allowPublicCurrent: boolean;
+};
+
+/**
+ * Historical releases are available only to the owner or an active/frozen follower.
+ * A public preview grants access to the current release, never an addressable old snapshot.
+ */
+export function canAccessRelease({
+  deck,
+  follow,
+  userId,
+  releaseId,
+  allowPublicCurrent,
+}: CanAccessReleaseInput): boolean {
+  if (deck.status === 'moderation_removed') return false;
+  if (deck.ownerId === userId) return true;
+  if (follow && isActiveFollow(follow)) return true;
+
+  return (
+    allowPublicCurrent &&
+    deck.status === 'active' &&
+    deck.visibility !== 'private' &&
+    deck.currentReleaseId === releaseId
+  );
+}
+
 /**
  * Resolves the release visible to one user outside a SQL query.
  * Keep the equivalent CASE expression in db/queries/deck-access.ts in parity with this policy.

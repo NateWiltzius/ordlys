@@ -6,6 +6,10 @@ import { OrderDirection } from '@/types/order.types';
 import { DeckDomainError } from '@/lib/deck-domain';
 import { assertAuthoringCapacity } from '@/lib/authoring-quota';
 import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
+import {
+  activeEditableLessonCondition,
+  activeOwnedDeckCondition,
+} from '@/db/queries/authoring-access';
 
 export const createLesson = async (lesson: CreateLesson, userId: string) => {
   await db.transaction(async tx => {
@@ -13,9 +17,7 @@ export const createLesson = async (lesson: CreateLesson, userId: string) => {
     const [deck] = await tx
       .select({ id: decks.id })
       .from(decks)
-      .where(
-        and(eq(decks.id, lesson.deckId), eq(decks.ownerId, userId), eq(decks.status, 'active')),
-      )
+      .where(and(eq(decks.id, lesson.deckId), activeOwnedDeckCondition(userId)))
       .for('update')
       .limit(1);
 
@@ -91,14 +93,7 @@ export const updateLesson = async (lessonId: number, title: string, userId: stri
       .select({ deckId: lessons.deckId })
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(
-        and(
-          eq(lessons.id, lessonId),
-          eq(decks.ownerId, userId),
-          eq(decks.status, 'active'),
-          isNull(lessons.removedAt),
-        ),
-      )
+      .where(activeEditableLessonCondition(lessonId, userId))
       .for('update', { of: lessons })
       .limit(1);
     if (!target) throw new Error('Lesson not found or access denied.');
@@ -127,7 +122,7 @@ export const deleteLesson = async (lessonId: number, userId: string): Promise<nu
       .select({ id: lessons.id, deckId: lessons.deckId })
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
+      .where(activeEditableLessonCondition(lessonId, userId))
       .for('update')
       .limit(1);
 
@@ -178,7 +173,7 @@ export const moveLesson = async (
       .select({ deckId: lessons.deckId })
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(lessons.id, lessonId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
+      .where(activeEditableLessonCondition(lessonId, userId))
       .for('update')
       .limit(1);
 
@@ -189,7 +184,7 @@ export const moveLesson = async (
     const orderedLessons = await tx
       .select({ id: lessons.id, orderIndex: lessons.orderIndex })
       .from(lessons)
-      .where(eq(lessons.deckId, targetLesson.deckId))
+      .where(and(eq(lessons.deckId, targetLesson.deckId), isNull(lessons.removedAt)))
       .orderBy(lessons.orderIndex, lessons.id);
 
     const currentIndex = orderedLessons.findIndex(lesson => lesson.id === lessonId);

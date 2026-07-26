@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canAccessRelease,
   isActiveFollow,
   resolveAccessibleReleaseId,
   resolveFollowReleaseId,
@@ -107,5 +108,64 @@ describe('release access policy', () => {
     expect(isActiveFollow({ status: 'frozen' })).toBe(true);
     expect(isActiveFollow({ status: 'unfollowed' })).toBe(false);
     expect(isActiveFollow(null)).toBe(false);
+  });
+
+  it.each([
+    {
+      name: 'owner history',
+      releaseId: 10,
+      userId: 'owner',
+      follow: null,
+      allowPublicCurrent: true,
+      expected: true,
+    },
+    {
+      name: 'follower history',
+      releaseId: 10,
+      userId: 'learner',
+      follow: automaticFollow,
+      allowPublicCurrent: false,
+      expected: true,
+    },
+    {
+      name: 'public current release',
+      releaseId: 30,
+      userId: 'visitor',
+      follow: null,
+      allowPublicCurrent: true,
+      expected: true,
+    },
+    {
+      name: 'public historical release',
+      releaseId: 10,
+      userId: 'visitor',
+      follow: null,
+      allowPublicCurrent: true,
+      expected: false,
+    },
+  ])(
+    'grants release access for $name',
+    ({ releaseId, userId, follow, allowPublicCurrent, expected }) => {
+      expect(
+        canAccessRelease({
+          deck: { ...deck, visibility: 'public' },
+          releaseId,
+          userId,
+          follow,
+          allowPublicCurrent,
+        }),
+      ).toBe(expected);
+    },
+  );
+
+  it('denies every release of a moderation-removed deck', () => {
+    expect(
+      canAccessRelease({
+        deck: { ...deck, status: 'moderation_removed', visibility: 'public' },
+        releaseId: 30,
+        userId: deck.ownerId,
+        allowPublicCurrent: true,
+      }),
+    ).toBe(false);
   });
 });

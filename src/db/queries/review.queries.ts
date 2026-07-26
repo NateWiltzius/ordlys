@@ -2,6 +2,7 @@ import { and, count, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle
 import { db } from '@/db';
 import {
   deckFollows,
+  deckReleases,
   decks,
   lessonRevisions,
   lessons,
@@ -37,6 +38,7 @@ import {
   vocabRevisionQuizSelection,
 } from '@/db/queries/vocab-content';
 import type { SaveQuizAttemptInput } from '@/types/quiz.types';
+import { deriveServerCardOutcome } from '@/lib/quiz/server-attempt-policy';
 
 export async function getSrsCategoryCountsForDecks(
   deckIds: number[],
@@ -173,7 +175,7 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
       tags: vocabRevisionExtendedSelection.tags,
       notes: vocabRevisionExtendedSelection.notes,
       lessonId: vocabs.lessonId,
-      lessonTitle: lessons.title,
+      lessonTitle: lessonRevisions.title,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
     })
@@ -187,6 +189,14 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
         eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
       ),
     )
+    .innerJoin(
+      releaseLessons,
+      and(
+        eq(releaseLessons.releaseId, releaseVocabs.releaseId),
+        eq(releaseLessons.lessonId, releaseVocabs.lessonId),
+      ),
+    )
+    .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
     .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
     .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .leftJoin(
@@ -201,7 +211,7 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
         isNull(userVocabState.id),
       ),
     )
-    .orderBy(lessons.orderIndex, vocabs.orderIndex, vocabs.id)
+    .orderBy(releaseLessons.orderIndex, releaseVocabs.orderIndex, vocabs.id)
     .limit(limit);
 }
 
@@ -271,8 +281,8 @@ export async function getNewVocabCountsForDecks(
       and(eq(userVocabState.vocabId, vocabs.id), eq(userVocabState.userId, userId)),
     )
     .where(inArray(lessons.deckId, deckIds))
-    .groupBy(lessons.deckId, lessons.id, lessons.orderIndex)
-    .orderBy(lessons.deckId, lessons.orderIndex, lessons.id);
+    .groupBy(lessons.deckId, lessons.id, releaseLessons.orderIndex)
+    .orderBy(lessons.deckId, releaseLessons.orderIndex, lessons.id);
 
   const counts: Record<number, number> = Object.fromEntries(deckIds.map(deckId => [deckId, 0]));
   const progressRowsByDeck = new Map<number, Parameters<typeof buildLessonProgress>[0]>();
@@ -414,16 +424,8 @@ export async function getDueReviews(userId: string, deckId?: number, limit: numb
       id: vocabs.id,
       ...vocabRevisionQuizSelection,
       lessonId: vocabs.lessonId,
-      lessonTitle: lessons.title,
-      deckTitle: sql<string>`
-        case
-          when ${decks.ownerId} = ${userId} then ${decks.title}
-          else coalesce(
-            (select title from deck_releases where id = ${activeReleaseIdExpression(userId, false)}),
-            ${decks.title}
-          )
-        end
-      `,
+      lessonTitle: lessonRevisions.title,
+      deckTitle: deckReleases.title,
       stateId: userVocabState.id,
       srsLevel: userVocabState.srsLevel,
       frontLanguage: decks.frontLanguage,
@@ -441,6 +443,15 @@ export async function getDueReviews(userId: string, deckId?: number, limit: numb
         eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
       ),
     )
+    .innerJoin(deckReleases, eq(deckReleases.id, releaseVocabs.releaseId))
+    .innerJoin(
+      releaseLessons,
+      and(
+        eq(releaseLessons.releaseId, releaseVocabs.releaseId),
+        eq(releaseLessons.lessonId, releaseVocabs.lessonId),
+      ),
+    )
+    .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
     .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
     .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .where(
@@ -516,7 +527,7 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
       id: vocabs.id,
       ...vocabRevisionQuizSelection,
       lessonId: vocabs.lessonId,
-      lessonTitle: lessons.title,
+      lessonTitle: lessonRevisions.title,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
     })
@@ -530,6 +541,14 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
         eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
       ),
     )
+    .innerJoin(
+      releaseLessons,
+      and(
+        eq(releaseLessons.releaseId, releaseVocabs.releaseId),
+        eq(releaseLessons.lessonId, releaseVocabs.lessonId),
+      ),
+    )
+    .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
     .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
     .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .leftJoin(
@@ -544,7 +563,7 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
         isNull(userVocabState.id),
       ),
     )
-    .orderBy(vocabs.orderIndex, vocabs.id);
+    .orderBy(releaseVocabs.orderIndex, vocabs.id);
 }
 
 /**
@@ -572,6 +591,29 @@ export async function saveQuizAttempt(
     // queued attempt obsolete rather than retryable forever.
     if (!vocabAccess) return { saved: false, transition: null, deckId: null };
 
+    // Serialize attempts for one card within one quiz session so two directions
+    // cannot race while the server derives the completion boundary.
+    await tx.execute(sql`
+      select pg_advisory_xact_lock(
+        hashtextextended(${`${userId}:${input.sessionId}:${input.vocabId}:${input.mode}`}, 0)
+      )
+    `);
+    const previousAttempts = await tx
+      .select({
+        direction: reviewAttempts.direction,
+        isCorrect: reviewAttempts.isCorrect,
+        wasOverridden: reviewAttempts.wasOverridden,
+      })
+      .from(reviewAttempts)
+      .where(
+        and(
+          eq(reviewAttempts.userId, userId),
+          eq(reviewAttempts.sessionId, input.sessionId),
+          eq(reviewAttempts.vocabId, input.vocabId),
+          eq(reviewAttempts.mode, input.mode),
+        ),
+      );
+
     const insertedAttempt = await tx
       .insert(reviewAttempts)
       .values({
@@ -581,6 +623,7 @@ export async function saveQuizAttempt(
         direction: input.direction,
         isCorrect: input.isCorrect,
         wasOverridden: input.wasOverridden,
+        sessionId: input.sessionId,
         idempotencyKey: input.idempotencyKey,
         attemptedAt: now,
       })
@@ -590,7 +633,15 @@ export async function saveQuizAttempt(
     if (insertedAttempt.length === 0) {
       return { saved: false, transition: null, deckId: vocabAccess.deckId };
     }
-    if (!input.completesCard) {
+    const { completesCard, cardWasCorrect } = deriveServerCardOutcome(
+      {
+        direction: input.direction,
+        isCorrect: input.isCorrect,
+        wasOverridden: input.wasOverridden,
+      },
+      previousAttempts,
+    );
+    if (!completesCard) {
       return { saved: true, transition: null, deckId: vocabAccess.deckId };
     }
 
@@ -646,7 +697,7 @@ export async function saveQuizAttempt(
 
       const nextState = getNextSrsState({
         currentSrsLevel: state.srsLevel,
-        wasCorrect: input.cardWasCorrect,
+        wasCorrect: cardWasCorrect,
         now,
       });
       await tx
@@ -674,7 +725,7 @@ export async function saveQuizAttempt(
       .for('update')
       .limit(1);
 
-    if (!input.cardWasCorrect) {
+    if (!cardWasCorrect) {
       return {
         saved: true,
         transition: existingState

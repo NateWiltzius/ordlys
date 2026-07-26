@@ -1,3 +1,6 @@
 import type { deckReleases } from '@/db/schema';
 
-export type DeckRelease = typeof deckReleases.$inferSelect;
+export type DeckRelease = Pick<
+  typeof deckReleases.$inferSelect,
+  'id' | 'version' | 'copyPolicy' | 'changeSummary' | 'createdAt'
+>;

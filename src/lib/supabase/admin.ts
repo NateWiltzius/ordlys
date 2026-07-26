@@ -1,12 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { getSupabaseSecretKey } from '@/config/server-env';
+import { getPublicEnvironment } from '@/config/public-env';
 
 export function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const secretKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !secretKey) {
-    throw new Error('Account deletion is not configured.');
-  }
+  const { supabaseUrl: url } = getPublicEnvironment();
+  const secretKey = getSupabaseSecretKey();
 
   return createClient(url, secretKey, {
     auth: {

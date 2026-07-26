@@ -4,6 +4,7 @@ import HomepagePrimaryAction from '@/app/_components/homepage-primary-action';
 import HomepageQuizPreview from '@/app/_components/homepage-quiz-preview';
 import ButtonLink from '@/components/shared/button-link';
 import { absoluteUrl, OPEN_GRAPH_IMAGE, TWITTER_IMAGE } from '@/lib/site';
+import { headers } from 'next/headers';
 import { ArrowPathRoundedSquareIcon, CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Chip } from '@heroui/react';
 import type { Metadata } from 'next';
@@ -34,7 +35,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
@@ -48,6 +50,7 @@ export default function Home() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col px-4">
       <script
+        nonce={nonce}
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData).replaceAll('<', '\\u003c'),

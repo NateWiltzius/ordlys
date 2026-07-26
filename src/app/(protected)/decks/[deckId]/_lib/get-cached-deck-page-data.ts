@@ -29,9 +29,10 @@ export const getCachedDeckPageIdentity = cache(async (deckId: number) => {
 export const getCachedDeckHeaderControlsData = cache(async (deckId: number) => {
   const identity = await getCachedDeckPageIdentity(deckId);
   if (!identity) return null;
+  const userId = await getCurrentUserId();
 
   const [releases, canModerate] = await Promise.all([
-    listReleaseHistory(deckId),
+    listReleaseHistory(deckId, userId),
     currentUserCanModerate(),
   ]);
   const { deck, followState, isOwned } = identity;

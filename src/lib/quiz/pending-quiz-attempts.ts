@@ -1,4 +1,5 @@
 import type { SaveQuizAttemptInput } from '@/types/quiz.types';
+import { isUuid } from '../validation/uuid';
 
 const STORAGE_KEY = 'ordlys.pending-quiz-attempts.v1';
 
@@ -52,8 +53,7 @@ function isSaveQuizAttemptInput(value: unknown): value is SaveQuizAttemptInput {
     ['btf', 'ftb'].includes(attempt.direction ?? '') &&
     typeof attempt.isCorrect === 'boolean' &&
     typeof attempt.wasOverridden === 'boolean' &&
-    typeof attempt.completesCard === 'boolean' &&
-    typeof attempt.cardWasCorrect === 'boolean' &&
+    isUuid(attempt.sessionId) &&
     typeof attempt.idempotencyKey === 'string' &&
     /^[a-zA-Z0-9_-]{16,128}$/.test(attempt.idempotencyKey)
   );

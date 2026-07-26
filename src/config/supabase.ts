@@ -1,6 +1,6 @@
+import { getPublicEnvironment } from '@/config/public-env';
+
 export function getSupabasePublicConfig() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !publishableKey) throw new Error('Supabase public configuration is missing.');
+  const { supabaseUrl: url, supabasePublishableKey: publishableKey } = getPublicEnvironment();
   return { url, publishableKey };
 }

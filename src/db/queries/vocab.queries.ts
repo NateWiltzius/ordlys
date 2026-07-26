@@ -16,6 +16,10 @@ import {
   vocabRevisionValues,
 } from '@/db/queries/vocab-content';
 import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
+import {
+  activeEditableLessonCondition,
+  activeEditableVocabCondition,
+} from '@/db/queries/authoring-access';
 
 export const getVocabByLessonId = async (lessonId: number): Promise<Vocab[]> => {
   return db
@@ -77,9 +81,7 @@ export const createVocab = async (
       .select({ deckId: lessons.deckId })
       .from(lessons)
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(
-        and(eq(lessons.id, vocab.lessonId), eq(decks.ownerId, userId), eq(decks.status, 'active')),
-      )
+      .where(activeEditableLessonCondition(vocab.lessonId, userId))
       .for('update')
       .limit(1);
 
@@ -129,7 +131,7 @@ export const moveVocab = async (
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(vocabs.id, vocabId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
+      .where(activeEditableVocabCondition(vocabId, userId))
       .for('update')
       .limit(1);
 
@@ -177,14 +179,7 @@ export const moveVocabToPosition = async (
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(
-        and(
-          eq(vocabs.id, vocabId),
-          isNull(vocabs.removedAt),
-          eq(decks.ownerId, userId),
-          eq(decks.status, 'active'),
-        ),
-      )
+      .where(activeEditableVocabCondition(vocabId, userId))
       .for('update')
       .limit(1);
 
@@ -234,7 +229,7 @@ export const updateVocab = async (
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(vocabs.id, vocabId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
+      .where(activeEditableVocabCondition(vocabId, userId))
       .for('update')
       .limit(1);
     if (!target) throw new Error('Vocabulary not found or access denied.');
@@ -267,7 +262,7 @@ export const deleteVocab = async (vocabId: number, userId: string): Promise<numb
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(and(eq(vocabs.id, vocabId), eq(decks.ownerId, userId), eq(decks.status, 'active')))
+      .where(activeEditableVocabCondition(vocabId, userId))
       .for('update')
       .limit(1);
     if (!target) throw new Error('Vocabulary not found or access denied.');
@@ -320,14 +315,7 @@ export const replaceVocab = async (
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
-      .where(
-        and(
-          eq(vocabs.id, vocabId),
-          eq(decks.ownerId, userId),
-          eq(decks.status, 'active'),
-          isNull(vocabs.removedAt),
-        ),
-      )
+      .where(activeEditableVocabCondition(vocabId, userId))
       .for('update', { of: vocabs })
       .limit(1);
     if (!current) throw new Error('Vocabulary not found or access denied.');

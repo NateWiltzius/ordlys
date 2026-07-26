@@ -1,8 +1,11 @@
 import { db } from '@/db';
 import {
   deckFollows,
+  deckReleases,
   decks,
+  lessonRevisions,
   lessons,
+  releaseLessons,
   releaseVocabs,
   reviewAttempts,
   vocabRevisions,
@@ -44,8 +47,8 @@ export async function getRecentMistakeVocabs(userId: string, limit = 25) {
       id: vocabs.id,
       ...vocabRevisionQuizSelection,
       lessonId: lessons.id,
-      lessonTitle: lessons.title,
-      deckTitle: decks.title,
+      lessonTitle: lessonRevisions.title,
+      deckTitle: deckReleases.title,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
     })
@@ -59,6 +62,15 @@ export async function getRecentMistakeVocabs(userId: string, limit = 25) {
         eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
       ),
     )
+    .innerJoin(deckReleases, eq(deckReleases.id, releaseVocabs.releaseId))
+    .innerJoin(
+      releaseLessons,
+      and(
+        eq(releaseLessons.releaseId, releaseVocabs.releaseId),
+        eq(releaseLessons.lessonId, releaseVocabs.lessonId),
+      ),
+    )
+    .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
     .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
     .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
     .where(and(inArray(vocabs.id, mistakeIds), studyDeckAccess(userId)));

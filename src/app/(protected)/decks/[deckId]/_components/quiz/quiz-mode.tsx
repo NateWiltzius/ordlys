@@ -7,20 +7,12 @@ import { normalizeAnswer } from '@/lib/quiz/normalize';
 import {
   shuffleArray,
   buildQuizQueue,
-  buildQuizProgress,
   getQuizAttemptOutcome,
-  insertLater,
-  addFirstAttempt,
-  addReviewWordToQueue,
   buildRollingReviewQueue,
 } from '@/lib/quiz/quiz-helpers';
 import {
   QuizQueueItem,
-  QuizProgress,
   QuizProgressItem,
-  QuizFeedback,
-  QuizAttemptStats,
-  QuizFirstAttemptStats,
   QuizProgressStats,
   QuizSourceItem,
   SaveQuizAttemptInput,
@@ -37,8 +29,9 @@ import {
   writePendingQuizAttempts,
 } from '@/lib/quiz/pending-quiz-attempts';
 import QuizCompletionSummary from '@/components/quiz/quiz-completion-summary';
-import type { NextReviewBatch, SrsTransition } from '@/types/review.types';
+import type { NextReviewBatch } from '@/types/review.types';
 import { getDifficultQuizItems, getSrsMilestoneCounts } from '@/lib/quiz/quiz-completion';
+import { useQuizSession } from '@/hooks/use-quiz-session';
 
 type Props = {
   quizItems: QuizSourceItem[];
@@ -67,27 +60,20 @@ export default function QuizMode({
   // auth cookie is refreshed). Keep the cards that started this session so that reconciliation
   // does not replace the active queue and reset the learner's in-memory progress.
   const [sessionQuizItems] = useState(() => quizItems);
-  const [answer, setAnswer] = useState('');
-  const [failedCardIds, setFailedCardIds] = useState<Set<number>>(() => new Set());
-  const [missCounts, setMissCounts] = useState<Record<number, number>>({});
-  const [srsTransitions, setSrsTransitions] = useState<Record<number, SrsTransition>>({});
-  const [quizQueue, setQuizQueue] = useState<QuizQueueItem[] | null>(null);
-  const [quizProgress, setQuizProgress] = useState<QuizProgress>(() =>
-    buildQuizProgress(sessionQuizItems),
-  );
-  const [attemptStats, setAttemptStats] = useState<QuizAttemptStats>({
-    totalAttempts: 0,
-    correctAttempts: 0,
-    incorrectAttempts: 0,
-  });
-  const [firstAttemptStats, setFirstAttemptStats] = useState<QuizFirstAttemptStats>({
-    totalDirections: 0,
-    correctDirections: 0,
-    accuracyPercentage: 0,
-  });
+  const [session, dispatchSession] = useQuizSession(sessionQuizItems);
+  const {
+    answer,
+    failedCardIds,
+    missCounts,
+    srsTransitions,
+    quizQueue,
+    quizProgress,
+    attemptStats,
+    firstAttemptStats,
+    feedback,
+  } = session;
   const [nextReview, setNextReview] = useState<NextReviewBatch | null>(null);
   const [nextReviewLoading, setNextReviewLoading] = useState(false);
-  const [feedback, setFeedback] = useState<QuizFeedback | null>(null);
   const [pendingSaveCount, setPendingSaveCount] = useState(0);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
@@ -102,48 +88,53 @@ export default function QuizMode({
   const nextReviewFetchedRef = useRef(false);
   const sessionCardIdsRef = useRef(new Set(sessionQuizItems.map(item => item.id)));
   const pendingReviewItemsRef = useRef<QuizSourceItem[]>([]);
+  const sessionIdRef = useRef<string | null>(null);
   const usesRollingReviewQueue = studyMode === 'review' && recordAttempts;
 
-  const saveAttempt = useCallback((attempt: SaveQuizAttemptInput) => {
-    pendingAttemptsRef.current.set(attempt.idempotencyKey, attempt);
-    writePendingQuizAttempts(pendingAttemptsRef.current.values());
-    if (inFlightAttemptKeysRef.current.has(attempt.idempotencyKey)) return;
+  const saveAttempt = useCallback(
+    (attempt: SaveQuizAttemptInput) => {
+      pendingAttemptsRef.current.set(attempt.idempotencyKey, attempt);
+      writePendingQuizAttempts(pendingAttemptsRef.current.values());
+      if (inFlightAttemptKeysRef.current.has(attempt.idempotencyKey)) return;
 
-    inFlightAttemptKeysRef.current.add(attempt.idempotencyKey);
-    pendingSaveCountRef.current += 1;
-    setPendingSaveCount(count => count + 1);
+      inFlightAttemptKeysRef.current.add(attempt.idempotencyKey);
+      pendingSaveCountRef.current += 1;
+      setPendingSaveCount(count => count + 1);
 
-    void saveQuizAttemptAction(attempt)
-      .then(result => {
-        const transition = result.transition;
-        if (transition && sessionCardIdsRef.current.has(attempt.vocabId)) {
-          setSrsTransitions(previous => ({
-            ...previous,
-            [attempt.vocabId]: transition,
-          }));
-        }
-        pendingAttemptsRef.current.delete(attempt.idempotencyKey);
-        failedAttemptKeysRef.current.delete(attempt.idempotencyKey);
-        writePendingQuizAttempts(pendingAttemptsRef.current.values());
-        if (failedAttemptKeysRef.current.size === 0) {
-          setSaveError(null);
-        }
-        if (pendingAttemptsRef.current.size === 0) {
-          setSaveNotice(null);
-        }
-      })
-      .catch(() => {
-        failedAttemptKeysRef.current.add(attempt.idempotencyKey);
-        setSaveError(
-          'Some answers have not been saved yet. They are stored in this tab and can be retried.',
-        );
-      })
-      .finally(() => {
-        inFlightAttemptKeysRef.current.delete(attempt.idempotencyKey);
-        pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
-        setPendingSaveCount(count => Math.max(0, count - 1));
-      });
-  }, []);
+      void saveQuizAttemptAction(attempt)
+        .then(result => {
+          const transition = result.transition;
+          if (transition && sessionCardIdsRef.current.has(attempt.vocabId)) {
+            dispatchSession({
+              type: 'srs_transition_recorded',
+              vocabId: attempt.vocabId,
+              transition,
+            });
+          }
+          pendingAttemptsRef.current.delete(attempt.idempotencyKey);
+          failedAttemptKeysRef.current.delete(attempt.idempotencyKey);
+          writePendingQuizAttempts(pendingAttemptsRef.current.values());
+          if (failedAttemptKeysRef.current.size === 0) {
+            setSaveError(null);
+          }
+          if (pendingAttemptsRef.current.size === 0) {
+            setSaveNotice(null);
+          }
+        })
+        .catch(() => {
+          failedAttemptKeysRef.current.add(attempt.idempotencyKey);
+          setSaveError(
+            'Some answers have not been saved yet. They are stored in this tab and can be retried.',
+          );
+        })
+        .finally(() => {
+          inFlightAttemptKeysRef.current.delete(attempt.idempotencyKey);
+          pendingSaveCountRef.current = Math.max(0, pendingSaveCountRef.current - 1);
+          setPendingSaveCount(count => Math.max(0, count - 1));
+        });
+    },
+    [dispatchSession],
+  );
 
   const retryFailedSaves = useCallback(() => {
     const attempts = Array.from(pendingAttemptsRef.current.values());
@@ -158,32 +149,23 @@ export default function QuizMode({
 
   useEffect(() => {
     setHasMounted(true);
-    setAnswer('');
-    setFailedCardIds(new Set());
-    setMissCounts({});
-    setSrsTransitions({});
+    sessionIdRef.current = crypto.randomUUID();
+    let queue: QuizQueueItem[];
     if (usesRollingReviewQueue) {
       const rollingQueue = buildRollingReviewQueue(sessionQuizItems);
       pendingReviewItemsRef.current = rollingQueue.pendingItems;
-      setQuizQueue(rollingQueue.queue);
+      queue = rollingQueue.queue;
     } else {
       pendingReviewItemsRef.current = [];
-      setQuizQueue(shuffleArray(buildQuizQueue(sessionQuizItems)));
+      queue = shuffleArray(buildQuizQueue(sessionQuizItems));
     }
-    setQuizProgress(buildQuizProgress(sessionQuizItems));
-    setAttemptStats({
-      totalAttempts: 0,
-      correctAttempts: 0,
-      incorrectAttempts: 0,
-    });
-    setFirstAttemptStats({
-      totalDirections: 0,
-      correctDirections: 0,
-      accuracyPercentage: 0,
+    dispatchSession({
+      type: 'reset',
+      quizItems: sessionQuizItems,
+      queue,
     });
     setNextReview(null);
     setNextReviewLoading(false);
-    setFeedback(null);
     pendingSaveCountRef.current = 0;
     pendingAttemptsRef.current.clear();
     failedAttemptKeysRef.current.clear();
@@ -207,7 +189,7 @@ export default function QuizMode({
         saveAttempt(attempt);
       }
     }
-  }, [saveAttempt, sessionQuizItems, usesRollingReviewQueue]);
+  }, [dispatchSession, saveAttempt, sessionQuizItems, usesRollingReviewQueue]);
 
   const sessionIsSaved =
     quizQueue !== null && quizQueue.length === 0 && pendingSaveCount === 0 && !saveError;
@@ -307,12 +289,15 @@ export default function QuizMode({
     onSessionStart?.();
     continueHandledRef.current = false;
     attemptKeyRef.current = crypto.randomUUID();
-    setFeedback({
-      quizItem: currentQuizItem,
-      submittedAnswer: answer,
-      isCorrect: currentQuizItem.acceptedAnswers.some(
-        acceptedAnswer => normalizeAnswer(answer) === normalizeAnswer(acceptedAnswer),
-      ),
+    dispatchSession({
+      type: 'feedback_shown',
+      feedback: {
+        quizItem: currentQuizItem,
+        submittedAnswer: answer,
+        isCorrect: currentQuizItem.acceptedAnswers.some(
+          acceptedAnswer => normalizeAnswer(answer) === normalizeAnswer(acceptedAnswer),
+        ),
+      },
     });
   };
 
@@ -322,10 +307,13 @@ export default function QuizMode({
     onSessionStart?.();
     continueHandledRef.current = false;
     attemptKeyRef.current = crypto.randomUUID();
-    setFeedback({
-      quizItem: currentQuizItem,
-      submittedAnswer: '',
-      isCorrect: false,
+    dispatchSession({
+      type: 'feedback_shown',
+      feedback: {
+        quizItem: currentQuizItem,
+        submittedAnswer: '',
+        isCorrect: false,
+      },
     });
   };
 
@@ -334,10 +322,9 @@ export default function QuizMode({
     continueHandledRef.current = true;
 
     const { quizItem } = feedback;
-    const { isAccepted, cardWasCorrect, shouldMarkMissed } = getQuizAttemptOutcome({
+    const { isAccepted, shouldMarkMissed } = getQuizAttemptOutcome({
       isCorrect: feedback.isCorrect,
       wasOverridden: acceptAnyway,
-      failedEarlier: failedCardIds.has(quizItem.cardId),
     });
     const currentProgress = quizProgress[quizItem.cardId];
     const nextProgressForCard: QuizProgressItem = {
@@ -350,9 +337,9 @@ export default function QuizMode({
     const completesCard = isAccepted && isNowFullyPassed && !wasAlreadyFullyPassed;
     const directionKey = `${quizItem.cardId}:${quizItem.direction}`;
 
-    if (!attemptedDirectionKeysRef.current.has(directionKey)) {
+    const isFirstDirectionAttempt = !attemptedDirectionKeysRef.current.has(directionKey);
+    if (isFirstDirectionAttempt) {
       attemptedDirectionKeysRef.current.add(directionKey);
-      setFirstAttemptStats(previous => addFirstAttempt(previous, isAccepted));
     }
 
     if (recordAttempts) {
@@ -362,67 +349,27 @@ export default function QuizMode({
         direction: quizItem.direction,
         isCorrect: feedback.isCorrect,
         wasOverridden: acceptAnyway,
-        completesCard,
-        cardWasCorrect,
+        sessionId: sessionIdRef.current ?? (sessionIdRef.current = crypto.randomUUID()),
         idempotencyKey: attemptKeyRef.current ?? crypto.randomUUID(),
       });
     }
 
     attemptKeyRef.current = null;
 
-    if (shouldMarkMissed) {
-      setMissCounts(previous => ({
-        ...previous,
-        [quizItem.cardId]: (previous[quizItem.cardId] ?? 0) + 1,
-      }));
-    }
-
-    setAttemptStats(prev => ({
-      totalAttempts: prev.totalAttempts + 1,
-      correctAttempts: prev.correctAttempts + Number(isAccepted),
-      incorrectAttempts: prev.incorrectAttempts + Number(!isAccepted),
-    }));
-
-    if (isAccepted) {
-      const nextQuizProgress: QuizProgress = {
-        ...quizProgress,
-        [quizItem.cardId]: nextProgressForCard,
-      };
-
-      setQuizProgress(nextQuizProgress);
-      const nextReviewItem =
-        completesCard && usesRollingReviewQueue ? pendingReviewItemsRef.current.shift() : undefined;
-
-      setQuizQueue(previous => {
-        const remainingQueue = previous?.slice(1) ?? [];
-        return nextReviewItem
-          ? addReviewWordToQueue(remainingQueue, nextReviewItem)
-          : remainingQueue;
-      });
-
-      if (completesCard) {
-        setFailedCardIds(prev => {
-          const next = new Set(prev);
-          next.delete(quizItem.cardId);
-          return next;
-        });
-      }
-    } else {
-      setFailedCardIds(prev => {
-        const next = new Set(prev);
-        next.add(quizItem.cardId);
-        return next;
-      });
-
-      setQuizQueue(prev => {
-        if (!prev) return null;
-        const [, ...remainingItems] = prev;
-        return insertLater(remainingItems, quizItem, 2);
-      });
-    }
-
-    setAnswer('');
-    setFeedback(null);
+    const nextReviewItem =
+      isAccepted && completesCard && usesRollingReviewQueue
+        ? pendingReviewItemsRef.current.shift()
+        : undefined;
+    dispatchSession({
+      type: 'attempt_completed',
+      quizItem,
+      nextProgressForCard,
+      isAccepted,
+      shouldMarkMissed,
+      completesCard,
+      isFirstDirectionAttempt,
+      nextReviewItem,
+    });
   };
 
   if (quizQueue === null) {
@@ -573,7 +520,7 @@ export default function QuizMode({
             frontLanguage={currentSourceItem?.frontLanguage ?? null}
             backLanguage={currentSourceItem?.backLanguage ?? null}
             tone={tone}
-            onAnswerChange={setAnswer}
+            onAnswerChange={answer => dispatchSession({ type: 'answer_changed', answer })}
             onSubmit={handleAnswerSubmit}
             onGiveUp={handleGiveUp}
             deckTitle={currentQuizItem.deckTitle}

@@ -9,11 +9,13 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { OPEN_GRAPH_IMAGE, SITE_URL, TWITTER_IMAGE } from '@/lib/site';
 import AuthSessionProvider from '@/components/providers/auth-session-provider';
 import AppChromeState from '@/app/_components/app-chrome-state';
+import { isProduction } from '@/config/server-env';
+import { headers } from 'next/headers';
 
 const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Any Subject';
 const siteDescription =
   'Create or follow flashcard decks for any subject, practise active recall, and review each card at the right time.';
-const enableVercelTelemetry = process.env.NODE_ENV === 'production';
+const enableVercelTelemetry = isProduction();
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
@@ -62,16 +64,20 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: PropsWithChildren) {
+export default async function RootLayout({ children }: PropsWithChildren) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){var p=location.pathname;var active=p==='/review'||p==='/practice/recent-mistakes'||/^\\/decks\\/[^/]+\\/(?:learn|review)$/.test(p)||/^\\/decks\\/[^/]+\\/placement\\/[^/]+$/.test(p);if(active)document.documentElement.dataset.quizActive='true'})();`,
           }}
         />
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var saved=localStorage.getItem('theme');var dark=saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){}})();`,
           }}

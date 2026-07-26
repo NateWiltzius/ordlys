@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getLegalContact } from '@/config/server-env';
 
 export const metadata: Metadata = {
   title: 'Privacy',
@@ -7,8 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  const operatorName = process.env.NEXT_PUBLIC_OPERATOR_NAME?.trim() || 'the Ordlys site owner';
-  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+  const { operatorName: configuredOperatorName, contactEmail } = getLegalContact();
+  const operatorName = configuredOperatorName || 'the Ordlys site owner';
 
   return (
     <article className="prose mx-auto max-w-3xl px-6 py-12">

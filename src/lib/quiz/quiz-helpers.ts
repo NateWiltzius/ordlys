@@ -15,25 +15,21 @@ type RollingReviewQueue = {
 type QuizAttemptOutcomeInput = {
   isCorrect: boolean;
   wasOverridden: boolean;
-  failedEarlier: boolean;
 };
 
 type QuizAttemptOutcome = {
   isAccepted: boolean;
-  cardWasCorrect: boolean;
   shouldMarkMissed: boolean;
 };
 
 export function getQuizAttemptOutcome({
   isCorrect,
   wasOverridden,
-  failedEarlier,
 }: QuizAttemptOutcomeInput): QuizAttemptOutcome {
   const isAccepted = isCorrect || wasOverridden;
 
   return {
     isAccepted,
-    cardWasCorrect: isAccepted && !failedEarlier,
     shouldMarkMissed: !isAccepted,
   };
 }

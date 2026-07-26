@@ -29,7 +29,7 @@ export default tseslint.config(
       ...hooksPlugin.configs.recommended.rules,
       'unicorn/filename-case': ['error', { case: 'kebabCase' }],
       'react/react-in-jsx-scope': 'off',
-      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+      'prettier/prettier': 'error',
     },
   },
   ...tseslint.configs.strict,

@@ -1,6 +1,6 @@
-import { deckFollows, decks, lessons, vocabs } from '@/db/schema';
+import { deckFollows, deckReleases, decks, lessons, vocabs } from '../schema';
 import { and, eq, ne, or, sql } from 'drizzle-orm';
-import { resolveAccessibleReleaseId } from '@/lib/deck-access-policy';
+import { resolveAccessibleReleaseId } from '../../lib/deck-access-policy';
 
 export function activeReleaseIdExpression(userId: string, allowPublic: boolean) {
   // SQL counterpart to resolveAccessibleReleaseId. Policy tests cover this precedence order.
@@ -31,6 +31,29 @@ export function activeReleaseIdExpression(userId: string, allowPublic: boolean) 
       else null
     end
   )`;
+}
+
+/**
+ * SQL counterpart to canAccessRelease in lib/deck-access-policy.ts.
+ * The query must join deckReleases -> decks and left-join the requesting user's deckFollows row.
+ */
+export function accessibleReleaseCondition(userId: string, allowPublicCurrent: boolean) {
+  const publicCurrent = allowPublicCurrent
+    ? and(
+        eq(decks.status, 'active'),
+        ne(decks.visibility, 'private'),
+        eq(deckReleases.id, decks.currentReleaseId),
+      )
+    : undefined;
+
+  return and(
+    ne(decks.status, 'moderation_removed'),
+    or(
+      eq(decks.ownerId, userId),
+      or(eq(deckFollows.status, 'active'), eq(deckFollows.status, 'frozen')),
+      publicCurrent,
+    ),
+  );
 }
 
 function releaseContentAccess(userId: string, allowPublic: boolean) {
@@ -77,7 +100,7 @@ export async function getActiveReleaseId(
   userId: string,
   allowPublic = false,
 ): Promise<number | null> {
-  const { db } = await import('@/db');
+  const { db } = await import('..');
   const [deck] = await db
     .select({
       ownerId: decks.ownerId,

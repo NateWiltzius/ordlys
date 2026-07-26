@@ -13,8 +13,7 @@ const attempt: SaveQuizAttemptInput = {
   direction: 'ftb',
   isCorrect: true,
   wasOverridden: false,
-  completesCard: true,
-  cardWasCorrect: true,
+  sessionId: '22345678-1234-4234-8234-123456789abc',
   idempotencyKey: '12345678-1234-4234-8234-123456789abc',
 };
 
@@ -43,7 +42,14 @@ describe('pending quiz attempt storage', () => {
   });
 
   it('ignores malformed stored values', () => {
-    values.set(STORAGE_KEY, JSON.stringify([{ ...attempt, vocabId: 0 }, attempt]));
+    values.set(
+      STORAGE_KEY,
+      JSON.stringify([
+        { ...attempt, vocabId: 0 },
+        { ...attempt, sessionId: 'not-a-uuid' },
+        attempt,
+      ]),
+    );
 
     expect(readPendingQuizAttempts()).toEqual([attempt]);
   });

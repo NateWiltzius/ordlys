@@ -1,12 +1,9 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 // import * as schema from '@/db/schema';
 import postgres from 'postgres';
+import { getDatabaseUrl } from '@/config/server-env';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is not set');
-}
-
-const client = postgres(process.env.DATABASE_URL, {
+const client = postgres(getDatabaseUrl(), {
   prepare: false,
   ssl: 'require',
 });

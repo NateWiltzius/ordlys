@@ -104,10 +104,7 @@ export async function getAccountExportData(userId: string) {
   };
 }
 
-export async function deleteAccountData(
-  userId: string,
-  deleteAuthenticationUser: () => Promise<void>,
-) {
+export async function deleteAccountData(userId: string) {
   await db.transaction(async tx => {
     const deletedAt = new Date();
 
@@ -144,7 +141,5 @@ export async function deleteAccountData(
     await tx.delete(reviewAttempts).where(eq(reviewAttempts.userId, userId));
     await tx.delete(userVocabState).where(eq(userVocabState.userId, userId));
     await tx.delete(deckFollows).where(eq(deckFollows.userId, userId));
-
-    await deleteAuthenticationUser();
   });
 }

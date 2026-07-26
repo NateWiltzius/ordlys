@@ -41,8 +41,16 @@ npm run dev          # Start the development server
 npm run build        # Create a production build
 npm run start        # Run the production build
 npm run lint         # Run ESLint
+npm run test         # Run unit tests
+npm run check        # Run typecheck, lint, tests, and formatting checks
+npm run test:db-contract # Run PostgreSQL contract tests against DATABASE_URL
+npm run audit:prod   # Audit production dependencies
 npm run drizzle-push # Push the Drizzle schema to the configured database
 ```
+
+Database contract tests are kept out of the normal local test suite. CI runs them explicitly against
+its disposable PostgreSQL service; if you run them manually, they use `DATABASE_URL` and roll back
+their test fixtures.
 
 ## Stack
 

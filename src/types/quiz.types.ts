@@ -8,8 +8,7 @@ export type SaveQuizAttemptInput = {
   direction: QuizDirection;
   isCorrect: boolean;
   wasOverridden: boolean;
-  completesCard: boolean;
-  cardWasCorrect: boolean;
+  sessionId: string;
   idempotencyKey: string;
 };
 

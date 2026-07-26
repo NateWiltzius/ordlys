@@ -5,6 +5,7 @@ import PageShell from '@/components/shared/layout/page-shell';
 import ButtonLink from '@/components/shared/button-link';
 import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import type { Metadata } from 'next';
+import { getLegalContact } from '@/config/server-env';
 
 export const metadata: Metadata = {
   title: 'Feedback',
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function FeedbackPage() {
   const userId = await getCurrentUserIdOrNull();
-  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+  const { contactEmail } = getLegalContact();
 
   return (
     <PageShell>

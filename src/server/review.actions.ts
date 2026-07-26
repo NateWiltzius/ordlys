@@ -24,6 +24,7 @@ import {
 } from '@/lib/study-session-size';
 import { revalidatePath } from 'next/cache';
 import { getAccessibleDeckById } from '@/db/queries/deck.queries';
+import { isUuid } from '@/lib/validation/uuid';
 
 export async function getLessonProgressForDeckAction(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -126,8 +127,7 @@ export async function saveQuizAttemptAction(input: SaveQuizAttemptInput) {
   if (
     typeof input.isCorrect !== 'boolean' ||
     typeof input.wasOverridden !== 'boolean' ||
-    typeof input.completesCard !== 'boolean' ||
-    typeof input.cardWasCorrect !== 'boolean' ||
+    !isUuid(input.sessionId) ||
     !/^[a-zA-Z0-9_-]{16,128}$/.test(input.idempotencyKey)
   ) {
     throw new Error('Invalid review attempt.');

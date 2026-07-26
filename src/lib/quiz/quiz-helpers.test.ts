@@ -30,11 +30,9 @@ describe('getQuizAttemptOutcome', () => {
       getQuizAttemptOutcome({
         isCorrect: true,
         wasOverridden: false,
-        failedEarlier: false,
       }),
     ).toEqual({
       isAccepted: true,
-      cardWasCorrect: true,
       shouldMarkMissed: false,
     });
   });
@@ -44,25 +42,9 @@ describe('getQuizAttemptOutcome', () => {
       getQuizAttemptOutcome({
         isCorrect: false,
         wasOverridden: true,
-        failedEarlier: false,
       }),
     ).toEqual({
       isAccepted: true,
-      cardWasCorrect: true,
-      shouldMarkMissed: false,
-    });
-  });
-
-  it('does not erase a genuine earlier miss on the same card', () => {
-    expect(
-      getQuizAttemptOutcome({
-        isCorrect: false,
-        wasOverridden: true,
-        failedEarlier: true,
-      }),
-    ).toEqual({
-      isAccepted: true,
-      cardWasCorrect: false,
       shouldMarkMissed: false,
     });
   });
@@ -72,11 +54,9 @@ describe('getQuizAttemptOutcome', () => {
       getQuizAttemptOutcome({
         isCorrect: false,
         wasOverridden: false,
-        failedEarlier: false,
       }),
     ).toEqual({
       isAccepted: false,
-      cardWasCorrect: false,
       shouldMarkMissed: true,
     });
   });

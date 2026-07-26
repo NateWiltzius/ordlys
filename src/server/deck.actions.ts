@@ -130,7 +130,7 @@ export async function getEditDeckPageDataAction(id: number) {
   const [lessons, releases, hasUnpublishedChanges, provenance, removedDraftItems] =
     await Promise.all([
       getEditLessonSummaries(deckId),
-      listReleaseHistory(deckId),
+      listReleaseHistory(deckId, userId),
       hasUnpublishedDraftChanges(deckId),
       getDeckProvenance(deckId),
       getRemovedDraftItems(deckId),
