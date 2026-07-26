@@ -2,18 +2,18 @@ import PageSection from '@/components/shared/layout/page-section';
 import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
 import DashboardDeckRow from '@/app/_components/dashboard/dashboard-deck-row';
-import { getDashboardDataAction } from '@/server/deck.actions';
+import { getDashboardData } from '@/server/data/deck-page-data';
 import ReviewForecastCard from '@/components/shared/review-forecast-card';
 import DashboardReviewCard from '@/app/_components/dashboard/dashboard-review-card';
 import DashboardRecentMistakesCard from '@/app/_components/dashboard/dashboard-recent-mistakes-card';
-import { getRecentMistakeCountAction } from '@/server/review.actions';
+import { getRecentMistakeCountData } from '@/server/data/review-page-data';
 import DashboardLearningCard from '@/app/_components/dashboard/dashboard-learning-card';
 import { DashboardAction, getDashboardActionOrder } from '@/lib/dashboard-actions';
 
 export default async function DashboardContent() {
   const [dashboardData, recentMistakeCount] = await Promise.all([
-    getDashboardDataAction(),
-    getRecentMistakeCountAction(),
+    getDashboardData(),
+    getRecentMistakeCountData(),
   ]);
   const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview } = dashboardData;
   const deckShortcuts = [...activeDecks]

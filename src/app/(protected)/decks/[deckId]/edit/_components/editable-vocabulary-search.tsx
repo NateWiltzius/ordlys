@@ -6,7 +6,7 @@ import EditVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/ed
 import EmptyState from '@/components/shared/empty-state';
 import StatusAlert from '@/components/shared/status-alert';
 import { filterVocabulary } from '@/lib/vocab/search-vocabulary';
-import { getEditableDeckVocabularyForSearchAction } from '@/server/vocab.actions';
+import { getEditableDeckVocabularyForSearch } from '@/lib/client/vocabulary-api';
 import type { EditLessonSummary } from '@/types/lesson.types';
 import type { Vocab } from '@/types/vocab.types';
 import { PencilSquareIcon } from '@heroicons/react/24/outline';
@@ -42,7 +42,7 @@ export default function EditableVocabularySearch({
     setIsLoading(true);
     setError(null);
     try {
-      setVocabs(await getEditableDeckVocabularyForSearchAction(deckId));
+      setVocabs(await getEditableDeckVocabularyForSearch(deckId));
     } catch {
       setError('Unable to search this deck’s cards. Please try again.');
     } finally {

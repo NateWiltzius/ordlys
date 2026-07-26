@@ -10,8 +10,7 @@ import ProfileMenu from '@/app/_components/profile-menu';
 
 export default function Navbar() {
   const loggedIn = useAuthSessionState();
-  const authResolved = loggedIn !== null;
-  const navigationItems = authResolved ? getNavigationItems(loggedIn) : [];
+  const navigationItems = getNavigationItems(loggedIn);
   const mainNavigationItems = navigationItems.filter(item => item.section === 'main');
   const homeHref = loggedIn ? '/dashboard' : '/';
 
@@ -19,17 +18,12 @@ export default function Navbar() {
     <nav
       data-app-navigation
       aria-label="Main navigation"
-      aria-busy={!authResolved}
       className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
     >
       <div className="flex shrink-0 items-center gap-2">
-        {authResolved ? (
-          <Link href={homeHref} className="text-2xl font-semibold">
-            Ordlys
-          </Link>
-        ) : (
-          <span className="text-2xl font-semibold">Ordlys</span>
-        )}
+        <Link href={homeHref} className="text-2xl font-semibold">
+          Ordlys
+        </Link>
         <div className="group static sm:relative">
           <button
             type="button"
@@ -54,35 +48,19 @@ export default function Navbar() {
         </div>
       </div>
       <div className="hidden min-w-0 items-center gap-2 text-base md:flex">
-        {authResolved ? (
-          <>
-            <div className="flex items-center gap-1">
-              {mainNavigationItems.map(item => (
-                <NavigationLink key={item.href} {...item} variant="desktop" />
-              ))}
-            </div>
-            {loggedIn ? (
-              <div className="ml-1 flex items-center gap-1 border-l border-default-200 pl-3">
-                <ProfileMenu />
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <div
-            className="h-10 w-[543px] animate-pulse rounded-lg bg-default-200"
-            aria-hidden="true"
-          />
-        )}
+        <div className="flex items-center gap-1">
+          {mainNavigationItems.map(item => (
+            <NavigationLink key={item.href} {...item} variant="desktop" />
+          ))}
+        </div>
+        {loggedIn ? (
+          <div className="ml-1 flex items-center gap-1 border-l border-default-200 pl-3">
+            <ProfileMenu />
+          </div>
+        ) : null}
         <ThemeToggle />
       </div>
-      {authResolved ? (
-        <MobileNavigation loggedIn={loggedIn} />
-      ) : (
-        <div className="flex items-center gap-1 md:hidden" aria-hidden="true">
-          <ThemeToggle />
-          <div className="size-11 animate-pulse rounded-lg bg-default-200" />
-        </div>
-      )}
+      <MobileNavigation loggedIn={loggedIn} />
     </nav>
   );
 }

@@ -7,7 +7,7 @@ import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
 import StatusAlert from '@/components/shared/status-alert';
 import { filterVocabulary } from '@/lib/vocab/search-vocabulary';
-import { getDeckVocabularyForSearchAction } from '@/server/vocab.actions';
+import { getDeckVocabularyForSearch } from '@/lib/client/vocabulary-api';
 import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
 import { LessonProgress } from '@/types/review.types';
 import type { Vocab } from '@/types/vocab.types';
@@ -48,7 +48,7 @@ export default function LessonsAccordion({
     setIsSearchLoading(true);
     setSearchError(null);
     try {
-      const result = await getDeckVocabularyForSearchAction(deckId);
+      const result = await getDeckVocabularyForSearch(deckId);
       setSearchVocabs(result.vocabs);
       setSearchSrsStates(result.srsStates);
     } catch {

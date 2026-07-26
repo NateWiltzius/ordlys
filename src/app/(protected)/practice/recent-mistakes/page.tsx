@@ -3,7 +3,7 @@ import ButtonLink from '@/components/shared/button-link';
 import StudySession from '@/components/shared/layout/study-session';
 import StudySessionHeader from '@/components/shared/layout/study-session-header';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
-import { getRecentMistakesAction } from '@/server/review.actions';
+import { getRecentMistakes } from '@/server/data/review-page-data';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RecentMistakesPage() {
-  const quizItems = await getRecentMistakesAction();
+  const quizItems = await getRecentMistakes();
 
   if (quizItems.length === 0) {
     return (

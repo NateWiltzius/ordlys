@@ -16,7 +16,7 @@ import type {
 import type { SrsTransition } from '../types/review.types';
 import { useReducer } from 'react';
 
-export type QuizSessionState = {
+type QuizSessionState = {
   answer: string;
   failedCardIds: Set<number>;
   missCounts: Record<number, number>;
@@ -28,7 +28,7 @@ export type QuizSessionState = {
   feedback: QuizFeedback | null;
 };
 
-type QuizSessionAction =
+export type QuizSessionAction =
   | { type: 'reset'; quizItems: QuizSourceItem[]; queue: QuizQueueItem[] }
   | { type: 'answer_changed'; answer: string }
   | { type: 'feedback_shown'; feedback: QuizFeedback }

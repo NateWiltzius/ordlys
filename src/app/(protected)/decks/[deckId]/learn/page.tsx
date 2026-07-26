@@ -1,7 +1,7 @@
 import LearnPage from '@/app/(protected)/decks/[deckId]/learn/_components/learn-page';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
-import { getLearnPageDataAction } from '@/server/review.actions';
+import { getLearnPageData } from '@/server/data/review-page-data';
 import type { Metadata } from 'next';
 import { LEARN_SESSION_SIZE_COOKIE, parseLearnSessionSize } from '@/lib/study-session-size';
 import { cookies } from 'next/headers';
@@ -26,7 +26,7 @@ export default async function Page({ params, searchParams }: Props) {
   );
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
-  const data = await getLearnPageDataAction(parsedDeckId, selectedSize);
+  const data = await getLearnPageData(parsedDeckId, selectedSize);
   if (!data) notFound();
   const { deckTitle, learnItems, lessonProgress, availableCount } = data;
 

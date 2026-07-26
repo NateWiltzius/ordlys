@@ -1,33 +1,24 @@
 'use client';
 
-import {
-  moderationRemoveDeckAction,
-  moderationReviewDeckAction,
-  permanentlyDeleteFollowProgressAction,
-  reportDeckAction,
-  restrictedHardDeleteDeckAction,
-} from '@/server/deck-release.actions';
-import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actions';
 import type { Deck } from '@/types/deck.types';
 import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
-import {
-  Button,
-  Input,
-  Label,
-  ListBox,
-  Modal,
-  Popover,
-  TextArea,
-  useOverlayState,
-} from '@heroui/react';
-import { EllipsisHorizontalIcon } from '@heroicons/react/24/outline';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useState, useTransition } from 'react';
-import ConfirmationDialog from '@/components/shared/confirmation-dialog';
+import { useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
-import { isActionFailure } from '@/lib/action-result';
+import DeckSafetyMenu from './deck-safety-menu';
+import { DeckReportModal, DeckSafetyConfirmationDialog } from './deck-safety-dialogs';
+import { type DeckSafetyConfirmation, useDeckSafetyActions } from './use-deck-safety-actions';
 
-type ConfirmationAction = 'delete-progress' | 'hard-delete' | 'moderate-removal' | 'unfollow';
+type Props = {
+  deckId: number;
+  deckTitle: string;
+  status: Deck['status'];
+  retentionUntil: Deck['retentionUntil'];
+  isOwned: boolean;
+  isFollowing: boolean;
+  canFollow: boolean;
+  canModerate: boolean;
+  protectedFollowerCount: number | null;
+};
 
 export default function DeckSafetyControls({
   deckId,
@@ -39,292 +30,59 @@ export default function DeckSafetyControls({
   canFollow,
   canModerate,
   protectedFollowerCount,
-}: {
-  deckId: number;
-  deckTitle: string;
-  status: Deck['status'];
-  retentionUntil: Deck['retentionUntil'];
-  isOwned: boolean;
-  isFollowing: boolean;
-  canFollow: boolean;
-  canModerate: boolean;
-  protectedFollowerCount: number | null;
-}) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [feedback, setFeedback] = useState<{
-    status: 'danger' | 'success';
-    message: string;
-  } | null>(null);
-  const [confirmation, setConfirmation] = useState<ConfirmationAction | null>(null);
+}: Props) {
+  const [confirmation, setConfirmation] = useState<DeckSafetyConfirmation | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const reportModalState = useOverlayState();
-  const [reportReason, setReportReason] = useState('');
-  const [reportDetails, setReportDetails] = useState('');
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const actions = useDeckSafetyActions(deckId);
   const hardDeleteEligible =
     status === 'deleted' &&
     protectedFollowerCount !== null &&
     canFinalizeDeckDeletion(protectedFollowerCount, retentionUntil);
 
-  function run(operation: () => Promise<unknown>, success: string, leave = false) {
-    startTransition(async () => {
-      try {
-        setFeedback(null);
-        const result = await operation();
-        if (isActionFailure(result)) {
-          setFeedback({ status: 'danger', message: result.message });
-          return;
-        }
-        setFeedback({ status: 'success', message: success });
-        if (leave) router.push('/decks');
-        else router.refresh();
-      } catch (error) {
-        setFeedback({
-          status: 'danger',
-          message: error instanceof Error ? error.message : 'The operation could not be completed.',
-        });
-      }
-    });
-  }
-
-  function report(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const reason = reportReason.trim();
-    if (!reason) return;
-    const details = reportDetails.trim() || undefined;
-    reportModalState.close();
-    run(() => reportDeckAction(deckId, reason, details), 'Report submitted.');
-  }
-
-  function confirm(action: ConfirmationAction) {
-    setIsMenuOpen(false);
-    setConfirmation(action);
-  }
-
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <Popover isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <Button
-          variant="tertiary"
-          isIconOnly
-          aria-label={`More actions for ${deckTitle}`}
-          aria-expanded={isMenuOpen}
-        >
-          <EllipsisHorizontalIcon className="size-5" aria-hidden="true" />
-        </Button>
-        <Popover.Content placement="bottom end">
-          <Popover.Dialog className="w-56 p-1">
-            <ListBox aria-label={`Actions for ${deckTitle}`} selectionMode="none">
-              {isOwned ? (
-                <ListBox.Item
-                  id="export"
-                  href={`/decks/${deckId}/export`}
-                  download={`${deckTitle}.csv`}
-                  onAction={() => setIsMenuOpen(false)}
-                >
-                  Export CSV
-                </ListBox.Item>
-              ) : null}
-              {isFollowing ? (
-                <ListBox.Item
-                  id="unfollow"
-                  isDisabled={pending}
-                  onAction={() => confirm('unfollow')}
-                >
-                  Unfollow deck
-                </ListBox.Item>
-              ) : canFollow ? (
-                <ListBox.Item
-                  id="follow"
-                  isDisabled={pending}
-                  onAction={() => {
-                    setIsMenuOpen(false);
-                    run(() => followDeckAction(deckId), 'Deck followed.');
-                  }}
-                >
-                  Follow deck
-                </ListBox.Item>
-              ) : null}
-              {!isOwned ? (
-                <ListBox.Item
-                  id="report"
-                  isDisabled={pending}
-                  onAction={() => {
-                    setIsMenuOpen(false);
-                    setReportReason('');
-                    setReportDetails('');
-                    reportModalState.open();
-                  }}
-                >
-                  Report
-                </ListBox.Item>
-              ) : null}
-              {isFollowing ? (
-                <ListBox.Item
-                  id="delete-progress"
-                  variant="danger"
-                  className="text-danger"
-                  isDisabled={pending}
-                  onAction={() => confirm('delete-progress')}
-                >
-                  Delete progress
-                </ListBox.Item>
-              ) : null}
-              {canModerate && status !== 'moderation_removed' ? (
-                <>
-                  <ListBox.Item
-                    id="mark-under-review"
-                    isDisabled={pending}
-                    onAction={() => {
-                      setIsMenuOpen(false);
-                      run(() => moderationReviewDeckAction(deckId), 'Deck marked under review.');
-                    }}
-                  >
-                    Mark under review
-                  </ListBox.Item>
-                  <ListBox.Item
-                    id="moderate-removal"
-                    variant="danger"
-                    className="text-danger"
-                    isDisabled={pending}
-                    onAction={() => confirm('moderate-removal')}
-                  >
-                    Moderate removal
-                  </ListBox.Item>
-                </>
-              ) : null}
-              {isOwned && status === 'deleted' ? (
-                <ListBox.Item
-                  id="finalize-deletion"
-                  variant="danger"
-                  className="text-danger"
-                  isDisabled={pending || !hardDeleteEligible}
-                  onAction={() => confirm('hard-delete')}
-                >
-                  Finalize deletion
-                </ListBox.Item>
-              ) : null}
-            </ListBox>
-            {isOwned && status === 'deleted' && !hardDeleteEligible && retentionUntil ? (
-              <p className="px-2 pb-2 text-xs text-default-500">
-                Available after {retentionUntil.toLocaleDateString()}.
-              </p>
-            ) : null}
-          </Popover.Dialog>
-        </Popover.Content>
-      </Popover>
-      {feedback ? (
-        <StatusAlert status={feedback.status} className="w-full">
-          {feedback.message}
+      <DeckSafetyMenu
+        deckId={deckId}
+        deckTitle={deckTitle}
+        status={status}
+        retentionUntil={retentionUntil}
+        isOwned={isOwned}
+        isFollowing={isFollowing}
+        canFollow={canFollow}
+        canModerate={canModerate}
+        hardDeleteEligible={hardDeleteEligible}
+        pending={actions.pending}
+        isOpen={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
+        onConfirm={setConfirmation}
+        onFollow={actions.follow}
+        onMarkUnderReview={actions.markUnderReview}
+        onOpenReport={() => setIsReportOpen(true)}
+      />
+
+      {actions.feedback ? (
+        <StatusAlert status={actions.feedback.status} className="w-full">
+          {actions.feedback.message}
         </StatusAlert>
       ) : null}
-      <ConfirmationDialog
-        isOpen={confirmation !== null}
-        onOpenChange={isOpen => {
-          if (!isOpen) setConfirmation(null);
-        }}
-        title={
-          confirmation === 'delete-progress'
-            ? 'Delete all progress?'
-            : confirmation === 'unfollow'
-              ? `Unfollow “${deckTitle}”?`
-              : confirmation === 'moderate-removal'
-                ? 'Remove this deck for moderation?'
-                : 'Finalize deletion?'
-        }
-        description={
-          confirmation === 'delete-progress'
-            ? 'All learning progress for this deck will be permanently deleted. This cannot be undone.'
-            : confirmation === 'unfollow'
-              ? 'Author updates will stop, but your progress is retained if you follow the deck again.'
-              : confirmation === 'moderate-removal'
-                ? 'Learner access will be revoked.'
-                : 'This permanently removes the deck from your account. Releases or lineage required by other records will remain under an anonymized tombstone.'
-        }
-        confirmLabel={
-          confirmation === 'delete-progress'
-            ? 'Delete progress'
-            : confirmation === 'unfollow'
-              ? 'Unfollow deck'
-              : confirmation === 'moderate-removal'
-                ? 'Remove deck'
-                : 'Finalize deletion'
-        }
-        tone={confirmation === 'unfollow' ? 'warning' : 'danger'}
-        isPending={pending}
-        onConfirm={() => {
-          const action = confirmation;
-          setConfirmation(null);
-          if (action === 'delete-progress') {
-            run(() => permanentlyDeleteFollowProgressAction(deckId), 'Progress deleted.', true);
-          }
-          if (action === 'unfollow') {
-            run(() => unfollowDeckAction(deckId), 'Deck unfollowed.', true);
-          }
-          if (action === 'moderate-removal') {
-            run(() => moderationRemoveDeckAction(deckId), 'Deck removed by moderation.', true);
-          }
-          if (action === 'hard-delete') {
-            run(() => restrictedHardDeleteDeckAction(deckId), 'Deletion finalized.', true);
-          }
-        }}
+
+      <DeckSafetyConfirmationDialog
+        confirmation={confirmation}
+        deckTitle={deckTitle}
+        pending={actions.pending}
+        onClose={() => setConfirmation(null)}
+        onConfirm={actions.executeConfirmation}
       />
-      <Modal.Backdrop isOpen={reportModalState.isOpen} onOpenChange={reportModalState.setOpen}>
-        <Modal.Container scroll="inside">
-          <Modal.Dialog className="min-h-0 sm:max-w-md">
-            <Modal.CloseTrigger />
-            <Modal.Header className="space-y-1">
-              <Modal.Heading>Report this deck</Modal.Heading>
-              <p className="text-sm text-default-500">
-                Tell us what needs review. Your report will be associated with this deck.
-              </p>
-            </Modal.Header>
-            <form onSubmit={report} className="mt-2 flex min-h-0 flex-1 flex-col">
-              <Modal.Body className="space-y-4">
-                <div className="form-field">
-                  <Label htmlFor={`report-reason-${deckId}`}>Reason</Label>
-                  <Input
-                    id={`report-reason-${deckId}`}
-                    value={reportReason}
-                    onChange={event => setReportReason(event.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <div className="form-field">
-                  <Label htmlFor={`report-details-${deckId}`}>Details (optional)</Label>
-                  <TextArea
-                    id={`report-details-${deckId}`}
-                    value={reportDetails}
-                    onChange={event => setReportDetails(event.target.value)}
-                    rows={4}
-                  />
-                </div>
-              </Modal.Body>
-              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  className="w-full sm:w-auto"
-                  onPress={reportModalState.close}
-                  isDisabled={pending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full sm:w-auto"
-                  isDisabled={!reportReason.trim()}
-                  isPending={pending}
-                >
-                  Submit report
-                </Button>
-              </Modal.Footer>
-            </form>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+
+      {isReportOpen ? (
+        <DeckReportModal
+          deckId={deckId}
+          pending={actions.pending}
+          onClose={() => setIsReportOpen(false)}
+          onSubmit={actions.submitReport}
+        />
+      ) : null}
     </div>
   );
 }

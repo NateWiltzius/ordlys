@@ -1,4 +1,4 @@
-'use server';
+import 'server-only';
 
 import { getDeckCardStudyCounts, getUserActiveDecks } from '@/db/queries/deck.queries';
 import { getProgressAttemptStats } from '@/db/queries/review-attempt.queries';
@@ -12,7 +12,7 @@ import {
 import { SRS_CATEGORIES, type SrsCategoryCounts } from '@/lib/srs/srs-config';
 import type { ProgressPageData } from '@/types/progress.types';
 
-export async function getProgressPageDataAction(): Promise<ProgressPageData> {
+export async function getProgressPageData(): Promise<ProgressPageData> {
   const userId = await getCurrentUserId();
   const decks = await getUserActiveDecks(userId);
   const deckIds = decks.map(deck => deck.id);

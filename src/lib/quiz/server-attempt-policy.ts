@@ -6,7 +6,7 @@ export type RecordedDirectionalAttempt = {
   wasOverridden: boolean;
 };
 
-export type ServerCardOutcome = {
+type ServerCardOutcome = {
   completesCard: boolean;
   cardWasCorrect: boolean;
 };

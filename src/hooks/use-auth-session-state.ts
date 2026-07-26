@@ -6,7 +6,7 @@ import {
 } from '@/components/providers/auth-session-provider';
 import { useContext } from 'react';
 
-export function useAuthSessionState(): boolean | null {
+export function useAuthSessionState(): boolean {
   const loggedIn = useContext(AuthSessionContext);
 
   if (loggedIn === undefined) {

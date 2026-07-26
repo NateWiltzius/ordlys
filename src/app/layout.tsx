@@ -11,6 +11,7 @@ import AuthSessionProvider from '@/components/providers/auth-session-provider';
 import AppChromeState from '@/app/_components/app-chrome-state';
 import { isProduction } from '@/config/server-env';
 import { headers } from 'next/headers';
+import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 
 const siteTitle = 'Ordlys – Spaced Repetition Flashcards for Any Subject';
 const siteDescription =
@@ -65,7 +66,8 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: PropsWithChildren) {
-  const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const [requestHeaders, userId] = await Promise.all([headers(), getCurrentUserIdOrNull()]);
+  const nonce = requestHeaders.get('x-nonce') ?? undefined;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -86,7 +88,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       <body
         className={`flex min-h-screen flex-col bg-background font-sans text-foreground antialiased ${fontSans.variable}`}
       >
-        <AuthSessionProvider>
+        <AuthSessionProvider initialLoggedIn={userId !== null}>
           <AppChromeState />
           <a
             href="#main-content"

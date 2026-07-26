@@ -10,7 +10,7 @@ import EmptyState from '@/components/shared/empty-state';
 import { moveLessonAction } from '@/server/lesson.actions';
 import { moveItem } from '@/lib/order/move-item';
 import { OrderDirection } from '@/types/order.types';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import EditDeckModal from './edit-deck-modal';
 import { Deck } from '@/types/deck.types';
@@ -56,11 +56,6 @@ export default function EditPage({
   const [movingLessonId, setMovingLessonId] = useState<number | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [vocabularyQuery, setVocabularyQuery] = useState('');
-
-  useEffect(() => {
-    setOrderedLessons(lessons);
-    setLessonCardCounts(Object.fromEntries(lessons.map(lesson => [lesson.id, lesson.vocabCount])));
-  }, [lessons]);
 
   const totalCardCount = useMemo(
     () =>

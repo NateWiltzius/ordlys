@@ -10,7 +10,7 @@ export type DeckCardAction =
   | 'restore'
   | 'unfollow';
 
-type DeckRowPrimaryAction = DeckCardAction | 'learn' | 'open';
+export type DeckRowPrimaryAction = DeckCardAction | 'learn' | 'open';
 
 type DeckCardActionInput = {
   context: DeckCardContext;

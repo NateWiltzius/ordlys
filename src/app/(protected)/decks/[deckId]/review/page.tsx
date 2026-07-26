@@ -1,7 +1,7 @@
 import ReviewMode from '@/app/(protected)/decks/[deckId]/review/_components/review-mode';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { notFound } from 'next/navigation';
-import { getReviewPageDataAction } from '@/server/review.actions';
+import { getReviewPageData } from '@/server/data/review-page-data';
 import type { Metadata } from 'next';
 import { parseReviewSessionSize, REVIEW_SESSION_SIZE_COOKIE } from '@/lib/study-session-size';
 import { cookies } from 'next/headers';
@@ -26,7 +26,7 @@ export default async function ReviewPage({ params, searchParams }: Props) {
     (await searchParams).size,
     (await cookies()).get(REVIEW_SESSION_SIZE_COOKIE)?.value,
   );
-  const data = await getReviewPageDataAction(parsedDeckId, selectedSize);
+  const data = await getReviewPageData(parsedDeckId, selectedSize);
   if (!data) notFound();
 
   return (

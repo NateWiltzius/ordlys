@@ -1,35 +1,17 @@
 'use client';
 
-import CreateVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/create-vocab-modal';
-import EditLessonModal from '@/app/(protected)/decks/[deckId]/edit/_components/edit-lesson-modal';
-import EditVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/edit-vocab-modal';
-import MoveVocabModal from '@/app/(protected)/decks/[deckId]/edit/_components/move-vocab-modal';
-import VocabularyLoading from '@/app/(protected)/decks/[deckId]/edit/_components/vocabulary-loading';
+import CreateVocabModal from './create-vocab-modal';
+import EditVocabModal from './edit-vocab-modal';
+import MoveVocabModal from './move-vocab-modal';
+import VocabularyLoading from './vocabulary-loading';
+import { useLessonCardController } from './use-lesson-card-controller';
+import { LessonToolbar, VocabActions } from './lesson-card-controls';
 import VocabTable from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-table';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
-import { moveItem, moveItemToIndex } from '@/lib/order/move-item';
-import { deleteLessonAction } from '@/server/lesson.actions';
-import {
-  deleteVocabAction,
-  getEditableLessonVocabularyAction,
-  moveVocabAction,
-  moveVocabToPositionAction,
-} from '@/server/vocab.actions';
-import { EditLessonSummary } from '@/types/lesson.types';
-import { OrderDirection } from '@/types/order.types';
-import { Vocab } from '@/types/vocab.types';
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  NumberedListIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline';
-import { Accordion, Button, Chip, Tooltip } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { isActionFailure } from '@/lib/action-result';
+import type { EditLessonSummary } from '@/types/lesson.types';
+import type { OrderDirection } from '@/types/order.types';
+import { Accordion, Button, Chip } from '@heroui/react';
 
 type Props = {
   deckId: number;
@@ -52,156 +34,16 @@ export default function LessonCard({
   isExpanded,
   onCardCountChange,
 }: Props) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [orderedVocabs, setOrderedVocabs] = useState<Vocab[] | null>(null);
-  const [movingVocabId, setMovingVocabId] = useState<number | null>(null);
-  const [deletingVocabId, setDeletingVocabId] = useState<number | null>(null);
-  const [selectedVocab, setSelectedVocab] = useState<Vocab | null>(null);
-  const [moveTarget, setMoveTarget] = useState<Vocab | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<'lesson' | Vocab | null>(null);
-  const [mutationError, setMutationError] = useState<string | null>(null);
-  const loadRequested = useRef(false);
-
-  useEffect(() => {
-    setOrderedVocabs(null);
-    loadRequested.current = false;
-  }, [lesson.id]);
-
-  const loadVocabulary = useCallback(
-    async (showLoading = true) => {
-      if (showLoading) setIsLoading(true);
-      setMutationError(null);
-
-      try {
-        setOrderedVocabs(await getEditableLessonVocabularyAction(deckId, lesson.id));
-      } catch (error) {
-        setMutationError(
-          error instanceof Error ? error.message : 'Could not load this lesson’s cards.',
-        );
-      } finally {
-        if (showLoading) setIsLoading(false);
-      }
-    },
-    [deckId, lesson.id],
-  );
-
-  useEffect(() => {
-    if (!isExpanded) {
-      loadRequested.current = false;
-      return;
-    }
-    if (loadRequested.current || orderedVocabs !== null || isLoading) return;
-
-    loadRequested.current = true;
-    void loadVocabulary();
-  }, [isExpanded, isLoading, loadVocabulary, orderedVocabs]);
-
-  const handleDeleteLesson = async () => {
-    if (isDeleting) return;
-
-    try {
-      setIsDeleting(true);
-      setMutationError(null);
-      const result = await deleteLessonAction(lesson.id);
-      if (isActionFailure(result)) {
-        setMutationError(result.message);
-        return;
-      }
-      router.refresh();
-    } catch (error) {
-      setMutationError(error instanceof Error ? error.message : 'Could not delete the lesson.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleMoveVocab = async (vocabId: number, direction: OrderDirection) => {
-    if (!orderedVocabs || movingVocabId !== null) return;
-
-    const previousVocabs = orderedVocabs;
-    const currentIndex = previousVocabs.findIndex(vocab => vocab.id === vocabId);
-    const nextVocabs = moveItem(previousVocabs, currentIndex, direction);
-    if (nextVocabs === previousVocabs) return;
-
-    setOrderedVocabs(nextVocabs);
-    setMovingVocabId(vocabId);
-    setMutationError(null);
-
-    try {
-      const result = await moveVocabAction(vocabId, direction);
-      if (isActionFailure(result)) {
-        setOrderedVocabs(previousVocabs);
-        setMutationError(result.message);
-      }
-    } catch (error) {
-      setOrderedVocabs(previousVocabs);
-      setMutationError(error instanceof Error ? error.message : 'Could not reorder cards.');
-    } finally {
-      setMovingVocabId(null);
-    }
-  };
-
-  const handleMoveVocabToPosition = async (
-    vocabId: number,
-    position: number,
-  ): Promise<string | null> => {
-    if (!orderedVocabs || movingVocabId !== null) return 'Another card is already being moved.';
-
-    const previousVocabs = orderedVocabs;
-    const currentIndex = previousVocabs.findIndex(vocab => vocab.id === vocabId);
-    const nextVocabs = moveItemToIndex(previousVocabs, currentIndex, position - 1);
-    if (nextVocabs === previousVocabs) return null;
-
-    setOrderedVocabs(nextVocabs);
-    setMovingVocabId(vocabId);
-    setMutationError(null);
-
-    try {
-      const result = await moveVocabToPositionAction(vocabId, position);
-      if (isActionFailure(result)) {
-        setOrderedVocabs(previousVocabs);
-        setMutationError(result.message);
-        return result.message;
-      }
-      return null;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not reorder cards.';
-      setOrderedVocabs(previousVocabs);
-      setMutationError(message);
-      return message;
-    } finally {
-      setMovingVocabId(null);
-    }
-  };
-
-  const handleDeleteVocab = async (vocab: Vocab) => {
-    try {
-      setDeletingVocabId(vocab.id);
-      setMutationError(null);
-      const result = await deleteVocabAction(vocab.id);
-      if (isActionFailure(result)) {
-        setMutationError(result.message);
-        return;
-      }
-      setOrderedVocabs(current => current?.filter(item => item.id !== vocab.id) ?? null);
-    } catch (error) {
-      setMutationError(error instanceof Error ? error.message : 'Could not delete the card.');
-    } finally {
-      setDeletingVocabId(null);
-    }
-  };
-
-  const vocabCount = orderedVocabs?.length ?? lesson.vocabCount;
-  const lessonKey = String(lesson.id);
-
-  useEffect(() => {
-    onCardCountChange(lesson.id, vocabCount);
-  }, [lesson.id, onCardCountChange, vocabCount]);
+  const controller = useLessonCardController({
+    deckId,
+    lesson,
+    isExpanded,
+    onCardCountChange,
+  });
+  const vocabCount = controller.orderedVocabs?.length ?? lesson.vocabCount;
 
   return (
-    <Accordion.Item id={lessonKey}>
+    <Accordion.Item id={String(lesson.id)}>
       <Accordion.Heading>
         <Accordion.Trigger>
           <span className="flex min-w-0 flex-1 items-center justify-between gap-4 pr-2 text-left">
@@ -217,163 +59,110 @@ export default function LessonCard({
       <Accordion.Panel>
         <Accordion.Body>
           <div className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted">Manage the cards in this lesson.</p>
-              <div className="flex flex-wrap items-center gap-1">
-                <EditLessonModal lesson={lesson} />
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  isIconOnly
-                  isDisabled={!canMoveUp || isLessonOrderPending}
-                  aria-label={`Move ${lesson.title} up`}
-                  onPress={() => onMoveLesson(lesson.id, 'up')}
-                >
-                  <ChevronUpIcon className="size-4" aria-hidden="true" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  isIconOnly
-                  isDisabled={!canMoveDown || isLessonOrderPending}
-                  aria-label={`Move ${lesson.title} down`}
-                  onPress={() => onMoveLesson(lesson.id, 'down')}
-                >
-                  <ChevronDownIcon className="size-4" aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
+            <LessonToolbar
+              lesson={lesson}
+              canMoveUp={canMoveUp}
+              canMoveDown={canMoveDown}
+              isLessonOrderPending={isLessonOrderPending}
+              onMoveLesson={onMoveLesson}
+            />
 
-            {mutationError ? <StatusAlert status="danger">{mutationError}</StatusAlert> : null}
+            {controller.mutationError ? (
+              <StatusAlert status="danger">{controller.mutationError}</StatusAlert>
+            ) : null}
 
-            {isLoading ? (
+            {controller.isLoading ? (
               <VocabularyLoading />
-            ) : orderedVocabs ? (
+            ) : controller.orderedVocabs ? (
               <VocabTable
-                vocabs={orderedVocabs}
+                vocabs={controller.orderedVocabs}
                 emptyDescription="Add cards to start building this lesson."
                 renderActions={(vocab, index) => (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      isIconOnly
-                      aria-label={`Edit ${vocab.front}`}
-                      onPress={() => setSelectedVocab(vocab)}
-                    >
-                      <PencilSquareIcon className="size-4" aria-hidden="true" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger-soft"
-                      isIconOnly
-                      aria-label={`Delete ${vocab.front}`}
-                      onPress={() => setDeleteTarget(vocab)}
-                    >
-                      <TrashIcon className="size-4" aria-hidden="true" />
-                    </Button>
-                    <Tooltip delay={300}>
-                      <Button
-                        size="sm"
-                        variant="tertiary"
-                        isIconOnly
-                        isDisabled={orderedVocabs.length < 2 || movingVocabId !== null}
-                        aria-label={`Move ${vocab.front} to another position`}
-                        onPress={() => setMoveTarget(vocab)}
-                      >
-                        <NumberedListIcon className="size-4" aria-hidden="true" />
-                      </Button>
-                      <Tooltip.Content>Move to position</Tooltip.Content>
-                    </Tooltip>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      isIconOnly
-                      isDisabled={index === 0 || movingVocabId !== null}
-                      aria-label={`Move ${vocab.front} up`}
-                      onPress={() => handleMoveVocab(vocab.id, 'up')}
-                    >
-                      <ChevronUpIcon className="size-4" aria-hidden="true" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      isIconOnly
-                      isDisabled={index === orderedVocabs.length - 1 || movingVocabId !== null}
-                      aria-label={`Move ${vocab.front} down`}
-                      onPress={() => handleMoveVocab(vocab.id, 'down')}
-                    >
-                      <ChevronDownIcon className="size-4" aria-hidden="true" />
-                    </Button>
-                  </div>
+                  <VocabActions
+                    vocabFront={vocab.front}
+                    index={index}
+                    total={controller.orderedVocabs?.length ?? 0}
+                    moving={controller.movingVocabId !== null}
+                    onEdit={() => controller.setSelectedVocab(vocab)}
+                    onDelete={() => controller.setDeleteTarget(vocab)}
+                    onMoveToPosition={() => controller.setMoveTarget(vocab)}
+                    onMove={direction => controller.moveVocab(vocab.id, direction)}
+                  />
                 )}
               />
             ) : (
-              <Button variant="secondary" onPress={() => void loadVocabulary()}>
+              <Button variant="secondary" onPress={() => void controller.loadVocabulary()}>
                 Try loading again
               </Button>
             )}
 
             <div className="flex flex-wrap gap-2 border-t border-default-200 pt-4">
-              <CreateVocabModal lessonId={lesson.id} onCreated={() => loadVocabulary(false)} />
+              <CreateVocabModal
+                lessonId={lesson.id}
+                onCreated={() => controller.loadVocabulary(false)}
+              />
               <Button
                 size="sm"
                 variant="danger-soft"
-                isPending={isDeleting}
-                onPress={() => setDeleteTarget('lesson')}
+                isPending={controller.isDeleting}
+                onPress={() => controller.setDeleteTarget('lesson')}
               >
                 Delete lesson
               </Button>
             </div>
 
             <EditVocabModal
-              vocab={selectedVocab}
-              isOpen={selectedVocab !== null}
+              vocab={controller.selectedVocab}
+              isOpen={controller.selectedVocab !== null}
               onOpenChange={isOpen => {
-                if (!isOpen) setSelectedVocab(null);
+                if (!isOpen) controller.setSelectedVocab(null);
               }}
-              onSaved={() => loadVocabulary(false)}
+              onSaved={() => controller.loadVocabulary(false)}
             />
             <MoveVocabModal
-              vocab={moveTarget}
+              vocab={controller.moveTarget}
               currentPosition={
-                moveTarget
-                  ? (orderedVocabs?.findIndex(vocab => vocab.id === moveTarget.id) ?? -1) + 1
+                controller.moveTarget
+                  ? (controller.orderedVocabs?.findIndex(
+                      vocab => vocab.id === controller.moveTarget?.id,
+                    ) ?? -1) + 1
                   : 0
               }
-              totalPositions={orderedVocabs?.length ?? 0}
-              isOpen={moveTarget !== null}
+              totalPositions={controller.orderedVocabs?.length ?? 0}
+              isOpen={controller.moveTarget !== null}
               onOpenChange={isOpen => {
-                if (!isOpen) setMoveTarget(null);
+                if (!isOpen) controller.setMoveTarget(null);
               }}
               onMove={position =>
-                moveTarget
-                  ? handleMoveVocabToPosition(moveTarget.id, position)
+                controller.moveTarget
+                  ? controller.moveVocabToPosition(controller.moveTarget.id, position)
                   : Promise.resolve('The card is no longer available.')
               }
             />
             <ConfirmationDialog
-              isOpen={deleteTarget !== null}
+              isOpen={controller.deleteTarget !== null}
               onOpenChange={isOpen => {
-                if (!isOpen && !isDeleting && deletingVocabId === null) setDeleteTarget(null);
+                if (!isOpen && !controller.isDeleting && controller.deletingVocabId === null) {
+                  controller.setDeleteTarget(null);
+                }
               }}
               title={
-                deleteTarget === 'lesson'
+                controller.deleteTarget === 'lesson'
                   ? `Delete lesson “${lesson.title}”?`
-                  : `Delete “${deleteTarget?.front ?? ''}”?`
+                  : `Delete “${controller.deleteTarget?.front ?? ''}”?`
               }
               description={
-                deleteTarget === 'lesson'
+                controller.deleteTarget === 'lesson'
                   ? 'The lesson and all of its cards will be deleted.'
                   : 'This card will be permanently deleted. This cannot be undone.'
               }
-              confirmLabel={deleteTarget === 'lesson' ? 'Delete lesson' : 'Delete card'}
-              isPending={isDeleting || deletingVocabId !== null}
+              confirmLabel={controller.deleteTarget === 'lesson' ? 'Delete lesson' : 'Delete card'}
+              isPending={controller.isDeleting || controller.deletingVocabId !== null}
               onConfirm={async () => {
-                const target = deleteTarget;
-                if (target === 'lesson') await handleDeleteLesson();
-                else if (target) await handleDeleteVocab(target);
-                setDeleteTarget(null);
+                const target = controller.deleteTarget;
+                if (target === 'lesson') await controller.deleteLesson();
+                else if (target) await controller.deleteVocab(target);
+                controller.setDeleteTarget(null);
               }}
             />
           </div>

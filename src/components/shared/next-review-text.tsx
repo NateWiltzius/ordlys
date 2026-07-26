@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMountedTimestamp } from '@/hooks/use-mounted-timestamp';
 import type { NextReviewBatch } from '@/types/review.types';
 
 type Props = {
@@ -9,20 +9,16 @@ type Props = {
 };
 
 export default function NextReviewText({ nextReview, className = '' }: Props) {
-  const [hasMounted, setHasMounted] = useState(false);
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
+  const mountedAt = useMountedTimestamp();
 
   if (!nextReview) return;
 
-  if (!hasMounted) {
+  if (mountedAt === null) {
     return <span className={className}>Next review batch scheduled.</span>;
   }
 
   const date = new Date(nextReview.hour);
-  const today = startOfLocalDay(new Date());
+  const today = startOfLocalDay(new Date(mountedAt));
   const reviewDay = startOfLocalDay(date);
   const dayDifference = Math.round((reviewDay.getTime() - today.getTime()) / 86_400_000);
   const dayLabel =

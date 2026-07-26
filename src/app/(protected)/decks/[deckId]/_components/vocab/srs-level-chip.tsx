@@ -1,3 +1,6 @@
+'use client';
+
+import { useMountedTimestamp } from '@/hooks/use-mounted-timestamp';
 import {
   getSrsCategoryKey,
   getSrsLevelDisplayLabel,
@@ -12,6 +15,8 @@ type Props = {
 };
 
 export default function SrsLevelChip({ srsLevel, reviewDueAt }: Props) {
+  const mountedAt = useMountedTimestamp();
+
   if (srsLevel === undefined) {
     return (
       <Chip size="sm" variant="soft">
@@ -33,13 +38,16 @@ export default function SrsLevelChip({ srsLevel, reviewDueAt }: Props) {
   return (
     <Tooltip delay={300}>
       <Tooltip.Trigger className="inline-flex">{chip}</Tooltip.Trigger>
-      <Tooltip.Content>{formatReviewDueAt(reviewDueAt)}</Tooltip.Content>
+      <Tooltip.Content>
+        {mountedAt === null ? 'Review scheduled' : formatReviewDueAt(reviewDueAt, mountedAt)}
+      </Tooltip.Content>
     </Tooltip>
   );
 }
 
-function formatReviewDueAt(reviewDueAt: string, now = new Date()): string {
+function formatReviewDueAt(reviewDueAt: string, nowTimestamp: number): string {
   const dueAt = new Date(reviewDueAt);
+  const now = new Date(nowTimestamp);
   if (dueAt <= now) return 'Review due now';
 
   const today = startOfLocalDay(now);

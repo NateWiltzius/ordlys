@@ -1,5 +1,5 @@
 import AllDecksReviewMode from '@/app/(protected)/review/_components/all-decks-review-mode';
-import { getAllReviewsPageDataAction } from '@/server/review.actions';
+import { getAllReviewsPageData } from '@/server/data/review-page-data';
 import type { Metadata } from 'next';
 import { parseReviewSessionSize, REVIEW_SESSION_SIZE_COOKIE } from '@/lib/study-session-size';
 import { cookies } from 'next/headers';
@@ -16,7 +16,7 @@ export default async function AllDecksReviewPage({ searchParams }: Props) {
     (await searchParams).size,
     (await cookies()).get(REVIEW_SESSION_SIZE_COOKIE)?.value,
   );
-  const data = await getAllReviewsPageDataAction(selectedSize);
+  const data = await getAllReviewsPageData(selectedSize);
 
   return (
     <AllDecksReviewMode

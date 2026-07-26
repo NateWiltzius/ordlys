@@ -1,6 +1,6 @@
 import PublicDecks from '@/app/(protected)/decks/_components/public-decks';
 import PageHeader from '@/components/shared/layout/page-header';
-import { getDiscoverPageDataAction } from '@/server/deck.actions';
+import { getDiscoverPageData } from '@/server/data/deck-page-data';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import DiscoverLoading from '@/app/(protected)/discover/loading';
@@ -25,7 +25,7 @@ export default function DiscoverPage() {
 }
 
 async function DiscoverDecks() {
-  const { publicDecks, ownedDeckIds, followingDeckIds } = await getDiscoverPageDataAction();
+  const { publicDecks, ownedDeckIds, followingDeckIds } = await getDiscoverPageData();
 
   return (
     <PublicDecks

@@ -1,7 +1,7 @@
 'use client';
 
 import VocabTable from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-table';
-import { getLessonVocabularyAction } from '@/server/vocab.actions';
+import { getLessonVocabulary } from '@/lib/client/vocabulary-api';
 import { Vocab } from '@/types/vocab.types';
 import { Button } from '@heroui/react';
 import { useCallback, useEffect, useState } from 'react';
@@ -39,7 +39,7 @@ export default function LessonVocabulary({
     setIsLoading(true);
 
     try {
-      const result = await getLessonVocabularyAction(deckId, lessonId);
+      const result = await getLessonVocabulary(deckId, lessonId);
       setVocabs(result.vocabs);
       setSrsStates(result.srsStates);
     } catch {
