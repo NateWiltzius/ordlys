@@ -82,7 +82,7 @@ export default function QuizAnswerForm({
     <section
       ref={answerCardRef}
       data-study-tone={tone}
-      className="quiz-answer-card w-full border-y border-default-200 py-6 sm:py-8"
+      className="quiz-answer-card w-full py-4 sm:py-6"
     >
       <form onSubmit={handleSubmit}>
         <div className="quiz-answer-content">
@@ -115,7 +115,7 @@ export default function QuizAnswerForm({
             ) : null}
           </div>
 
-          <div className="mt-6 space-y-2 border-t border-default-200 pt-5">
+          <div className="mt-6 space-y-2 rounded-xl bg-default-50 p-4">
             <p className="text-sm font-medium">{answerInstruction}</p>
             <Input
               ref={answerInputRef}

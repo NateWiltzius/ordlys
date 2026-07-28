@@ -5,7 +5,11 @@ import { Button, Chip } from '@heroui/react';
 import { useEffect, useRef } from 'react';
 import AnswerRow from '@/components/quiz/answer-row';
 import { QUIZ_FEEDBACK_STYLES } from '@/lib/study-colors';
-import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline';
 import { getQuizLanguageLabels } from '@/lib/quiz/quiz-language-labels';
 import {
   getDirectionProgressContent,
@@ -33,8 +37,10 @@ export default function QuizFeedbackPanel({
   keyboardShortcutEnabled = true,
   recordAttempts = true,
 }: Props) {
-  const styles = feedback.isCorrect ? QUIZ_FEEDBACK_STYLES.correct : QUIZ_FEEDBACK_STYLES.incorrect;
-  const wordCompletionContent = wordCompletion
+  const answerStyles = feedback.isCorrect
+    ? QUIZ_FEEDBACK_STYLES.correct
+    : QUIZ_FEEDBACK_STYLES.incorrect;
+  const outcomeContent = wordCompletion
     ? getWordCompletionContent(
         studyMode,
         wordCompletion,
@@ -42,9 +48,19 @@ export default function QuizFeedbackPanel({
         recordAttempts,
       )
     : getDirectionProgressContent(feedback.isCorrect, recordAttempts);
-  const completionStyles = wordCompletionContent.isWarning
-    ? QUIZ_FEEDBACK_STYLES.incorrect
-    : QUIZ_FEEDBACK_STYLES.correct;
+  const hasSchedulingWarning = Boolean(
+    feedback.isCorrect && wordCompletion && outcomeContent.isWarning && recordAttempts,
+  );
+  const resultStyles = hasSchedulingWarning ? QUIZ_FEEDBACK_STYLES.warning : answerStyles;
+  const resultTitle = feedback.isCorrect
+    ? wordCompletion
+      ? hasSchedulingWarning
+        ? `Correct — ${outcomeContent.title.toLowerCase()}`
+        : recordAttempts
+          ? 'Correct — word completed'
+          : 'Correct — practice completed'
+      : 'Correct — 1 of 2 directions passed'
+    : 'Not quite';
   const shownLanguageCode =
     feedback.quizItem.direction === 'btf'
       ? feedback.quizItem.backLanguage
@@ -108,31 +124,31 @@ export default function QuizFeedbackPanel({
   }, [keyboardShortcutEnabled]);
 
   return (
-    <section className="border-y border-default-200 py-5 sm:py-6">
+    <section className="py-2 sm:py-3">
       <header
-        className={`flex flex-col gap-3 rounded-lg border px-3 py-3 sm:flex-row sm:items-start sm:justify-between ${styles.surface}`}
+        role="status"
+        className={`flex flex-col gap-3 rounded-lg border px-3 py-3 sm:flex-row sm:items-start sm:justify-between ${resultStyles.surface}`}
       >
         <div className="flex items-start gap-2">
-          {feedback.isCorrect ? (
+          {hasSchedulingWarning ? (
+            <ExclamationTriangleIcon
+              className={`mt-0.5 size-5 shrink-0 ${resultStyles.text}`}
+              aria-hidden="true"
+            />
+          ) : feedback.isCorrect ? (
             <CheckCircleIcon
-              className={`mt-0.5 size-5 shrink-0 ${styles.text}`}
+              className={`mt-0.5 size-5 shrink-0 ${resultStyles.text}`}
               aria-hidden="true"
             />
           ) : (
             <ExclamationCircleIcon
-              className={`mt-0.5 size-5 shrink-0 ${styles.text}`}
+              className={`mt-0.5 size-5 shrink-0 ${resultStyles.text}`}
               aria-hidden="true"
             />
           )}
           <div>
-            <h2 className={`font-semibold ${styles.text}`}>
-              {feedback.isCorrect ? 'Correct' : 'Not quite'}
-            </h2>
-            <p className="text-sm text-default-600">
-              {feedback.isCorrect
-                ? 'Good answer. Continue when you are ready.'
-                : 'Review the correct answer before continuing.'}
-            </p>
+            <h2 className={`font-semibold ${resultStyles.text}`}>{resultTitle}</h2>
+            <p className="text-sm text-default-600">{outcomeContent.description}</p>
           </div>
         </div>
 
@@ -166,52 +182,19 @@ export default function QuizFeedbackPanel({
         </p>
       </div>
 
-      <div className="space-y-3">
-        <div
-          role="status"
-          className={`flex items-start gap-2 border-l-4 px-3 py-2 ${
-            wordCompletionContent.isWarning
-              ? 'border-danger bg-danger/10'
-              : 'border-success bg-success/10'
-          }`}
-        >
-          {wordCompletionContent.isWarning ? (
-            <ExclamationCircleIcon
-              className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
-              aria-hidden="true"
-            />
-          ) : (
-            <CheckCircleIcon
-              className={`mt-0.5 size-5 shrink-0 ${completionStyles.text}`}
-              aria-hidden="true"
-            />
-          )}
-          <div>
-            <p className={`font-semibold ${completionStyles.text}`}>
-              {wordCompletionContent.title}
-            </p>
-            <p className="text-sm text-foreground/80">{wordCompletionContent.description}</p>
-          </div>
-        </div>
-        <div className="divide-y divide-default-200 border-y border-default-200">
-          {feedback.quizItem.hint ? (
-            <AnswerRow label="Hint" value={feedback.quizItem.hint} />
-          ) : null}
-          {feedback.quizItem.reading ? (
-            <AnswerRow label="Reading" value={feedback.quizItem.reading} />
-          ) : null}
-          <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
-          <AnswerRow
-            label={languageLabels.correctAnswerRowLabel}
-            value={feedback.quizItem.answer}
-          />
-          {acceptedAlternatives.length > 0 ? (
-            <AnswerRow label="Also accepted" value={acceptedAlternatives.join(' · ')} />
-          ) : null}
-          {feedback.quizItem.notes ? (
-            <AnswerRow label="Notes" value={feedback.quizItem.notes} preserveWhitespace />
-          ) : null}
-        </div>
+      <div className="rounded-xl bg-default-50 px-4 py-1">
+        {feedback.quizItem.hint ? <AnswerRow label="Hint" value={feedback.quizItem.hint} /> : null}
+        {feedback.quizItem.reading ? (
+          <AnswerRow label="Reading" value={feedback.quizItem.reading} />
+        ) : null}
+        <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
+        <AnswerRow label={languageLabels.correctAnswerRowLabel} value={feedback.quizItem.answer} />
+        {acceptedAlternatives.length > 0 ? (
+          <AnswerRow label="Also accepted" value={acceptedAlternatives.join(' · ')} />
+        ) : null}
+        {feedback.quizItem.notes ? (
+          <AnswerRow label="Notes" value={feedback.quizItem.notes} preserveWhitespace />
+        ) : null}
       </div>
 
       <footer className="mt-5 space-y-3">
@@ -235,7 +218,7 @@ export default function QuizFeedbackPanel({
             <Button
               variant="primary"
               onPress={onContinue}
-              className={`w-full sm:w-auto ${styles.button}`}
+              className={`w-full sm:w-auto ${answerStyles.button}`}
             >
               Continue
             </Button>

@@ -9,7 +9,11 @@ import {
   type DeckVisibility,
   DeckDomainError,
 } from '@/lib/deck-domain';
-import { canFinalizeDeckDeletion, getDeckDeletionRetentionUntil } from '@/lib/deck-deletion-policy';
+import {
+  canFinalizeDeckDeletion,
+  getDeckDeletionRetentionUntil,
+  requiresDeckTombstone,
+} from '@/lib/deck-deletion-policy';
 import { and, count, eq, ne, or, sql } from 'drizzle-orm';
 
 export async function changeDeckStatus(
@@ -326,14 +330,36 @@ export async function restrictedHardDeleteDeck(deckId: number, actorId: string):
     }
 
     const dependencies = await tx.execute(sql`
-      select (
-        (select count(*) from deck_releases where deck_id=${deckId}) +
-        (select count(*) from deck_follows where deck_id=${deckId}) +
-        (select count(*) from decks where id <> ${deckId} and (source_deck_id=${deckId} or root_deck_id=${deckId})) +
-        (select count(*) from deck_audit_events where deck_id=${deckId})
-      )::int as value
+      select
+        (
+          (
+            select count(*)
+            from decks
+            where id <> ${deckId}
+              and (source_deck_id=${deckId} or root_deck_id=${deckId})
+          ) +
+          (
+            select count(*)
+            from decks descendant
+            join deck_releases source_release on source_release.id = descendant.source_release_id
+            where descendant.id <> ${deckId}
+              and source_release.deck_id = ${deckId}
+          ) +
+          (
+            select count(*)
+            from deck_releases derived_release
+            join deck_releases source_release
+              on source_release.id = derived_release.derived_from_release_id
+            where derived_release.deck_id <> ${deckId}
+              and source_release.deck_id = ${deckId}
+          )
+        )::int as "lineageCount"
     `);
-    if (Number(dependencies[0].value) > 0) {
+    if (
+      requiresDeckTombstone({
+        lineageCount: Number(dependencies[0].lineageCount),
+      })
+    ) {
       await tx
         .update(decks)
         .set({
@@ -351,6 +377,69 @@ export async function restrictedHardDeleteDeck(deckId: number, actorId: string):
       return false;
     }
 
+    // The immutable-release trigger recognizes this transaction-local marker.
+    // Eligibility was checked above while the deck row was locked.
+    await tx.execute(sql`
+      select set_config('ordlys.purge_deck_id', ${String(deckId)}, true)
+    `);
+
+    // Audit history is preserved without retaining the deck row. The remaining
+    // records belong exclusively to this deck and can be purged safely.
+    await tx.execute(sql`
+      update deck_audit_events
+      set deck_id = null
+      where deck_id = ${deckId}
+    `);
+    await tx.execute(sql`delete from deck_reports where deck_id = ${deckId}`);
+    await tx.execute(sql`delete from deck_follows where deck_id = ${deckId}`);
+    await tx.execute(sql`
+      update decks
+      set current_release_id = null
+      where id = ${deckId}
+    `);
+    await tx.execute(sql`
+      delete from release_vocabs membership
+      using deck_releases release
+      where membership.release_id = release.id
+        and release.deck_id = ${deckId}
+    `);
+    await tx.execute(sql`
+      delete from release_lessons membership
+      using deck_releases release
+      where membership.release_id = release.id
+        and release.deck_id = ${deckId}
+    `);
+    await tx.execute(sql`delete from deck_releases where deck_id = ${deckId}`);
+    await tx.execute(sql`
+      update vocabs
+      set current_revision_id = null
+      where lesson_id in (select id from lessons where deck_id = ${deckId})
+    `);
+    await tx.execute(sql`
+      update lessons
+      set current_revision_id = null
+      where deck_id = ${deckId}
+    `);
+    await tx.execute(sql`
+      delete from vocab_revisions revision
+      using vocabs vocab, lessons lesson
+      where revision.vocab_id = vocab.id
+        and vocab.lesson_id = lesson.id
+        and lesson.deck_id = ${deckId}
+    `);
+    await tx.execute(sql`
+      delete from vocabs vocab
+      using lessons lesson
+      where vocab.lesson_id = lesson.id
+        and lesson.deck_id = ${deckId}
+    `);
+    await tx.execute(sql`
+      delete from lesson_revisions revision
+      using lessons lesson
+      where revision.lesson_id = lesson.id
+        and lesson.deck_id = ${deckId}
+    `);
+    await tx.execute(sql`delete from lessons where deck_id = ${deckId}`);
     await tx.delete(decks).where(eq(decks.id, deckId));
     return true;
   });

@@ -1,5 +1,13 @@
 const DECK_DELETION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
+export type DeckTombstoneDependencies = {
+  lineageCount: number;
+};
+
+export function requiresDeckTombstone({ lineageCount }: DeckTombstoneDependencies): boolean {
+  return lineageCount > 0;
+}
+
 export function getDeckDeletionRetentionUntil(
   deletedAt: Date,
   protectedFollowerCount: number,

@@ -16,7 +16,7 @@ describe('getWordCompletionContent', () => {
 
   it('keeps an earlier miss visible when it affects a review', () => {
     expect(getWordCompletionContent('review', 'recovered')).toEqual({
-      title: 'Word complete - keep practicing',
+      title: 'Word completed after a miss',
       description: 'You passed both directions, but missed this word earlier.',
       isWarning: true,
     });
@@ -34,14 +34,22 @@ describe('getWordCompletionContent', () => {
 
   it('explains the memory transition and next interval after a review', () => {
     expect(getWordCompletionContent('review', 'clean', 2)).toEqual({
-      title: 'Word complete',
+      title: 'Review level increased',
       description: 'Learning 3 → Strong 4. Next review in 2 days.',
       isWarning: false,
     });
 
     expect(getWordCompletionContent('review', 'recovered', 3)).toEqual({
-      title: 'Word complete — keep practising',
-      description: 'Strong 4 → Learning 3 after an earlier miss. Next review in 1 day.',
+      title: 'Review level decreased',
+      description:
+        'An earlier miss lowered the review level: Strong 4 → Learning 3. Next review in 1 day.',
+      isWarning: true,
+    });
+
+    expect(getWordCompletionContent('review', 'recovered', 0)).toEqual({
+      title: 'Review level unchanged',
+      description:
+        'An earlier miss prevented this word from advancing. Stays at Learning 1. Next review in 4 hours.',
       isWarning: true,
     });
   });

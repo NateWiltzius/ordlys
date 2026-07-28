@@ -287,7 +287,7 @@ export const deckAuditEvents = pgTable(
   'deck_audit_events',
   {
     id: serial('id').primaryKey(),
-    deckId: integer('deck_id').references(() => decks.id),
+    deckId: integer('deck_id').references(() => decks.id, { onDelete: 'set null' }),
     actorId: uuid('actor_id'),
     eventType: varchar('event_type', { length: 64 }).notNull(),
     metadata: jsonb('metadata')

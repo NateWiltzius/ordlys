@@ -37,6 +37,11 @@ export const QUIZ_FEEDBACK_STYLES = {
     text: 'text-success',
     button: 'bg-success text-white hover:bg-success/90',
   },
+  warning: {
+    surface: 'border-warning/40 bg-warning/10',
+    text: 'text-warning',
+    button: 'bg-warning text-black hover:bg-warning/90',
+  },
   incorrect: {
     surface: 'border-danger/30 bg-danger/10',
     text: 'text-danger',

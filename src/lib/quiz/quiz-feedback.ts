@@ -73,17 +73,24 @@ export function getWordCompletionContent(
       currentSrsLevel,
       wasCorrect: wordCompletion === 'clean',
     });
-    const transition = `${getSrsLevelDisplayLabel(currentSrsLevel)} → ${getSrsLevelDisplayLabel(nextState.srsLevel)}`;
+    const currentLevelLabel = getSrsLevelDisplayLabel(currentSrsLevel);
+    const nextLevelLabel = getSrsLevelDisplayLabel(nextState.srsLevel);
+    const levelChanged = nextState.srsLevel !== currentSrsLevel;
+    const transition = levelChanged
+      ? `${currentLevelLabel} → ${nextLevelLabel}`
+      : `Stays at ${currentLevelLabel}`;
 
     return wordCompletion === 'clean'
       ? {
-          title: 'Word complete',
+          title: levelChanged ? 'Review level increased' : 'Review level unchanged',
           description: `${transition}. Next review in ${formatReviewInterval(nextState.intervalMinutes)}.`,
           isWarning: false,
         }
       : {
-          title: 'Word complete — keep practising',
-          description: `${transition} after an earlier miss. Next review in ${formatReviewInterval(nextState.intervalMinutes)}.`,
+          title: levelChanged ? 'Review level decreased' : 'Review level unchanged',
+          description: levelChanged
+            ? `An earlier miss lowered the review level: ${transition}. Next review in ${formatReviewInterval(nextState.intervalMinutes)}.`
+            : `An earlier miss prevented this word from advancing. ${transition}. Next review in ${formatReviewInterval(nextState.intervalMinutes)}.`,
           isWarning: true,
         };
   }
@@ -95,7 +102,7 @@ export function getWordCompletionContent(
         isWarning: false,
       }
     : {
-        title: 'Word complete - keep practicing',
+        title: 'Word completed after a miss',
         description: 'You passed both directions, but missed this word earlier.',
         isWarning: true,
       };
