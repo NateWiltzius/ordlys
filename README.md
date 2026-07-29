@@ -12,7 +12,7 @@ Requirements:
 
 Copy `.env.example` to `.env`, add your database and Supabase credentials, install dependencies,
 and start the development server. Keep `SUPABASE_SECRET_KEY` server-only; it is required for
-account deletion.
+account deletion only.
 
 ```bash
 npm install
@@ -27,7 +27,7 @@ example, `https://www.example.com`). Ordlys uses it for canonical links, social 
 
 ## Release checklist
 
-1. Apply every SQL file in `supabase/migrations` in order.
+1. Run `npm run drizzle-push`, then apply `supabase/migrations/0000_bootstrap.sql`.
 2. Configure the production operator name and public contact email from `.env.example`. Feedback is
    stored directly in the database.
 3. In Supabase Auth, set the production Site URL and allowed redirect URLs. Decide whether sign-up
@@ -47,6 +47,16 @@ npm run test:db-contract # Run PostgreSQL contract tests against DATABASE_URL
 npm run audit:prod   # Audit production dependencies
 npm run drizzle-push # Push the Drizzle schema to the configured database
 ```
+
+For a new database, push the Drizzle schema first. Then apply the single bootstrap SQL file:
+
+```bash
+npm run drizzle-push
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/0000_bootstrap.sql
+```
+
+The bootstrap file installs RLS, browser-role restrictions, access helper functions, and immutable
+release triggers. Historical data migrations are intentionally not part of fresh database setup.
 
 Database contract tests are kept out of the normal local test suite. CI runs them explicitly against
 its disposable PostgreSQL service; if you run them manually, they use `DATABASE_URL` and roll back
