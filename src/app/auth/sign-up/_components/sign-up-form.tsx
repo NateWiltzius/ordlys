@@ -9,6 +9,7 @@ import {
   getSignUpErrorMessage,
   MIN_SIGNUP_PASSWORD_LENGTH,
 } from '@/lib/auth/signup-guidance';
+import { buildEmailConfirmationRedirect } from '@/lib/auth/email-confirmation';
 import {
   EnvelopeIcon,
   ExclamationCircleIcon,
@@ -31,7 +32,7 @@ export function SignUpForm({ nextPath }: Props) {
   const [isResending, setIsResending] = useState(false);
   const passwordGuidance = useMemo(() => getPasswordGuidance(password), [password]);
 
-  const emailRedirectTo = () => `${window.location.origin}${nextPath}`;
+  const emailRedirectTo = () => buildEmailConfirmationRedirect(window.location.origin, nextPath);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

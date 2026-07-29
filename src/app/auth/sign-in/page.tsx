@@ -10,11 +10,16 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 };
 
 export default async function SignInPage({ searchParams }: Props) {
-  const nextPath = safeInternalRedirect((await searchParams).next);
+  const params = await searchParams;
+  const nextPath = safeInternalRedirect(params.next);
+  const initialErrorMessage =
+    params.error === 'confirmation_failed'
+      ? 'That confirmation link is invalid or has expired. Request a new email and try again.'
+      : null;
 
   return (
     <AuthShell
@@ -32,7 +37,7 @@ export default async function SignInPage({ searchParams }: Props) {
         </p>
       }
     >
-      <SignInForm nextPath={nextPath} />
+      <SignInForm nextPath={nextPath} initialErrorMessage={initialErrorMessage} />
     </AuthShell>
   );
 }

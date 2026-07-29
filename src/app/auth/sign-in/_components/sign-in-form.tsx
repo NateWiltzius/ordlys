@@ -7,13 +7,14 @@ import Link from 'next/link';
 import StatusAlert from '@/components/shared/status-alert';
 
 type Props = {
+  initialErrorMessage?: string | null;
   nextPath: string;
 };
 
-export function SignInForm({ nextPath }: Props) {
+export function SignInForm({ initialErrorMessage = null, nextPath }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(initialErrorMessage);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
