@@ -4,6 +4,9 @@ import { resolveAccessibleReleaseId } from '../../lib/deck-access-policy';
 
 export function activeReleaseIdExpression(userId: string, allowPublic: boolean) {
   // SQL counterpart to resolveAccessibleReleaseId. Policy tests cover this precedence order.
+  // Raw SQL subqueries must qualify outer columns because `deck_follows` also has an `id`.
+  const outerDeckId = sql.raw('"decks"."id"');
+  const outerCurrentReleaseId = sql.raw('"decks"."current_release_id"');
   const ownerFallback = allowPublic
     ? sql`when ${decks.ownerId} = ${userId} and ${decks.status} <> 'moderation_removed' then ${decks.currentReleaseId}`
     : sql``;
@@ -15,16 +18,16 @@ export function activeReleaseIdExpression(userId: string, allowPublic: boolean) 
       ${ownerFallback}
       when ${decks.status} <> 'moderation_removed' and exists (
         select 1 from deck_follows df
-        where df.deck_id = ${decks.id} and df.user_id = ${userId}
+        where df.deck_id = ${outerDeckId} and df.user_id = ${userId}
           and df.status in ('active', 'frozen')
       ) then (
         select case
           when df.update_mode = 'manual' then coalesce(df.pinned_release_id, df.last_seen_release_id)
           when df.status = 'frozen' then df.last_seen_release_id
-          else ${decks.currentReleaseId}
+          else ${outerCurrentReleaseId}
         end
         from deck_follows df
-        where df.deck_id = ${decks.id} and df.user_id = ${userId}
+        where df.deck_id = ${outerDeckId} and df.user_id = ${userId}
         limit 1
       )
       ${publicFallback}

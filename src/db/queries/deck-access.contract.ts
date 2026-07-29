@@ -26,11 +26,11 @@ describe('deck access SQL/TypeScript policy contract', () => {
       prepare: false,
       ssl: contractDatabaseUrl.includes('localhost') ? false : 'require',
     });
+    const database = drizzle({ client: connection });
     const rollback = new Error('ROLLBACK_CONTRACT_FIXTURES');
 
     try {
-      await connection.begin(async transaction => {
-        const database = drizzle(transaction);
+      await database.transaction(async transaction => {
         const userId = randomUUID();
         const ownerId = randomUUID();
         const cases: Array<{
@@ -93,7 +93,7 @@ describe('deck access SQL/TypeScript policy contract', () => {
         ];
 
         for (const contractCase of cases) {
-          const [createdDeck] = await database
+          const [createdDeck] = await transaction
             .insert(decks)
             .values({
               ownerId: contractCase.deck.ownerId,
@@ -102,7 +102,7 @@ describe('deck access SQL/TypeScript policy contract', () => {
               visibility: contractCase.deck.visibility,
             })
             .returning({ id: decks.id });
-          const [previousRelease, currentRelease] = await database
+          const [previousRelease, currentRelease] = await transaction
             .insert(deckReleases)
             .values([
               {
@@ -125,7 +125,7 @@ describe('deck access SQL/TypeScript policy contract', () => {
               },
             ])
             .returning({ id: deckReleases.id });
-          await database
+          await transaction
             .update(decks)
             .set({ currentReleaseId: currentRelease.id })
             .where(eq(decks.id, createdDeck.id));
@@ -144,7 +144,7 @@ describe('deck access SQL/TypeScript policy contract', () => {
               pinnedReleaseId: releaseId(contractCase.follow.pinned),
               lastSeenReleaseId: releaseId(contractCase.follow.lastSeen),
             };
-            await database.insert(deckFollows).values({
+            await transaction.insert(deckFollows).values({
               userId,
               deckId: createdDeck.id,
               status: follow.status,
@@ -154,7 +154,7 @@ describe('deck access SQL/TypeScript policy contract', () => {
             });
           }
 
-          const [sqlResult] = await database
+          const [sqlResult] = await transaction
             .select({ releaseId: activeReleaseIdExpression(userId, contractCase.allowPublic) })
             .from(decks)
             .where(eq(decks.id, createdDeck.id));
@@ -171,7 +171,7 @@ describe('deck access SQL/TypeScript policy contract', () => {
           expect(sqlResult.releaseId, contractCase.name).toBe(expected);
 
           for (const releaseId of [previousRelease.id, currentRelease.id]) {
-            const sqlAccess = await database
+            const sqlAccess = await transaction
               .select({ id: deckReleases.id })
               .from(deckReleases)
               .innerJoin(decks, eq(decks.id, deckReleases.deckId))
@@ -203,11 +203,11 @@ describe('deck access SQL/TypeScript policy contract', () => {
           }
         }
 
-        const [authoringDeck] = await database
+        const [authoringDeck] = await transaction
           .insert(decks)
           .values({ ownerId: userId, title: 'Authoring contract' })
           .returning({ id: decks.id });
-        const [activeLesson, removedLesson] = await database
+        const [activeLesson, removedLesson] = await transaction
           .insert(lessons)
           .values([
             { deckId: authoringDeck.id, title: 'Active lesson', orderIndex: 0 },
@@ -219,7 +219,7 @@ describe('deck access SQL/TypeScript policy contract', () => {
             },
           ])
           .returning({ id: lessons.id });
-        const [activeVocab, removedVocab, nestedUnderRemovedLesson] = await database
+        const [activeVocab, removedVocab, nestedUnderRemovedLesson] = await transaction
           .insert(vocabs)
           .values([
             { lessonId: activeLesson.id, front: 'active', back: 'active', orderIndex: 0 },
@@ -240,13 +240,13 @@ describe('deck access SQL/TypeScript policy contract', () => {
           .returning({ id: vocabs.id });
 
         const editableLesson = (lessonId: number) =>
-          database
+          transaction
             .select({ id: lessons.id })
             .from(lessons)
             .innerJoin(decks, eq(decks.id, lessons.deckId))
             .where(activeEditableLessonCondition(lessonId, userId));
         const editableVocab = (vocabId: number) =>
-          database
+          transaction
             .select({ id: vocabs.id })
             .from(vocabs)
             .innerJoin(lessons, eq(lessons.id, vocabs.lessonId))
