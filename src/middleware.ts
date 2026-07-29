@@ -1,7 +1,7 @@
-import { updateSession } from '@/lib/supabase/proxy';
-import { type NextRequest } from 'next/server';
 import { getSupabasePublicConfig } from '@/config/supabase';
 import { buildContentSecurityPolicy } from '@/lib/security/content-security-policy';
+import { updateSession } from '@/lib/supabase/proxy';
+import { type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const nonce = btoa(crypto.randomUUID());

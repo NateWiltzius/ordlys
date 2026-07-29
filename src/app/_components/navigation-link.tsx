@@ -21,6 +21,7 @@ export default function NavigationLink({ href, label, variant, onNavigate }: Pro
   return (
     <Link
       href={href}
+      prefetch={false}
       aria-current={isActive ? 'page' : undefined}
       className={navigationItemClassName(variant, isActive)}
       onClick={onNavigate}

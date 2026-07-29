@@ -33,9 +33,6 @@ export async function saveQuizAttemptAction(input: SaveQuizAttemptInput) {
     revalidatePath('/progress');
     revalidatePath('/decks');
     revalidatePath(`/decks/${result.deckId}`);
-    revalidatePath('/review');
-    revalidatePath(`/decks/${result.deckId}/review`);
-    revalidatePath(`/decks/${result.deckId}/learn`);
   }
 
   return result;

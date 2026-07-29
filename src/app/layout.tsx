@@ -74,12 +74,14 @@ export default async function RootLayout({ children }: PropsWithChildren) {
       <head>
         <script
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){var p=location.pathname;var active=p==='/review'||p==='/practice/recent-mistakes'||/^\\/decks\\/[^/]+\\/(?:learn|review)$/.test(p)||/^\\/decks\\/[^/]+\\/placement\\/[^/]+$/.test(p);if(active)document.documentElement.dataset.quizActive='true'})();`,
           }}
         />
         <script
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var saved=localStorage.getItem('theme');var dark=saved==='dark'||(!saved&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);document.documentElement.style.colorScheme=dark?'dark':'light'}catch(e){}})();`,
           }}
@@ -110,16 +112,32 @@ export default async function RootLayout({ children }: PropsWithChildren) {
             data-app-footer
             className="flex justify-center gap-4 border-t border-default-200 px-4 py-6 text-sm text-default-500"
           >
-            <Link href="/how-to-use" className="rounded-sm hover:text-primary hover:underline">
+            <Link
+              href="/how-to-use"
+              prefetch={false}
+              className="rounded-sm hover:text-primary hover:underline"
+            >
               How to use
             </Link>
-            <Link href="/feedback" className="rounded-sm hover:text-primary hover:underline">
+            <Link
+              href="/feedback"
+              prefetch={false}
+              className="rounded-sm hover:text-primary hover:underline"
+            >
               Feedback
             </Link>
-            <Link href="/privacy" className="rounded-sm hover:text-primary hover:underline">
+            <Link
+              href="/privacy"
+              prefetch={false}
+              className="rounded-sm hover:text-primary hover:underline"
+            >
               Privacy
             </Link>
-            <Link href="/terms" className="rounded-sm hover:text-primary hover:underline">
+            <Link
+              href="/terms"
+              prefetch={false}
+              className="rounded-sm hover:text-primary hover:underline"
+            >
               Terms
             </Link>
           </footer>

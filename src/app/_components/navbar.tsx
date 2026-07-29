@@ -21,7 +21,7 @@ export default function Navbar() {
       className="sticky top-0 z-50 flex w-full items-center justify-between gap-4 border-b border-default-200 bg-background/95 px-4 py-3 shadow-sm backdrop-blur sm:py-4"
     >
       <div className="flex shrink-0 items-center gap-2">
-        <Link href={homeHref} className="text-2xl font-semibold">
+        <Link href={homeHref} prefetch={false} className="text-2xl font-semibold">
           Ordlys
         </Link>
         <div className="group static sm:relative">
