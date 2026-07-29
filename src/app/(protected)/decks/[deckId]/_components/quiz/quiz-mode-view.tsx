@@ -153,6 +153,7 @@ function ActiveQuiz({
           studyMode={studyMode}
           wordCompletion={wordCompletion}
           recordAttempts={recordAttempts}
+          pronunciationEnabled
           onContinue={() => controller.continueQuiz()}
           onAcceptAnyway={
             allowAnswerOverride &&
@@ -171,6 +172,7 @@ function ActiveQuiz({
           frontLanguage={controller.currentSourceItem?.frontLanguage ?? null}
           backLanguage={controller.currentSourceItem?.backLanguage ?? null}
           tone={tone}
+          pronunciationEnabled
           onAnswerChange={controller.changeAnswer}
           onSubmit={controller.submitAnswer}
           onGiveUp={controller.giveUp}
