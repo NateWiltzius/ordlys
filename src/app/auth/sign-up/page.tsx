@@ -1,8 +1,10 @@
 import { SignUpForm } from '@/app/auth/sign-up/_components/sign-up-form';
 import AuthShell from '@/app/auth/_components/auth-shell';
+import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import { safeInternalRedirect } from '@/lib/redirect';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Create account',
@@ -14,7 +16,9 @@ type Props = {
 };
 
 export default async function SignUpPage({ searchParams }: Props) {
-  const nextPath = safeInternalRedirect((await searchParams).next);
+  const [params, userId] = await Promise.all([searchParams, getCurrentUserIdOrNull()]);
+  const nextPath = safeInternalRedirect(params.next);
+  if (userId) redirect(nextPath);
 
   return (
     <AuthShell

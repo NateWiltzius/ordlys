@@ -1,8 +1,10 @@
 import { SignInForm } from '@/app/auth/sign-in/_components/sign-in-form';
 import AuthShell from '@/app/auth/_components/auth-shell';
+import { getCurrentUserIdOrNull } from '@/lib/auth/get-current-user-id';
 import { safeInternalRedirect } from '@/lib/redirect';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Sign in',
@@ -14,8 +16,10 @@ type Props = {
 };
 
 export default async function SignInPage({ searchParams }: Props) {
-  const params = await searchParams;
+  const [params, userId] = await Promise.all([searchParams, getCurrentUserIdOrNull()]);
   const nextPath = safeInternalRedirect(params.next);
+  if (userId) redirect(nextPath);
+
   const initialErrorMessage =
     params.error === 'confirmation_failed'
       ? 'That confirmation link is invalid or has expired. Request a new email and try again.'

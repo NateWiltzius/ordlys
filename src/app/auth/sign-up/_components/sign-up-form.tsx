@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Input, InputGroup, Label } from '@heroui/react';
 import { createClient } from '@/lib/supabase/client';
 import StatusAlert from '@/components/shared/status-alert';
@@ -10,6 +10,10 @@ import {
   MIN_SIGNUP_PASSWORD_LENGTH,
 } from '@/lib/auth/signup-guidance';
 import { buildEmailConfirmationRedirect } from '@/lib/auth/email-confirmation';
+import {
+  getResendCooldownSeconds,
+  RESEND_CONFIRMATION_COOLDOWN_MS,
+} from '@/lib/auth/resend-cooldown';
 import {
   EnvelopeIcon,
   ExclamationCircleIcon,
@@ -30,9 +34,31 @@ export function SignUpForm({ nextPath }: Props) {
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [resendAvailableAt, setResendAvailableAt] = useState<number | null>(null);
+  const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
   const passwordGuidance = useMemo(() => getPasswordGuidance(password), [password]);
 
   const emailRedirectTo = () => buildEmailConfirmationRedirect(window.location.origin, nextPath);
+
+  const startResendCooldown = () => {
+    const availableAt = Date.now() + RESEND_CONFIRMATION_COOLDOWN_MS;
+    setResendAvailableAt(availableAt);
+    setResendCooldownSeconds(getResendCooldownSeconds(availableAt, Date.now()));
+  };
+
+  useEffect(() => {
+    if (resendAvailableAt === null) return;
+
+    const updateCooldown = () => {
+      const secondsRemaining = getResendCooldownSeconds(resendAvailableAt, Date.now());
+      setResendCooldownSeconds(secondsRemaining);
+      if (secondsRemaining === 0) window.clearInterval(intervalId);
+    };
+    const intervalId = window.setInterval(updateCooldown, 1_000);
+    updateCooldown();
+
+    return () => window.clearInterval(intervalId);
+  }, [resendAvailableAt]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -59,6 +85,7 @@ export function SignUpForm({ nextPath }: Props) {
 
       if (!data.session) {
         setConfirmationEmail(normalizedEmail);
+        startResendCooldown();
         return;
       }
 
@@ -71,7 +98,7 @@ export function SignUpForm({ nextPath }: Props) {
   };
 
   const handleResend = async () => {
-    if (!confirmationEmail || isResending) return;
+    if (!confirmationEmail || isResending || resendCooldownSeconds > 0) return;
 
     setErrorMessage(null);
     setResendMessage(null);
@@ -94,6 +121,7 @@ export function SignUpForm({ nextPath }: Props) {
       }
 
       setResendMessage('A new confirmation email is on its way.');
+      startResendCooldown();
     } catch (error) {
       setErrorMessage(
         getSignUpErrorMessage(error, 'Unable to resend the confirmation email right now.'),
@@ -133,9 +161,14 @@ export function SignUpForm({ nextPath }: Props) {
             variant="secondary"
             className="w-full"
             isPending={isResending}
+            isDisabled={resendCooldownSeconds > 0}
             onPress={handleResend}
           >
-            {isResending ? 'Sending...' : 'Resend confirmation email'}
+            {isResending
+              ? 'Sending...'
+              : resendCooldownSeconds > 0
+                ? `Resend available in ${resendCooldownSeconds}s`
+                : 'Resend confirmation email'}
           </Button>
           <Button
             variant="tertiary"
@@ -146,6 +179,8 @@ export function SignUpForm({ nextPath }: Props) {
               setPassword('');
               setErrorMessage(null);
               setResendMessage(null);
+              setResendAvailableAt(null);
+              setResendCooldownSeconds(0);
             }}
           >
             Change email
