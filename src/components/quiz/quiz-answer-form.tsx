@@ -6,6 +6,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
 import { useKeepAboveKeyboard } from '@/hooks/use-keep-above-keyboard';
 import { getQuizLanguageLabels } from '@/lib/quiz/quiz-language-labels';
+import PronunciationButton from '@/components/shared/pronunciation-button';
 
 type Props = {
   prompt: string;
@@ -17,6 +18,7 @@ type Props = {
   tone: StudyTone;
   autoFocus?: boolean;
   keepAboveKeyboard?: boolean;
+  pronunciationEnabled?: boolean;
   onAnswerChange: (answer: string) => void;
   onSubmit: () => void;
   onGiveUp?: () => void;
@@ -34,6 +36,7 @@ export default function QuizAnswerForm({
   tone,
   autoFocus = true,
   keepAboveKeyboard = true,
+  pronunciationEnabled = false,
   onAnswerChange,
   onSubmit,
   onGiveUp,
@@ -108,6 +111,15 @@ export default function QuizAnswerForm({
             >
               {prompt}
             </p>
+            {pronunciationEnabled ? (
+              <div className="-mt-5 mb-2 flex justify-center sm:-mt-7">
+                <PronunciationButton
+                  text={prompt}
+                  language={shownLanguageCode}
+                  label={`${promptLabel} pronunciation`}
+                />
+              </div>
+            ) : null}
             {hint ? (
               <p className="text-center text-sm text-default-500">
                 <span className="font-semibold text-default-700">Hint:</span> {hint}

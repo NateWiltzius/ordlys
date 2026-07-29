@@ -17,6 +17,7 @@ import {
   WordCompletion,
 } from '@/lib/quiz/quiz-feedback';
 import { normalizeAnswer } from '@/lib/quiz/normalize';
+import PronunciationButton from '@/components/shared/pronunciation-button';
 
 type Props = {
   feedback: QuizFeedback;
@@ -26,6 +27,7 @@ type Props = {
   onAcceptAnyway?: () => void;
   keyboardShortcutEnabled?: boolean;
   recordAttempts?: boolean;
+  pronunciationEnabled?: boolean;
 };
 
 export default function QuizFeedbackPanel({
@@ -36,6 +38,7 @@ export default function QuizFeedbackPanel({
   onAcceptAnyway,
   keyboardShortcutEnabled = true,
   recordAttempts = true,
+  pronunciationEnabled = false,
 }: Props) {
   const answerStyles = feedback.isCorrect
     ? QUIZ_FEEDBACK_STYLES.correct
@@ -65,6 +68,10 @@ export default function QuizFeedbackPanel({
     feedback.quizItem.direction === 'btf'
       ? feedback.quizItem.backLanguage
       : feedback.quizItem.frontLanguage;
+  const answerLanguageCode =
+    feedback.quizItem.direction === 'btf'
+      ? feedback.quizItem.frontLanguage
+      : feedback.quizItem.backLanguage;
   const languageLabels = getQuizLanguageLabels(
     feedback.quizItem.direction,
     feedback.quizItem.frontLanguage,
@@ -180,6 +187,14 @@ export default function QuizFeedbackPanel({
         >
           {feedback.quizItem.prompt}
         </p>
+        {pronunciationEnabled ? (
+          <PronunciationButton
+            text={feedback.quizItem.prompt}
+            language={shownLanguageCode}
+            label={`${languageLabels.promptLabel} pronunciation`}
+            className="mt-3"
+          />
+        ) : null}
       </div>
 
       <div className="rounded-xl bg-default-50 px-4 py-1">
@@ -188,7 +203,20 @@ export default function QuizFeedbackPanel({
           <AnswerRow label="Reading" value={feedback.quizItem.reading} />
         ) : null}
         <AnswerRow label="Your answer" value={feedback.submittedAnswer.trim() || 'No answer'} />
-        <AnswerRow label={languageLabels.correctAnswerRowLabel} value={feedback.quizItem.answer} />
+        <AnswerRow
+          label={languageLabels.correctAnswerRowLabel}
+          value={feedback.quizItem.answer}
+          language={answerLanguageCode}
+          action={
+            pronunciationEnabled ? (
+              <PronunciationButton
+                text={feedback.quizItem.answer}
+                language={answerLanguageCode}
+                label={`${languageLabels.answerLabel} pronunciation`}
+              />
+            ) : undefined
+          }
+        />
         {acceptedAlternatives.length > 0 ? (
           <AnswerRow label="Also accepted" value={acceptedAlternatives.join(' · ')} />
         ) : null}
