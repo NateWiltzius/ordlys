@@ -4,6 +4,7 @@ import {
   deckFollows,
   deckReleases,
   decks,
+  lessonRevisions,
   lessons,
   releaseLessons,
   releaseVocabs,
@@ -23,10 +24,13 @@ import {
 import { assertAuthoringCapacity } from '@/lib/authoring-quota';
 import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-quota.queries';
 
-export const createDeck = async (deck: CreateDeck) => {
+export const createDeck = async (deck: CreateDeck, firstLessonTitle: string) => {
   return db.transaction(async tx => {
     await lockAuthoringAccount(tx, deck.ownerId);
-    assertAuthoringCapacity(await getAuthoringUsage(tx, deck.ownerId), { activeDecks: 1 });
+    assertAuthoringCapacity(await getAuthoringUsage(tx, deck.ownerId), {
+      activeDecks: 1,
+      revisionsToday: 1,
+    });
     const [created] = await tx
       .insert(decks)
       .values({
@@ -45,7 +49,27 @@ export const createDeck = async (deck: CreateDeck) => {
       actorId: deck.ownerId,
       eventType: 'deck.created',
     });
-    return created.id;
+    const [createdLesson] = await tx
+      .insert(lessons)
+      .values({
+        title: firstLessonTitle,
+        deckId: created.id,
+        orderIndex: 0,
+      })
+      .returning({ id: lessons.id });
+    const [createdLessonRevision] = await tx
+      .insert(lessonRevisions)
+      .values({
+        lessonId: createdLesson.id,
+        title: firstLessonTitle,
+        creatorId: deck.ownerId,
+      })
+      .returning({ id: lessonRevisions.id });
+    await tx
+      .update(lessons)
+      .set({ currentRevisionId: createdLessonRevision.id })
+      .where(eq(lessons.id, createdLesson.id));
+    return { deckId: created.id, lessonId: createdLesson.id };
   });
 };
 

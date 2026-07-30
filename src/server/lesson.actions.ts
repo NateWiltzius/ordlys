@@ -23,7 +23,7 @@ export async function createLessonAction(lesson: CreateLesson) {
       throw new Error('Invalid deck ID.');
     }
 
-    await createLesson(
+    const lessonId = await createLesson(
       {
         title: normalizedTitle,
         deckId,
@@ -31,6 +31,7 @@ export async function createLessonAction(lesson: CreateLesson) {
       await getCurrentUserId(),
     );
     revalidatePath(`/decks/${deckId}/edit`);
+    return lessonId;
   });
 }
 
@@ -81,6 +82,5 @@ export async function moveLessonAction(lessonId: number, direction: OrderDirecti
 
     const deckId = await moveLesson(lessonId, await getCurrentUserId(), direction);
     revalidatePath(`/decks/${deckId}`);
-    revalidatePath(`/decks/${deckId}/edit`);
   });
 }

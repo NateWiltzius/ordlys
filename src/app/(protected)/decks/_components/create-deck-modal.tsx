@@ -2,6 +2,7 @@
 
 import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields';
 import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
+import LessonFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/lesson-form-fields';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 import { parseDeckStudyDirection } from '@/lib/deck-study-direction';
@@ -40,6 +41,7 @@ export default function CreateDeckModal({
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const firstLessonTitle = String(formData.get('firstLessonTitle') ?? '');
     const deck: CreateDeckInput = {
       title: String(formData.get('title') ?? ''),
       description: String(formData.get('description') ?? ''),
@@ -52,14 +54,14 @@ export default function CreateDeckModal({
     setIsSubmitting(true);
     try {
       setError(null);
-      const result = await createDeckAction(deck);
+      const result = await createDeckAction(deck, firstLessonTitle);
       if (isActionFailure(result)) {
         setError(result.message);
         return;
       }
       form.reset();
       modalState.close();
-      router.push(`/decks/${result}/edit`);
+      router.push(`/decks/${result.deckId}/edit?lesson=${result.lessonId}`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not create the deck.');
     } finally {
@@ -85,12 +87,25 @@ export default function CreateDeckModal({
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create deck</Modal.Heading>
               <p className="text-sm text-default-500">
-                Give your deck a name. You can add cards and publishing details next.
+                Name the deck and its first lesson, then start adding cards.
               </p>
             </Modal.Header>
             <form onSubmit={handleCreateDeck} className="flex min-h-0 flex-1 flex-col">
               <Modal.Body className="space-y-5">
-                <DeckFormFields idPrefix="create-deck" autoFocus />
+                <DeckFormFields
+                  idPrefix="create-deck"
+                  autoFocus
+                  collapseSettings
+                  afterTitle={
+                    <LessonFormFields
+                      id="create-deck-first-lesson"
+                      defaultTitle="Lesson 1"
+                      label="First lesson"
+                      helpText="You can rename it or add more lessons from the editor."
+                      name="firstLessonTitle"
+                    />
+                  }
+                />
                 <p className="text-xs leading-5 text-default-500">
                   New decks are private until you choose to publish them.
                 </p>
@@ -107,7 +122,7 @@ export default function CreateDeckModal({
                   Cancel
                 </Button>
                 <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
-                  Create deck
+                  Create and start editing
                 </Button>
               </Modal.Footer>
             </form>

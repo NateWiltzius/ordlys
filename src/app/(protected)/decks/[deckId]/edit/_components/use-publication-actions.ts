@@ -23,6 +23,7 @@ export function usePublicationActions() {
       operation: () => Promise<unknown>,
       success: string,
       leavePage = false,
+      onSuccess?: () => void,
     ) => {
       setFeedback(null);
       setActiveOperation(operationName);
@@ -36,6 +37,7 @@ export function usePublicationActions() {
           }
 
           setFeedback({ status: 'success', text: success });
+          onSuccess?.();
           if (leavePage) router.push('/decks');
           else router.refresh();
         } catch (error) {

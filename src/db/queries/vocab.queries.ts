@@ -119,6 +119,72 @@ export const createVocab = async (
   });
 };
 
+export const createVocabs = async (
+  lessonId: number,
+  cards: NormalizedVocabContent[],
+  userId: string,
+): Promise<{ deckId: number; vocabIds: number[] }> => {
+  return db.transaction(async tx => {
+    await lockAuthoringAccount(tx, userId);
+    const [lesson] = await tx
+      .select({ deckId: lessons.deckId })
+      .from(lessons)
+      .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .where(activeEditableLessonCondition(lessonId, userId))
+      .for('update')
+      .limit(1);
+
+    if (!lesson) throw new Error('Lesson not found or access denied.');
+    assertAuthoringCapacity(await getAuthoringUsage(tx, userId, lesson.deckId), {
+      deckCards: cards.length,
+      logicalVocabs: cards.length,
+      revisionsToday: cards.length,
+    });
+
+    const [order] = await tx
+      .select({
+        nextIndex: sql<number>`coalesce(max(${vocabs.orderIndex}), -1) + 1`,
+      })
+      .from(vocabs)
+      .where(eq(vocabs.lessonId, lessonId));
+    const firstOrderIndex = Number(order.nextIndex);
+
+    const created = await tx
+      .insert(vocabs)
+      .values(
+        cards.map((card, index) => ({
+          lessonId,
+          ...vocabContentValues(card),
+          orderIndex: firstOrderIndex + index,
+        })),
+      )
+      .returning({ id: vocabs.id, orderIndex: vocabs.orderIndex });
+    const createdByOrder = new Map(created.map(card => [card.orderIndex, card.id]));
+    const vocabIds = cards.map((_, index) => {
+      const vocabId = createdByOrder.get(firstOrderIndex + index);
+      if (!vocabId) throw new Error('Could not preserve the card order.');
+      return vocabId;
+    });
+
+    const revisions = await tx
+      .insert(vocabRevisions)
+      .values(cards.map((card, index) => vocabRevisionValues(vocabIds[index], card, userId)))
+      .returning({ id: vocabRevisions.id, vocabId: vocabRevisions.vocabId });
+    const revisionByVocab = new Map(revisions.map(revision => [revision.vocabId, revision.id]));
+
+    for (const vocabId of vocabIds) {
+      const revisionId = revisionByVocab.get(vocabId);
+      if (!revisionId) throw new Error('Could not create a card revision.');
+      await tx
+        .update(vocabs)
+        .set({ currentRevisionId: revisionId, rootVocabId: vocabId })
+        .where(eq(vocabs.id, vocabId));
+    }
+
+    return { deckId: lesson.deckId, vocabIds };
+  });
+};
+
 export const moveVocab = async (
   vocabId: number,
   userId: string,

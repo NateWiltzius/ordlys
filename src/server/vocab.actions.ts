@@ -2,6 +2,7 @@
 
 import {
   createVocab,
+  createVocabs,
   deleteVocab,
   moveVocab,
   moveVocabToPosition,
@@ -10,7 +11,7 @@ import {
   updateVocab,
 } from '@/db/queries/vocab.queries';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
-import { CreateVocab, UpdateVocabInput } from '@/types/vocab.types';
+import { BulkCreateVocabInput, CreateVocab, UpdateVocabInput } from '@/types/vocab.types';
 import { revalidatePath } from 'next/cache';
 import { OrderDirection } from '@/types/order.types';
 import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
@@ -24,14 +25,28 @@ export async function createVocabAction(vocab: CreateVocab) {
       throw new Error('Invalid lesson ID.');
     }
 
-    const deckId = await createVocab(
+    await createVocab(
       {
         lessonId,
         ...normalizeVocabContent(vocab),
       },
       await getCurrentUserId(),
     );
-    revalidatePath(`/decks/${deckId}/edit`);
+  });
+}
+
+export async function createVocabsAction(lessonId: number, cards: BulkCreateVocabInput[]) {
+  return withExpectedError(async () => {
+    if (typeof lessonId !== 'number' || !Number.isInteger(lessonId) || lessonId <= 0) {
+      throw new Error('Invalid lesson ID.');
+    }
+    if (!Array.isArray(cards) || cards.length === 0 || cards.length > 100) {
+      throw new Error('Create between 1 and 100 cards at a time.');
+    }
+
+    const normalizedCards = cards.map(card => normalizeVocabContent(card));
+    const result = await createVocabs(lessonId, normalizedCards, await getCurrentUserId());
+    return result.vocabIds;
   });
 }
 
@@ -47,7 +62,6 @@ export async function moveVocabAction(vocabId: number, direction: OrderDirection
 
     const deckId = await moveVocab(vocabId, await getCurrentUserId(), direction);
     revalidatePath(`/decks/${deckId}`);
-    revalidatePath(`/decks/${deckId}/edit`);
   });
 }
 
@@ -64,7 +78,6 @@ export async function moveVocabToPositionAction(vocabId: number, position: numbe
       parsedPosition - 1,
     );
     revalidatePath(`/decks/${deckId}`);
-    revalidatePath(`/decks/${deckId}/edit`);
   });
 }
 
@@ -74,14 +87,7 @@ export async function updateVocabAction(vocabId: number, vocab: UpdateVocabInput
       throw new Error('Invalid vocabulary ID.');
     }
 
-    const deckId = await updateVocab(
-      vocabId,
-      normalizeVocabUpdate(vocab),
-      await getCurrentUserId(),
-    );
-
-    revalidatePath(`/decks/${deckId}`);
-    revalidatePath(`/decks/${deckId}/edit`);
+    await updateVocab(vocabId, normalizeVocabUpdate(vocab), await getCurrentUserId());
   });
 }
 
@@ -101,8 +107,6 @@ export async function replaceVocabAction(vocabId: number, vocab: UpdateVocabInpu
     if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
     const normalized = normalizeVocabContent(vocab);
     const result = await replaceVocab(parsedVocabId, normalized, await getCurrentUserId());
-    revalidatePath(`/decks/${result.deckId}`);
-    revalidatePath(`/decks/${result.deckId}/edit`);
     return result.vocabId;
   });
 }

@@ -13,6 +13,7 @@ type Props = {
   showSrsLevels?: boolean;
   frontLabel?: string;
   backLabel?: string;
+  highlightedVocabId?: number | null;
 };
 
 export default function VocabTable({
@@ -24,6 +25,7 @@ export default function VocabTable({
   showSrsLevels = false,
   frontLabel = 'Front',
   backLabel = 'Back',
+  highlightedVocabId,
 }: Props) {
   if (vocabs.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
@@ -54,6 +56,7 @@ export default function VocabTable({
             showSrsLevel={showSrsLevels}
             frontLabel={frontLabel}
             backLabel={backLabel}
+            isHighlighted={highlightedVocabId === vocab.id}
           />
         ))}
       </div>

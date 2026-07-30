@@ -1,3 +1,5 @@
+'use client';
+
 import type { DeckProvenance } from '@/db/queries/deck-release.queries';
 import {
   archiveDeckAction,
@@ -7,7 +9,9 @@ import {
 } from '@/server/deck-release.actions';
 import type { DeckRelease } from '@/types/deck-release.types';
 import type { Deck } from '@/types/deck.types';
-import { Alert, Button, Description, Label, ListBox, Select } from '@heroui/react';
+import ConfirmationDialog from '@/components/shared/confirmation-dialog';
+import { Alert, Button, Chip, Description, Label, ListBox, Select } from '@heroui/react';
+import { useState } from 'react';
 import type {
   PublicationOperation,
   usePublicationActions,
@@ -72,7 +76,7 @@ export function DeckVisibilitySetting({
           ? provenance && !sourceAllowsPublicForks
             ? 'The original deck requires this copy to remain private.'
             : 'Private is only visible to you; unlisted requires a link; public appears in discovery.'
-          : 'Available after you publish the deck.'}
+          : 'Publish the first version before changing who can find this deck.'}
       </Description>
       <Select.Popover>
         <ListBox>
@@ -108,7 +112,7 @@ export function DeckCopyPolicySetting({
   return (
     <>
       {provenance ? (
-        <Alert status="default">
+        <Alert status="default" className="mb-4">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>Original deck</Alert.Title>
@@ -172,25 +176,56 @@ export function DeckCopyPolicySetting({
   );
 }
 
-export function PublicationHistory({ releases }: { releases: DeckRelease[] }) {
-  if (releases.length === 0) return null;
+export function PublicationHistory({
+  releases,
+  currentReleaseId,
+}: {
+  releases: DeckRelease[];
+  currentReleaseId: number | null;
+}) {
+  if (releases.length === 0) {
+    return (
+      <section>
+        <h3 className="text-sm font-semibold">Release history</h3>
+        <p className="mt-1 text-sm text-default-500">Your published versions will appear here.</p>
+      </section>
+    );
+  }
 
   return (
-    <div>
-      <h3 className="text-sm font-semibold">Published versions</h3>
-      <ol className="mt-2 space-y-2 text-sm">
+    <section>
+      <h3 className="text-sm font-semibold">Release history</h3>
+      <ol className="mt-3 divide-y divide-default-200 overflow-hidden rounded-lg border border-default-200">
         {releases.map(release => (
-          <li key={release.id} className="flex items-start justify-between gap-4 text-default-600">
-            <span>
-              Version {release.version} · {release.changeSummary}
-            </span>
-            <time className="shrink-0" dateTime={release.createdAt.toISOString()}>
-              {release.createdAt.toLocaleDateString()}
+          <li
+            key={release.id}
+            className="flex flex-col gap-1 bg-content1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold">Version {release.version}</span>
+                {release.id === currentReleaseId ? (
+                  <Chip size="sm" variant="soft">
+                    Current
+                  </Chip>
+                ) : null}
+              </div>
+              <p className="mt-1 text-sm text-default-600">{release.changeSummary}</p>
+            </div>
+            <time
+              className="shrink-0 text-xs text-default-500"
+              dateTime={release.createdAt.toISOString()}
+            >
+              {release.createdAt.toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              })}
             </time>
           </li>
         ))}
       </ol>
-    </div>
+    </section>
   );
 }
 
@@ -205,34 +240,74 @@ export function DeckLifecycleActions({
   activeOperation: PublicationOperation | null;
   run: RunPublicationOperation;
 }) {
+  const [confirmation, setConfirmation] = useState<'archive' | 'delete' | null>(null);
+  const isArchiving = pending && activeOperation === 'archive';
+  const isDeleting = pending && activeOperation === 'delete';
+
   return (
-    <div className="space-y-3 border-t border-default-200 pt-4">
+    <section className="space-y-3 border-t border-default-200 pt-5">
       <div>
-        <h3 className="text-sm font-semibold">Deck status</h3>
-        <p className="text-sm text-default-500">
+        <h3 className="text-sm font-semibold">Deck lifecycle</h3>
+        <p className="mt-1 text-sm text-default-500">
           Archive a deck temporarily or move it to deleted decks.
         </p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2 min-[420px]:flex-row">
         <Button
           variant="secondary"
-          isPending={pending && activeOperation === 'archive'}
-          isDisabled={pending && activeOperation !== 'archive'}
-          onPress={() => run('archive', () => archiveDeckAction(deckId), 'Deck archived.', true)}
+          className="w-full min-[420px]:w-auto"
+          isDisabled={pending}
+          onPress={() => setConfirmation('archive')}
         >
           Archive deck
         </Button>
         <Button
           variant="danger"
-          isPending={pending && activeOperation === 'delete'}
-          isDisabled={pending && activeOperation !== 'delete'}
-          onPress={() =>
-            run('delete', () => softDeleteDeckAction(deckId), 'Deck moved to deleted decks.', true)
-          }
+          className="w-full min-[420px]:w-auto"
+          isDisabled={pending}
+          onPress={() => setConfirmation('delete')}
         >
           Delete deck
         </Button>
       </div>
-    </div>
+
+      <ConfirmationDialog
+        isOpen={confirmation === 'archive'}
+        onOpenChange={isOpen => setConfirmation(isOpen ? 'archive' : null)}
+        title="Archive this deck?"
+        description="The deck will be hidden from your active decks. You can restore it later from archived decks."
+        confirmLabel="Archive deck"
+        tone="warning"
+        isPending={isArchiving}
+        onConfirm={() =>
+          run(
+            'archive',
+            () => archiveDeckAction(deckId),
+            'Deck archived.',
+            true,
+            () => setConfirmation(null),
+          )
+        }
+      />
+
+      <ConfirmationDialog
+        isOpen={confirmation === 'delete'}
+        onOpenChange={isOpen => setConfirmation(isOpen ? 'delete' : null)}
+        title="Move this deck to deleted decks?"
+        description="The deck will no longer be available to learners. You can restore it during the retention period."
+        confirmLabel="Delete deck"
+        tone="danger"
+        isPending={isDeleting}
+        onConfirm={() =>
+          run(
+            'delete',
+            () => softDeleteDeckAction(deckId),
+            'Deck moved to deleted decks.',
+            true,
+            () => setConfirmation(null),
+          )
+        }
+      />
+    </section>
   );
 }

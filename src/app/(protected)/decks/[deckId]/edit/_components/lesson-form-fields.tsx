@@ -5,17 +5,27 @@ type Props = {
   id: string;
   defaultTitle?: string;
   autoFocus?: boolean;
+  label?: string;
+  helpText?: string;
+  name?: string;
 };
 
-export default function LessonFormFields({ id, defaultTitle, autoFocus = false }: Props) {
+export default function LessonFormFields({
+  id,
+  defaultTitle,
+  autoFocus = false,
+  label = 'Lesson title',
+  helpText = 'Use a short, specific name that makes the lesson easy to recognize.',
+  name = 'title',
+}: Props) {
   return (
     <div className="form-field">
       <Label className="text-sm text-default-600" htmlFor={id}>
-        Lesson title
+        {label}
       </Label>
       <Input
         id={id}
-        name="title"
+        name={name}
         placeholder="e.g. Present tense verbs"
         defaultValue={defaultTitle}
         required
@@ -23,9 +33,7 @@ export default function LessonFormFields({ id, defaultTitle, autoFocus = false }
         className="w-full"
         autoFocus={autoFocus}
       />
-      <p className="text-xs leading-5 text-default-500">
-        Use a short, specific name that makes the lesson easy to recognize.
-      </p>
+      <p className="text-xs leading-5 text-default-500">{helpText}</p>
     </div>
   );
 }

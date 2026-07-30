@@ -12,11 +12,13 @@ import { FormEvent, useState } from 'react';
 type CreateLessonModalProps = {
   triggerLabel?: string;
   deckId: number;
+  onCreated?: (lessonId: number) => void;
 };
 
 export default function CreateLessonModal({
   triggerLabel = 'New lesson',
   deckId,
+  onCreated,
 }: CreateLessonModalProps) {
   const modalState = useOverlayState();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,6 +40,7 @@ export default function CreateLessonModal({
         setError(result.message);
         return;
       }
+      onCreated?.(result);
       form.reset();
       modalState.close();
       router.refresh();

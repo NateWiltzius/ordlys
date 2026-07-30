@@ -2,6 +2,7 @@ import DeckLanguageSelect from '@/app/(protected)/decks/_components/deck-languag
 import { DECK_STUDY_DIRECTION_OPTIONS, type DeckStudyDirection } from '@/lib/deck-study-direction';
 import { CONTENT_LIMITS } from '@/lib/validation/content';
 import { Input, Label, Radio, RadioGroup, TextArea } from '@heroui/react';
+import type { ReactNode } from 'react';
 
 type DeckFormDefaults = {
   title: string;
@@ -16,6 +17,8 @@ type Props = {
   defaults?: DeckFormDefaults;
   autoFocus?: boolean;
   isDisabled?: boolean;
+  afterTitle?: ReactNode;
+  collapseSettings?: boolean;
 };
 
 export default function DeckFormFields({
@@ -23,31 +26,16 @@ export default function DeckFormFields({
   defaults,
   autoFocus = false,
   isDisabled = false,
+  afterTitle,
+  collapseSettings = false,
 }: Props) {
   const titleId = `${idPrefix}-title`;
   const descriptionId = `${idPrefix}-description`;
   const languagesHeadingId = `${idPrefix}-card-side-languages-heading`;
   const hasLanguageDefaults = Boolean(defaults?.frontLanguage || defaults?.backLanguage);
 
-  return (
-    <div className="space-y-5">
-      <div className="form-field">
-        <Label className="text-sm text-default-600" htmlFor={titleId}>
-          Deck title
-        </Label>
-        <Input
-          id={titleId}
-          name="title"
-          placeholder="e.g. Biology terms, Spanish verbs, AWS certification"
-          defaultValue={defaults?.title}
-          required
-          maxLength={CONTENT_LIMITS.deckTitle}
-          className="w-full"
-          autoFocus={autoFocus}
-          disabled={isDisabled}
-        />
-      </div>
-
+  const settings = (
+    <>
       <div className="form-field">
         <div className="form-field__label-row">
           <Label className="text-sm text-default-600" htmlFor={descriptionId}>
@@ -133,6 +121,43 @@ export default function DeckFormFields({
           />
         </div>
       </details>
+    </>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="form-field">
+        <Label className="text-sm text-default-600" htmlFor={titleId}>
+          Deck title
+        </Label>
+        <Input
+          id={titleId}
+          name="title"
+          placeholder="e.g. Biology terms, Spanish verbs, AWS certification"
+          defaultValue={defaults?.title}
+          required
+          maxLength={CONTENT_LIMITS.deckTitle}
+          className="w-full"
+          autoFocus={autoFocus}
+          disabled={isDisabled}
+        />
+      </div>
+
+      {afterTitle}
+
+      {collapseSettings ? (
+        <details className="group overflow-hidden rounded-lg border border-default-200">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-default-700 marker:text-default-400">
+            Deck settings <span className="font-normal text-default-400">(optional)</span>
+          </summary>
+          <p className="border-t border-default-200 px-4 pt-4 text-xs leading-5 text-default-500">
+            Add a description, change the testing direction, or label card-side languages.
+          </p>
+          <div className="space-y-5 px-4 pb-4 pt-3">{settings}</div>
+        </details>
+      ) : (
+        settings
+      )}
     </div>
   );
 }

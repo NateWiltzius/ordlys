@@ -12,7 +12,7 @@ import {
 } from '@/db/queries/authoring-access';
 
 export const createLesson = async (lesson: CreateLesson, userId: string) => {
-  await db.transaction(async tx => {
+  return db.transaction(async tx => {
     await lockAuthoringAccount(tx, userId);
     const [deck] = await tx
       .select({ id: decks.id })
@@ -51,6 +51,7 @@ export const createLesson = async (lesson: CreateLesson, userId: string) => {
       .update(lessons)
       .set({ currentRevisionId: revision.id })
       .where(eq(lessons.id, created.id));
+    return created.id;
   });
 };
 

@@ -18,11 +18,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 type Params = {
   deckId: number;
   lesson: EditLessonSummary;
-  isExpanded: boolean;
+  isActive: boolean;
   onCardCountChange: (lessonId: number, cardCount: number) => void;
 };
 
-export function useLessonCardController({ deckId, lesson, isExpanded, onCardCountChange }: Params) {
+export function useLessonCardController({ deckId, lesson, isActive, onCardCountChange }: Params) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -56,7 +56,7 @@ export function useLessonCardController({ deckId, lesson, isExpanded, onCardCoun
   );
 
   useEffect(() => {
-    if (!isExpanded) {
+    if (!isActive) {
       loadRequested.current = false;
       return;
     }
@@ -64,7 +64,7 @@ export function useLessonCardController({ deckId, lesson, isExpanded, onCardCoun
 
     loadRequested.current = true;
     void loadVocabulary();
-  }, [isExpanded, isLoading, loadVocabulary, orderedVocabs]);
+  }, [isActive, isLoading, loadVocabulary, orderedVocabs]);
 
   const deleteLesson = async () => {
     if (isDeleting) return;
@@ -86,12 +86,12 @@ export function useLessonCardController({ deckId, lesson, isExpanded, onCardCoun
   };
 
   const moveVocab = async (vocabId: number, direction: OrderDirection) => {
-    if (!orderedVocabs || movingVocabId !== null) return;
+    if (!orderedVocabs || movingVocabId !== null) return false;
 
     const previousVocabs = orderedVocabs;
     const currentIndex = previousVocabs.findIndex(vocab => vocab.id === vocabId);
     const nextVocabs = moveItem(previousVocabs, currentIndex, direction);
-    if (nextVocabs === previousVocabs) return;
+    if (nextVocabs === previousVocabs) return false;
 
     setOrderedVocabs(nextVocabs);
     setMovingVocabId(vocabId);
@@ -102,10 +102,13 @@ export function useLessonCardController({ deckId, lesson, isExpanded, onCardCoun
       if (isActionFailure(result)) {
         setOrderedVocabs(previousVocabs);
         setMutationError(result.message);
+        return false;
       }
+      return true;
     } catch (error) {
       setOrderedVocabs(previousVocabs);
       setMutationError(error instanceof Error ? error.message : 'Could not reorder cards.');
+      return false;
     } finally {
       setMovingVocabId(null);
     }

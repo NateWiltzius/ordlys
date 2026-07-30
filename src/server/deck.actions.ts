@@ -16,7 +16,7 @@ import { withExpectedError } from '@/lib/action-result';
 import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
 import { parseDeckStudyDirection } from '@/lib/deck-study-direction';
 
-export async function createDeckAction(deck: CreateDeckInput) {
+export async function createDeckAction(deck: CreateDeckInput, firstLessonTitle: string) {
   return withExpectedError(async () => {
     const userId = await getCurrentUserId();
     if (!deck || typeof deck !== 'object') throw new Error('Invalid deck.');
@@ -31,9 +31,12 @@ export async function createDeckAction(deck: CreateDeckInput) {
       ownerId: userId,
     };
 
-    const deckId = await createDeck(deckWithOwner);
+    const createdWorkspace = await createDeck(
+      deckWithOwner,
+      requiredText(firstLessonTitle, 'First lesson title', CONTENT_LIMITS.lessonTitle),
+    );
     revalidatePath('/decks');
-    return deckId;
+    return createdWorkspace;
   });
 }
 

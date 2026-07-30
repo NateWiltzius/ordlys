@@ -9,7 +9,7 @@ import { filterVocabulary } from '@/lib/vocab/search-vocabulary';
 import { getEditableDeckVocabularyForSearch } from '@/lib/client/vocabulary-api';
 import type { EditLessonSummary } from '@/types/lesson.types';
 import type { Vocab } from '@/types/vocab.types';
-import { PencilSquareIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { Button } from '@heroui/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -20,6 +20,8 @@ type Props = {
   frontLabel: string;
   backLabel: string;
   onQueryChange: (query: string) => void;
+  onSelectLesson: (lessonId: number) => void;
+  onSelectCard: (lessonId: number, vocabId: number) => void;
 };
 
 export default function EditableVocabularySearch({
@@ -29,6 +31,8 @@ export default function EditableVocabularySearch({
   frontLabel,
   backLabel,
   onQueryChange,
+  onSelectLesson,
+  onSelectCard,
 }: Props) {
   const [vocabs, setVocabs] = useState<Vocab[] | null>(null);
   const [selectedVocab, setSelectedVocab] = useState<Vocab | null>(null);
@@ -106,27 +110,57 @@ export default function EditableVocabularySearch({
             if (!lessonMatches?.length) return null;
 
             return (
-              <section key={lesson.id} className="space-y-2.5">
-                <div className="flex items-baseline justify-between gap-3 px-1">
-                  <h3 className="text-sm font-semibold text-foreground">{lesson.title}</h3>
-                  <span className="shrink-0 text-xs text-muted">
-                    {lessonMatches.length} {lessonMatches.length === 1 ? 'match' : 'matches'}
-                  </span>
+              <section key={lesson.id} data-search-lesson-id={lesson.id} className="space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-semibold text-foreground">
+                      {lesson.title}
+                    </h3>
+                    <p className="text-xs text-muted">
+                      {lessonMatches.length} {lessonMatches.length === 1 ? 'match' : 'matches'}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="tertiary"
+                    aria-label={`Open ${lesson.title}`}
+                    onPress={() => {
+                      handleQueryChange('');
+                      onSelectLesson(lesson.id);
+                    }}
+                  >
+                    Open lesson
+                    <ArrowRightIcon className="size-4" aria-hidden="true" />
+                  </Button>
                 </div>
                 <VocabTable
                   vocabs={lessonMatches}
                   frontLabel={frontLabel}
                   backLabel={backLabel}
                   renderActions={vocab => (
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      isIconOnly
-                      aria-label={`Edit ${vocab.front}`}
-                      onPress={() => setSelectedVocab(vocab)}
-                    >
-                      <PencilSquareIcon className="size-4" aria-hidden="true" />
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isIconOnly
+                        aria-label={`Open ${vocab.front} in ${lesson.title}`}
+                        onPress={() => {
+                          handleQueryChange('');
+                          onSelectCard(lesson.id, vocab.id);
+                        }}
+                      >
+                        <ArrowRightIcon className="size-4" aria-hidden="true" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isIconOnly
+                        aria-label={`Edit ${vocab.front}`}
+                        onPress={() => setSelectedVocab(vocab)}
+                      >
+                        <PencilSquareIcon className="size-4" aria-hidden="true" />
+                      </Button>
+                    </>
                   )}
                 />
               </section>

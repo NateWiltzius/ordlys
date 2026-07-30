@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import SrsLevelChip from '@/app/(protected)/decks/[deckId]/_components/vocab/srs-level-chip';
 import VocabSide from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-side';
 import { getVocabGridColumns } from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-grid';
+import { cn } from '@heroui/react';
 
 type Props = {
   vocab: Vocab;
@@ -13,6 +14,7 @@ type Props = {
   showSrsLevel?: boolean;
   frontLabel: string;
   backLabel: string;
+  isHighlighted?: boolean;
 };
 
 export default function VocabCard({
@@ -24,12 +26,18 @@ export default function VocabCard({
   showSrsLevel = false,
   frontLabel,
   backLabel,
+  isHighlighted = false,
 }: Props) {
   const desktopColumns = getVocabGridColumns(showSrsLevel, Boolean(actions));
 
   return (
     <div
-      className={`grid gap-4 bg-background px-4 py-4 transition-colors hover:bg-default-50 sm:items-start sm:py-3 ${desktopColumns}`}
+      id={`vocab-card-${vocab.id}`}
+      tabIndex={isHighlighted ? -1 : undefined}
+      className={cn(
+        `grid gap-4 bg-background px-4 py-4 transition-colors hover:bg-default-50 sm:items-start sm:py-3 ${desktopColumns}`,
+        isHighlighted && 'bg-primary/5 ring-2 ring-inset ring-primary/50',
+      )}
     >
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted">

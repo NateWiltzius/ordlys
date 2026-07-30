@@ -1,11 +1,12 @@
 import { createVocabAction } from '@/server/vocab.actions';
 import { CreateVocab } from '@/types/vocab.types';
-import { Button, Modal, useOverlayState } from '@heroui/react';
-import { FormEvent, useState } from 'react';
+import { Button, Modal } from '@heroui/react';
+import { FormEvent, KeyboardEvent, useRef, useState } from 'react';
 import VocabFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/vocab-form-fields';
 import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import ShortcutAction from './shortcut-action';
 
 type CreateVocabModalProps = {
   triggerLabel?: string;
@@ -18,14 +19,17 @@ export default function CreateVocabModal({
   lessonId,
   onCreated,
 }: CreateVocabModalProps) {
-  const modalState = useOverlayState();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const submissionLocked = useRef(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [submittingIntent, setSubmittingIntent] = useState<'close' | 'add-another' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const isSubmitting = submittingIntent !== null;
 
-  const handleCreateVocab = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const createVocabFromForm = async (form: HTMLFormElement, shouldAddAnother: boolean) => {
+    if (submissionLocked.current) return;
 
-    const form = e.currentTarget;
     const formData = new FormData(form);
 
     const front = String(formData.get('front') ?? '').trim();
@@ -40,6 +44,7 @@ export default function CreateVocabModal({
       return;
     }
 
+    submissionLocked.current = true;
     const vocab: CreateVocab = {
       front,
       back,
@@ -51,10 +56,11 @@ export default function CreateVocabModal({
       lessonId,
     };
 
-    setIsSubmitting(true);
+    setSubmittingIntent(shouldAddAnother ? 'add-another' : 'close');
 
     try {
       setError(null);
+      setSuccessMessage(null);
       const result = await createVocabAction(vocab);
       if (isActionFailure(result)) {
         setError(result.message);
@@ -62,60 +68,116 @@ export default function CreateVocabModal({
       }
       await onCreated();
       form.reset();
-      modalState.close();
+      if (shouldAddAnother) {
+        setSuccessMessage('Card created. Add the next one when you are ready.');
+        requestAnimationFrame(() => {
+          const frontField = form.elements.namedItem('front');
+          if (frontField instanceof HTMLElement) frontField.focus();
+        });
+      } else {
+        setIsOpen(false);
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not create the card.');
     } finally {
-      setIsSubmitting(false);
+      submissionLocked.current = false;
+      setSubmittingIntent(null);
     }
   };
 
+  const handleCreateVocab = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void createVocabFromForm(event.currentTarget, false);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (!(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
+
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    void createVocabFromForm(event.currentTarget, event.shiftKey);
+  };
+
   return (
-    <Modal state={modalState}>
+    <>
       <Button
         size="sm"
         variant="secondary"
         onPress={() => {
           setError(null);
-          modalState.open();
+          setSuccessMessage(null);
+          setIsOpen(true);
         }}
       >
         {triggerLabel}
       </Button>
 
-      <Modal.Backdrop>
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={setIsOpen}>
         <Modal.Container scroll="inside">
           <Modal.Dialog className="min-h-0 sm:max-w-2xl">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create card</Modal.Heading>
               <p className="text-sm text-default-500">
-                Add a front and back, then configure how the card appears during quizzes.
+                Add one card or keep this window open to enter several in a row.
               </p>
             </Modal.Header>
-            <form onSubmit={handleCreateVocab} className="mt-2 flex min-h-0 flex-1 flex-col">
+            <form
+              ref={formRef}
+              onSubmit={handleCreateVocab}
+              onKeyDown={handleKeyDown}
+              className="mt-2 flex min-h-0 flex-1 flex-col"
+            >
               <Modal.Body className="space-y-6">
-                <VocabFormFields />
+                <VocabFormFields autoFocus />
+                {successMessage ? (
+                  <StatusAlert status="success">{successMessage}</StatusAlert>
+                ) : null}
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Modal.Footer className="flex-col-reverse items-stretch gap-2 min-[560px]:flex-row min-[560px]:items-center min-[560px]:justify-end">
                 <Button
                   type="button"
                   variant="tertiary"
-                  className="w-full sm:w-auto"
+                  className="w-full min-[560px]:w-auto"
                   isDisabled={isSubmitting}
-                  onPress={modalState.close}
+                  onPress={() => setIsOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
-                  Create card
-                </Button>
+                <ShortcutAction hint="Ctrl/Cmd + Shift + Enter">
+                  <Button
+                    className="w-full"
+                    type="button"
+                    variant="secondary"
+                    aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
+                    isPending={submittingIntent === 'add-another'}
+                    isDisabled={isSubmitting}
+                    onPress={() => {
+                      const form = formRef.current;
+                      if (!form || !form.reportValidity()) return;
+                      void createVocabFromForm(form, true);
+                    }}
+                  >
+                    Create & add another
+                  </Button>
+                </ShortcutAction>
+                <ShortcutAction hint="Ctrl/Cmd + Enter">
+                  <Button
+                    className="w-full"
+                    type="submit"
+                    aria-keyshortcuts="Control+Enter Meta+Enter"
+                    isPending={submittingIntent === 'close'}
+                    isDisabled={isSubmitting}
+                  >
+                    Create card
+                  </Button>
+                </ShortcutAction>
               </Modal.Footer>
             </form>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
-    </Modal>
+    </>
   );
 }

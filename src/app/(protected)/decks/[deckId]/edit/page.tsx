@@ -5,6 +5,7 @@ import { getEditDeckPageData } from '@/server/data/deck-page-data';
 import type { Metadata } from 'next';
 import { parseDeckEditorTab } from '@/lib/deck-editor-tabs';
 import { getDeckEditorStateKey } from '@/lib/deck-editor-state';
+import { parseSelectedLessonId } from '@/lib/lesson-selection-state';
 
 export const metadata: Metadata = {
   title: 'Manage deck',
@@ -17,6 +18,7 @@ type Props = {
   }>;
   searchParams: Promise<{
     tab?: string | string[];
+    lesson?: string | string[];
   }>;
 };
 
@@ -46,6 +48,10 @@ export default async function Page({ params, searchParams }: Props) {
       lessons={lessons}
       parsedDeckId={parsedDeckId}
       initialTab={parseDeckEditorTab(query.tab)}
+      initialSelectedLessonId={parseSelectedLessonId(
+        query.lesson,
+        lessons.map(lesson => lesson.id),
+      )}
     />
   );
 }
