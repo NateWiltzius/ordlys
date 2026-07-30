@@ -14,6 +14,7 @@ import {
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
 import { withExpectedError } from '@/lib/action-result';
 import { PUBLIC_DECK_SUMMARIES_CACHE_TAG } from '@/lib/cache-tags';
+import { parseDeckStudyDirection } from '@/lib/deck-study-direction';
 
 export async function createDeckAction(deck: CreateDeckInput) {
   return withExpectedError(async () => {
@@ -24,6 +25,7 @@ export async function createDeckAction(deck: CreateDeckInput) {
       description: optionalText(deck.description, 'Description', CONTENT_LIMITS.deckDescription),
       frontLanguage: optionalLanguageTag(deck.frontLanguage, 'Front language'),
       backLanguage: optionalLanguageTag(deck.backLanguage, 'Back language'),
+      studyDirection: parseDeckStudyDirection(deck.studyDirection),
       // New authoring workspaces are always private. Publishing/sharing is a separate transition.
       visibility: 'private',
       ownerId: userId,
@@ -45,6 +47,7 @@ export async function updateDeckAction(id: number, input: Omit<CreateDeckInput, 
       description: optionalText(input.description, 'Description', CONTENT_LIMITS.deckDescription),
       frontLanguage: optionalLanguageTag(input.frontLanguage, 'Front language'),
       backLanguage: optionalLanguageTag(input.backLanguage, 'Back language'),
+      studyDirection: parseDeckStudyDirection(input.studyDirection),
     });
     revalidatePath('/decks');
     revalidatePath(`/decks/${deckId}`);

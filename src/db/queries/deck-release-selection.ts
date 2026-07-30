@@ -7,6 +7,7 @@ import { deckReleases } from '@/db/schema';
 export const safeDeckReleaseSelection = {
   id: deckReleases.id,
   version: deckReleases.version,
+  studyDirection: deckReleases.studyDirection,
   copyPolicy: deckReleases.copyPolicy,
   changeSummary: deckReleases.changeSummary,
   createdAt: deckReleases.createdAt,

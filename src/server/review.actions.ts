@@ -10,6 +10,9 @@ import { isUuid } from '@/lib/validation/uuid';
 export async function saveQuizAttemptAction(input: SaveQuizAttemptInput) {
   const parsedVocabId = parsePositiveInteger(input.vocabId);
   if (!parsedVocabId) throw new Error('Invalid vocabulary ID.');
+  const parsedReleaseId =
+    input.releaseId === undefined ? undefined : parsePositiveInteger(input.releaseId);
+  if (input.releaseId !== undefined && !parsedReleaseId) throw new Error('Invalid release ID.');
   if (!['learn', 'review', 'placement'].includes(input.mode)) {
     throw new Error('Invalid study mode.');
   }
@@ -26,6 +29,7 @@ export async function saveQuizAttemptAction(input: SaveQuizAttemptInput) {
   const result = await saveQuizAttempt(await getCurrentUserId(), {
     ...input,
     vocabId: parsedVocabId,
+    releaseId: parsedReleaseId ?? undefined,
   });
 
   if (result.transition && result.deckId) {

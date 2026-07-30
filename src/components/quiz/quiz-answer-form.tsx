@@ -6,6 +6,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { STUDY_TONE_STYLES, StudyTone } from '@/lib/study-colors';
 import { useKeepAboveKeyboard } from '@/hooks/use-keep-above-keyboard';
 import { getQuizLanguageLabels } from '@/lib/quiz/quiz-language-labels';
+import { getStudyTextSizeClass } from '@/lib/study-text-size';
 
 type Props = {
   prompt: string;
@@ -86,7 +87,11 @@ export default function QuizAnswerForm({
     >
       <form onSubmit={handleSubmit}>
         <div className="quiz-answer-content">
-          <div role="note" aria-label={`${promptLabel} shown; ${answerInstruction.toLowerCase()}`}>
+          <div
+            role="note"
+            className="border-b border-default-200 pb-6"
+            aria-label={`${promptLabel} shown; ${answerInstruction.toLowerCase()}`}
+          >
             {deckTitle || lessonTitle ? (
               <p className="mb-3 truncate text-center text-xs font-medium text-default-500">
                 {[deckTitle, lessonTitle].filter(Boolean).join(' · ')}
@@ -103,7 +108,9 @@ export default function QuizAnswerForm({
               </strong>
             </div>
             <p
-              className="quiz-answer-prompt break-words py-8 text-center text-4xl leading-tight font-semibold sm:py-10 sm:text-5xl"
+              className={`quiz-answer-prompt break-words py-8 text-center sm:py-10 ${getStudyTextSizeClass(
+                prompt,
+              )}`}
               lang={shownLanguageCode ?? undefined}
             >
               {prompt}
@@ -132,7 +139,7 @@ export default function QuizAnswerForm({
           </div>
         </div>
 
-        <div className="quiz-answer-footer mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="quiz-answer-footer mt-5 flex flex-col gap-3 border-t border-default-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="hidden text-xs text-default-500 sm:block">
             Press <kbd className="rounded border border-default-300 px-1.5 py-0.5">Enter</kbd> to
             submit

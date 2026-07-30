@@ -26,9 +26,9 @@ export default function PlacementTestMode({ deckId, placementItems }: Props) {
         <Card.Header>
           <SemanticCardTitle level={2}>How placement works</SemanticCardTitle>
           <Card.Description>
-            Pass each card in both directions without a mistake to mark its memory strength as
-            Strong, where it counts as learned. Missed cards remain Not started and will appear in
-            the normal learning flow. Existing progress will not be reduced.
+            Pass every direction required by this deck without a mistake to mark the card’s memory
+            strength as Strong, where it counts as learned. Missed cards remain Not started and will
+            appear in the normal learning flow. Existing progress will not be reduced.
           </Card.Description>
         </Card.Header>
       </Card>

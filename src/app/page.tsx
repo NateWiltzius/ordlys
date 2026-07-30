@@ -51,6 +51,7 @@ export default async function Home() {
     <div className="mx-auto flex max-w-6xl flex-col px-4">
       <script
         nonce={nonce}
+        suppressHydrationWarning
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData).replaceAll('<', '\\u003c'),
@@ -117,7 +118,7 @@ export default async function Home() {
             <StudyStep
               number="01"
               title="Learn a few new cards"
-              description="Work through a lesson in both directions, from the front of each card to the back and back again."
+              description="Work through each card in the direction the deck requires. Language decks can still test both sides."
             />
             <StudyStep
               number="02"
@@ -148,7 +149,7 @@ export default async function Home() {
           </h2>
           <p className="mt-4 leading-7 text-default-500">
             Typing an answer makes you retrieve the card from memory. This example uses Norwegian,
-            but the same front-and-back flow works with any language or subject.
+            but the same question-and-answer flow works with any language or subject.
           </p>
           <ul className="mt-6 space-y-3 text-sm">
             <FeatureLine>Common alternative answers are accepted.</FeatureLine>
@@ -212,6 +213,10 @@ export default async function Home() {
             <p className="mt-3 leading-7 text-default-500">
               Norwegian is the first ready-made collection in Ordlys. Your own decks can cover any
               language or subject, and you can create them by hand or import a CSV.
+            </p>
+            <p className="mt-3 leading-7 text-default-500">
+              Choose front to back, back to front, or both directions. This works for language
+              learning, flags, facts, and question-and-answer decks.
             </p>
           </div>
           <ButtonLink href="/public/decks" variant="secondary">

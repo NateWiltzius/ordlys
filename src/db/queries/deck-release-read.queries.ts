@@ -22,6 +22,7 @@ export async function hasUnpublishedDraftChanges(deckId: number): Promise<boolea
     select case when d.current_release_id is null then true else (
       d.title is distinct from r.title or d.description is distinct from r.description or
       d.copy_policy is distinct from r.copy_policy or
+      d.study_direction is distinct from r.study_direction or
       exists (select 1 from lessons l where l.deck_id=d.id and l.removed_at is null and not exists (
         select 1 from release_lessons rl where rl.release_id=r.id and rl.lesson_id=l.id
           and rl.revision_id=l.current_revision_id and rl.order_index=l.order_index
@@ -126,6 +127,7 @@ export async function inspectReleaseChanges(releaseId: number, previousReleaseId
     release: {
       id: release.id,
       version: release.version,
+      studyDirection: release.studyDirection,
       copyPolicy: release.copyPolicy,
       changeSummary: release.changeSummary,
       createdAt: release.createdAt,

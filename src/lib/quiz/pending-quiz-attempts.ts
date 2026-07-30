@@ -49,6 +49,8 @@ function isSaveQuizAttemptInput(value: unknown): value is SaveQuizAttemptInput {
   return (
     Number.isInteger(attempt.vocabId) &&
     (attempt.vocabId ?? 0) > 0 &&
+    (attempt.releaseId === undefined ||
+      (Number.isInteger(attempt.releaseId) && (attempt.releaseId ?? 0) > 0)) &&
     ['learn', 'review', 'placement'].includes(attempt.mode ?? '') &&
     ['btf', 'ftb'].includes(attempt.direction ?? '') &&
     typeof attempt.isCorrect === 'boolean' &&

@@ -17,6 +17,8 @@ import {
   WordCompletion,
 } from '@/lib/quiz/quiz-feedback';
 import { normalizeAnswer } from '@/lib/quiz/normalize';
+import { getRequiredQuizDirections } from '@/lib/quiz/quiz-helpers';
+import { getStudyTextSizeClass } from '@/lib/study-text-size';
 
 type Props = {
   feedback: QuizFeedback;
@@ -46,8 +48,14 @@ export default function QuizFeedbackPanel({
         wordCompletion,
         feedback.quizItem.srsLevel ?? null,
         recordAttempts,
+        getRequiredQuizDirections(feedback.quizItem.studyDirection).length,
       )
-    : getDirectionProgressContent(feedback.isCorrect, recordAttempts);
+    : getDirectionProgressContent({
+        studyMode,
+        isCorrect: feedback.isCorrect,
+        recordAttempts,
+        requiredDirectionCount: getRequiredQuizDirections(feedback.quizItem.studyDirection).length,
+      });
   const hasSchedulingWarning = Boolean(
     feedback.isCorrect && wordCompletion && outcomeContent.isWarning && recordAttempts,
   );
@@ -163,7 +171,7 @@ export default function QuizFeedbackPanel({
         </Chip>
       </header>
 
-      <div className="py-7 text-center sm:py-9">
+      <div className="border-b border-default-200 py-7 text-center sm:py-9">
         {feedback.quizItem.deckTitle || feedback.quizItem.lessonTitle ? (
           <p className="mb-3 truncate text-xs font-medium text-default-500">
             {[feedback.quizItem.deckTitle, feedback.quizItem.lessonTitle]
@@ -175,7 +183,7 @@ export default function QuizFeedbackPanel({
           {languageLabels.promptRowLabel}
         </p>
         <p
-          className="mt-3 break-words text-4xl leading-tight font-semibold sm:text-5xl"
+          className={`mt-3 break-words ${getStudyTextSizeClass(feedback.quizItem.prompt)}`}
           lang={shownLanguageCode ?? undefined}
         >
           {feedback.quizItem.prompt}
@@ -197,7 +205,7 @@ export default function QuizFeedbackPanel({
         ) : null}
       </div>
 
-      <footer className="mt-5 space-y-3">
+      <footer className="mt-5 space-y-3 border-t border-default-200 pt-5">
         {!feedback.isCorrect && onAcceptAnyway ? (
           <p className="text-sm text-default-500 sm:text-right">
             Accept anyway counts this response as correct once. It does not add a new accepted

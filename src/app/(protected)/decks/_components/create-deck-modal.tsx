@@ -4,6 +4,7 @@ import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields
 import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import { parseDeckStudyDirection } from '@/lib/deck-study-direction';
 import { createDeckAction } from '@/server/deck.actions';
 import { CreateDeckInput } from '@/types/deck.types';
 import { Button, Modal, useOverlayState } from '@heroui/react';
@@ -44,6 +45,7 @@ export default function CreateDeckModal({
       description: String(formData.get('description') ?? ''),
       frontLanguage: languageFormValue(formData.get('frontLanguage')),
       backLanguage: languageFormValue(formData.get('backLanguage')),
+      studyDirection: parseDeckStudyDirection(formData.get('studyDirection')),
       visibility: 'private',
     };
 

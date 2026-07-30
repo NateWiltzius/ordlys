@@ -92,8 +92,8 @@ export default function ProgressActivityChart({ activity }: Props) {
         </p>
       </div>
       <p className="mt-2 text-xs text-default-400">
-        A card can produce more than one answer because study sessions test both directions and
-        include retries.
+        A card can produce more than one answer when its deck tests both directions or an answer
+        needs to be retried.
       </p>
     </PageSection>
   );

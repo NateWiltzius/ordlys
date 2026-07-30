@@ -12,6 +12,7 @@ import {
 import { revalidatePath } from 'next/cache';
 import { UserFacingError, withExpectedError } from '@/lib/action-result';
 import { errorMessage } from '@/lib/validation/content';
+import { parseDeckStudyDirection } from '@/lib/deck-study-direction';
 
 export async function importCsvDeckAction(formData: FormData) {
   return withExpectedError(async () => {
@@ -41,6 +42,7 @@ export async function importCsvDeckAction(formData: FormData) {
         ),
         frontLanguage: optionalLanguageTag(formData.get('frontLanguage'), 'Front language'),
         backLanguage: optionalLanguageTag(formData.get('backLanguage'), 'Back language'),
+        studyDirection: parseDeckStudyDirection(formData.get('studyDirection')),
         visibility: 'private',
       },
       rows,

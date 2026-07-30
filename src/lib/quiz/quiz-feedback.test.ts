@@ -62,23 +62,73 @@ describe('getWordCompletionContent', () => {
       isWarning: false,
     });
   });
+
+  it('describes one-way completion without claiming both directions passed', () => {
+    expect(getWordCompletionContent('learn', 'clean', null, true, 1)).toEqual({
+      title: 'Word complete',
+      description:
+        'The required direction passed. This word will start at Learning 1 and return in 4 hours.',
+      isWarning: false,
+    });
+    expect(getWordCompletionContent('review', 'recovered', null, true, 1).description).toBe(
+      'You passed the required direction, but missed this word earlier.',
+    );
+  });
 });
 
 describe('getDirectionProgressContent', () => {
   it('explains when the schedule will be updated', () => {
-    expect(getDirectionProgressContent(true)).toEqual({
+    expect(getDirectionProgressContent({ studyMode: 'review', isCorrect: true })).toEqual({
       title: 'One direction passed',
       description: 'Pass the other direction to complete this word and update its review schedule.',
       isWarning: false,
     });
-    expect(getDirectionProgressContent(false).description).toContain('return later in the session');
+    expect(
+      getDirectionProgressContent({ studyMode: 'review', isCorrect: false }).description,
+    ).toContain('return later in the session');
   });
 
   it('does not imply that optional practice changes scheduling', () => {
-    expect(getDirectionProgressContent(false, false)).toEqual({
+    expect(
+      getDirectionProgressContent({
+        studyMode: 'review',
+        isCorrect: false,
+        recordAttempts: false,
+      }),
+    ).toEqual({
       title: 'Try this direction again',
       description:
         'This direction will return later in this practice session. Your review schedule will not change.',
+      isWarning: true,
+    });
+  });
+
+  it('describes a missed one-way card without claiming both directions are required', () => {
+    expect(
+      getDirectionProgressContent({
+        studyMode: 'review',
+        isCorrect: false,
+        requiredDirectionCount: 1,
+      }),
+    ).toEqual({
+      title: 'Try this direction again',
+      description:
+        'The required direction will return later in the session. Its review schedule updates after it is passed.',
+      isWarning: true,
+    });
+  });
+
+  it('does not promise a schedule update after a placement miss', () => {
+    expect(
+      getDirectionProgressContent({
+        studyMode: 'placement',
+        isCorrect: false,
+        requiredDirectionCount: 1,
+      }),
+    ).toEqual({
+      title: 'Try this direction again',
+      description:
+        'This direction will return later in the session. Because this card was missed, it will remain in the normal learning flow.',
       isWarning: true,
     });
   });

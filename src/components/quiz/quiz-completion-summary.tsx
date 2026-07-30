@@ -58,6 +58,7 @@ export default function QuizCompletionSummary({
     completedCards: progressStats.completedCards,
     totalCards: progressStats.totalCards,
     missedCardCount,
+    usesOneWayCards: progressStats.totalDirections < progressStats.totalCards * 2,
   });
   const returnsToToday = completionHref === '/dashboard';
   const cleanCardCount = Math.max(0, progressStats.completedCards - missedCardCount);

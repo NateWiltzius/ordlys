@@ -5,6 +5,7 @@ import { createQuizSessionState, quizSessionReducer } from './use-quiz-session';
 
 const item: QuizSourceItem = {
   id: 1,
+  releaseId: 1,
   front: 'hei',
   back: 'hello',
   frontAlternatives: [],
@@ -14,6 +15,7 @@ const item: QuizSourceItem = {
   reading: null,
   frontLanguage: 'nb',
   backLanguage: 'en',
+  studyDirection: 'both',
 };
 
 describe('quizSessionReducer', () => {

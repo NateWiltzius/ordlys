@@ -82,7 +82,11 @@ export default async function PublicDeckPage({ params }: Props) {
       <header className="py-2 sm:py-4">
         <div className="flex flex-col items-start gap-6 sm:flex-row sm:justify-between">
           <div className="max-w-3xl space-y-3">
-            <DeckIdentity badges={['public']} languagePair={languagePair} />
+            <DeckIdentity
+              badges={['public']}
+              languagePair={languagePair}
+              studyDirection={deck.studyDirection}
+            />
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{deck.title}</h1>
             <p className="text-base text-default-600 sm:text-lg">{deckDescription(deck)}</p>
             {deck.provenance ? (

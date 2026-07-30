@@ -7,6 +7,7 @@ type QuizCompletionInput = {
   completedCards: number;
   totalCards: number;
   missedCardCount: number;
+  usesOneWayCards?: boolean;
 };
 
 type QuizCompletionContent = {
@@ -30,6 +31,7 @@ export function getQuizCompletionContent({
   completedCards,
   totalCards,
   missedCardCount,
+  usesOneWayCards = false,
 }: QuizCompletionInput): QuizCompletionContent {
   if (!recordAttempts) {
     return {
@@ -58,7 +60,7 @@ export function getQuizCompletionContent({
       missedLabel: 'Needed another pass',
       detail:
         missedCardCount > 0
-          ? 'Every new word is now in review; missed words will return sooner.'
+          ? 'Every new word is now in review; missed words needed another pass in this session.'
           : 'Every new word passed cleanly and is now in review.',
     };
   }
@@ -70,7 +72,7 @@ export function getQuizCompletionContent({
       title: 'Placement test complete',
       description: `You tested ${completedCards} ${
         completedCards === 1 ? 'word' : 'words'
-      } in both directions.`,
+      }${usesOneWayCards ? ' in each deck’s required direction.' : ' in both directions.'}`,
       completedLabel: 'Words tested',
       cleanLabel: 'Qualified',
       missedLabel: 'Did not qualify',

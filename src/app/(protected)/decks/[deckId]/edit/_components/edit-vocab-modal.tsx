@@ -72,7 +72,7 @@ export default function EditVocabModal({ vocab, isOpen, onOpenChange, onSaved }:
   return (
     <Modal.Backdrop isOpen={modalState.isOpen} onOpenChange={modalState.setOpen}>
       <Modal.Container scroll="inside">
-        <Modal.Dialog className="min-h-0 sm:max-w-xl">
+        <Modal.Dialog className="min-h-0 sm:max-w-2xl">
           <Modal.CloseTrigger />
           <Modal.Header className="space-y-1">
             <Modal.Heading>Edit card</Modal.Heading>

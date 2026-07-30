@@ -31,14 +31,26 @@ export function getWordCompletionContent(
   wordCompletion: WordCompletion,
   currentSrsLevel: number | null = null,
   recordAttempts = true,
+  requiredDirectionCount = 2,
 ): WordCompletionContent {
+  const completionDescription =
+    requiredDirectionCount === 1 ? 'The required direction passed.' : 'Both directions passed.';
+  const recoveredDescription =
+    requiredDirectionCount === 1
+      ? 'You passed the required direction after an earlier miss.'
+      : 'You passed both directions after an earlier miss.';
+  const practiceCompletionDescription =
+    requiredDirectionCount === 1
+      ? 'You passed the required direction.'
+      : 'You passed both directions.';
+
   if (!recordAttempts) {
     return {
       title: 'Practice complete',
       description:
         wordCompletion === 'clean'
-          ? 'You passed both directions. Optional practice does not change the review schedule.'
-          : 'You passed both directions after an earlier miss. Optional practice does not change the review schedule.',
+          ? `${practiceCompletionDescription} Optional practice does not change the review schedule.`
+          : `${recoveredDescription} Optional practice does not change the review schedule.`,
       isWarning: wordCompletion === 'recovered',
     };
   }
@@ -47,7 +59,7 @@ export function getWordCompletionContent(
     const nextState = getInitialSrsState();
     return {
       title: 'Word complete',
-      description: `Both directions passed. This word will start at Learning 1 and return in ${formatReviewInterval(nextState.intervalMinutes)}.`,
+      description: `${completionDescription} This word will start at Learning 1 and return in ${formatReviewInterval(nextState.intervalMinutes)}.`,
       isWarning: false,
     };
   }
@@ -57,13 +69,17 @@ export function getWordCompletionContent(
     return wordCompletion === 'clean'
       ? {
           title: 'Placement passed',
-          description: `You passed both directions without a miss. This word will start at ${getSrsLevelDisplayLabel(nextState.srsLevel)} and return in ${formatReviewInterval(nextState.intervalMinutes)}.`,
+          description: `You passed ${
+            requiredDirectionCount === 1 ? 'the required direction' : 'both directions'
+          } without a miss. This word will start at ${getSrsLevelDisplayLabel(nextState.srsLevel)} and return in ${formatReviewInterval(nextState.intervalMinutes)}.`,
           isWarning: false,
         }
       : {
           title: 'Placement not passed',
           description:
-            'You completed both directions, but an earlier miss means this word will stay in the normal learning flow.',
+            requiredDirectionCount === 1
+              ? 'You completed the required direction, but an earlier miss means this word will stay in the normal learning flow.'
+              : 'You completed both directions, but an earlier miss means this word will stay in the normal learning flow.',
           isWarning: true,
         };
   }
@@ -98,23 +114,55 @@ export function getWordCompletionContent(
   return wordCompletion === 'clean'
     ? {
         title: 'Word complete',
-        description: 'You passed both directions with no misses.',
+        description:
+          requiredDirectionCount === 1
+            ? 'You passed the required direction with no misses.'
+            : 'You passed both directions with no misses.',
         isWarning: false,
       }
     : {
         title: 'Word completed after a miss',
-        description: 'You passed both directions, but missed this word earlier.',
+        description:
+          requiredDirectionCount === 1
+            ? 'You passed the required direction, but missed this word earlier.'
+            : 'You passed both directions, but missed this word earlier.',
         isWarning: true,
       };
 }
 
-export function getDirectionProgressContent(isCorrect: boolean, recordAttempts = true) {
+type DirectionProgressContentInput = {
+  studyMode: StudyMode;
+  isCorrect: boolean;
+  recordAttempts?: boolean;
+  requiredDirectionCount?: number;
+};
+
+export function getDirectionProgressContent({
+  studyMode,
+  isCorrect,
+  recordAttempts = true,
+  requiredDirectionCount = 2,
+}: DirectionProgressContentInput) {
   if (!recordAttempts) {
     return {
       title: isCorrect ? 'Direction passed' : 'Try this direction again',
       description: isCorrect
-        ? 'Pass the other direction to complete this practice word. Your review schedule will not change.'
+        ? requiredDirectionCount === 1
+          ? 'The required direction passed. Your review schedule will not change.'
+          : 'Pass the other direction to complete this practice word. Your review schedule will not change.'
         : 'This direction will return later in this practice session. Your review schedule will not change.',
+      isWarning: !isCorrect,
+    };
+  }
+
+  if (studyMode === 'placement') {
+    return {
+      title: isCorrect ? 'One direction passed' : 'Try this direction again',
+      description: isCorrect
+        ? requiredDirectionCount === 1
+          ? 'The required direction passed without a miss.'
+          : 'Pass the other direction without a miss to qualify this card for placement.'
+        : 'This direction will return later in the session. Because this card was missed, it will remain in the normal learning flow.',
       isWarning: !isCorrect,
     };
   }
@@ -122,8 +170,12 @@ export function getDirectionProgressContent(isCorrect: boolean, recordAttempts =
   return {
     title: isCorrect ? 'One direction passed' : 'Try this direction again',
     description: isCorrect
-      ? 'Pass the other direction to complete this word and update its review schedule.'
-      : "This direction will return later in the session. The word's review schedule updates after both directions are passed.",
+      ? requiredDirectionCount === 1
+        ? 'The required direction passed and this card can now update its review schedule.'
+        : 'Pass the other direction to complete this word and update its review schedule.'
+      : requiredDirectionCount === 1
+        ? 'The required direction will return later in the session. Its review schedule updates after it is passed.'
+        : "This direction will return later in the session. The word's review schedule updates after both directions are passed.",
     isWarning: !isCorrect,
   };
 }

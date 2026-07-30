@@ -45,12 +45,14 @@ export async function getRecentMistakeVocabs(userId: string, limit = 25) {
   const rows = await db
     .select({
       id: vocabs.id,
+      releaseId: releaseVocabs.releaseId,
       ...vocabRevisionQuizSelection,
       lessonId: lessons.id,
       lessonTitle: lessonRevisions.title,
       deckTitle: deckReleases.title,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
+      studyDirection: deckReleases.studyDirection,
     })
     .from(vocabs)
     .innerJoin(lessons, eq(lessons.id, vocabs.lessonId))

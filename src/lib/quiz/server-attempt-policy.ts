@@ -1,4 +1,6 @@
 import type { QuizDirection } from '../../types/quiz.types';
+import type { DeckStudyDirection } from '../deck-study-direction';
+import { getRequiredQuizDirections } from './quiz-helpers';
 
 export type RecordedDirectionalAttempt = {
   direction: QuizDirection;
@@ -16,25 +18,33 @@ function isAccepted(attempt: RecordedDirectionalAttempt): boolean {
 }
 
 /**
- * Derives the one attempt that completes a two-direction card. `previousAttempts`
+ * Derives the one attempt that completes a card's required directions. `previousAttempts`
  * must contain only attempts from the same user, session, mode, and vocabulary.
  */
 export function deriveServerCardOutcome(
   currentAttempt: RecordedDirectionalAttempt,
   previousAttempts: RecordedDirectionalAttempt[],
+  studyDirection: DeckStudyDirection = 'both',
 ): ServerCardOutcome {
   if (!isAccepted(currentAttempt)) {
     return { completesCard: false, cardWasCorrect: false };
   }
 
-  const oppositeDirection: QuizDirection = currentAttempt.direction === 'btf' ? 'ftb' : 'btf';
-  const acceptedCurrentDirectionAlready = previousAttempts.some(
-    attempt => attempt.direction === currentAttempt.direction && isAccepted(attempt),
+  const requiredDirections = getRequiredQuizDirections(studyDirection);
+  if (!requiredDirections.includes(currentAttempt.direction)) {
+    return { completesCard: false, cardWasCorrect: false };
+  }
+
+  const acceptedDirectionsBefore = new Set(
+    previousAttempts.filter(isAccepted).map(attempt => attempt.direction),
   );
-  const acceptedOppositeDirection = previousAttempts.some(
-    attempt => attempt.direction === oppositeDirection && isAccepted(attempt),
+  const completedBefore = requiredDirections.every(direction =>
+    acceptedDirectionsBefore.has(direction),
   );
-  const completesCard = !acceptedCurrentDirectionAlready && acceptedOppositeDirection;
+  acceptedDirectionsBefore.add(currentAttempt.direction);
+  const completesCard =
+    !completedBefore &&
+    requiredDirections.every(direction => acceptedDirectionsBefore.has(direction));
 
   return {
     completesCard,

@@ -1,12 +1,14 @@
 import DeckLanguageSelect from '@/app/(protected)/decks/_components/deck-language-select';
+import { DECK_STUDY_DIRECTION_OPTIONS, type DeckStudyDirection } from '@/lib/deck-study-direction';
 import { CONTENT_LIMITS } from '@/lib/validation/content';
-import { Input, Label, TextArea } from '@heroui/react';
+import { Input, Label, Radio, RadioGroup, TextArea } from '@heroui/react';
 
 type DeckFormDefaults = {
   title: string;
   description: string | null;
   frontLanguage: string | null;
   backLanguage: string | null;
+  studyDirection: DeckStudyDirection;
 };
 
 type Props = {
@@ -64,6 +66,42 @@ export default function DeckFormFields({
           disabled={isDisabled}
         />
       </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium text-default-700">
+          How should cards be tested?
+        </legend>
+        <RadioGroup
+          name="studyDirection"
+          defaultValue={defaults?.studyDirection ?? 'both'}
+          aria-label="Card testing direction"
+          isDisabled={isDisabled}
+          variant="secondary"
+          className="overflow-hidden rounded-lg border border-default-200 [&_[data-slot=radio]]:mt-0"
+        >
+          {DECK_STUDY_DIRECTION_OPTIONS.map(option => (
+            <Radio
+              key={option.value}
+              value={option.value}
+              className="w-full gap-0 border-b border-default-200 px-3 py-2.5 transition-colors last:border-b-0 hover:bg-default-50 data-[selected]:bg-accent-soft"
+            >
+              <Radio.Content className="w-full items-start gap-2.5">
+                <Radio.Control className="mt-0.5">
+                  <Radio.Indicator />
+                </Radio.Control>
+                <span className="min-w-0">
+                  <Label className="block text-sm font-medium text-default-700">
+                    {option.label}
+                  </Label>
+                  <span className="mt-0.5 block text-xs leading-4 text-default-500">
+                    {option.description}
+                  </span>
+                </span>
+              </Radio.Content>
+            </Radio>
+          ))}
+        </RadioGroup>
+      </fieldset>
 
       <details
         className="group border-t border-default-200 pt-5"

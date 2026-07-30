@@ -9,6 +9,7 @@ import type { SaveQuizAttemptInput } from '@/types/quiz.types';
 const STORAGE_KEY = 'ordlys.pending-quiz-attempts.v1';
 const attempt: SaveQuizAttemptInput = {
   vocabId: 42,
+  releaseId: 7,
   mode: 'review',
   direction: 'ftb',
   isCorrect: true,
@@ -41,11 +42,20 @@ describe('pending quiz attempt storage', () => {
     expect(readPendingQuizAttempts()).toEqual([attempt]);
   });
 
+  it('keeps legacy pending attempts that predate release-bound saving', () => {
+    const legacyAttempt: SaveQuizAttemptInput = { ...attempt };
+    delete legacyAttempt.releaseId;
+    values.set(STORAGE_KEY, JSON.stringify([legacyAttempt]));
+
+    expect(readPendingQuizAttempts()).toEqual([legacyAttempt]);
+  });
+
   it('ignores malformed stored values', () => {
     values.set(
       STORAGE_KEY,
       JSON.stringify([
         { ...attempt, vocabId: 0 },
+        { ...attempt, releaseId: 0 },
         { ...attempt, sessionId: 'not-a-uuid' },
         attempt,
       ]),

@@ -1,9 +1,12 @@
+import type { DeckStudyDirection } from '@/lib/deck-study-direction';
+
 export type QuizDirection = 'btf' | 'ftb';
 
 export type StudyMode = 'learn' | 'review' | 'placement';
 
 export type SaveQuizAttemptInput = {
   vocabId: number;
+  releaseId?: number;
   mode: StudyMode;
   direction: QuizDirection;
   isCorrect: boolean;
@@ -14,6 +17,7 @@ export type SaveQuizAttemptInput = {
 
 export type QuizSourceItem = {
   id: number;
+  releaseId: number;
   front: string;
   back: string;
   frontAlternatives: string[];
@@ -24,6 +28,7 @@ export type QuizSourceItem = {
   notes?: string | null;
   frontLanguage: string | null;
   backLanguage: string | null;
+  studyDirection: DeckStudyDirection;
   deckTitle?: string | null;
   lessonTitle?: string | null;
   srsLevel?: number | null;
@@ -31,6 +36,7 @@ export type QuizSourceItem = {
 
 export type QuizQueueItem = {
   cardId: number;
+  releaseId: number;
   direction: QuizDirection;
   prompt: string;
   hint: string | null;
@@ -43,6 +49,7 @@ export type QuizQueueItem = {
   deckTitle?: string | null;
   lessonTitle?: string | null;
   srsLevel?: number | null;
+  studyDirection: DeckStudyDirection;
 };
 
 export type QuizProgressItem = {

@@ -20,6 +20,7 @@ const publicDeckSummarySelection = {
   description: deckReleases.description,
   frontLanguage: decks.frontLanguage,
   backLanguage: decks.backLanguage,
+  studyDirection: deckReleases.studyDirection,
   updatedAt: decks.updatedAt,
   rootDeckId: decks.rootDeckId,
   sourceDeckId: decks.sourceDeckId,

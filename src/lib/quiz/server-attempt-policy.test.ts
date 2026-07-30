@@ -39,4 +39,31 @@ describe('deriveServerCardOutcome', () => {
       ]),
     ).toEqual({ completesCard: true, cardWasCorrect: true });
   });
+
+  it('completes a one-way card on its first accepted required attempt', () => {
+    expect(
+      deriveServerCardOutcome(
+        { direction: 'ftb', isCorrect: true, wasOverridden: false },
+        [],
+        'ftb',
+      ),
+    ).toEqual({ completesCard: true, cardWasCorrect: true });
+  });
+
+  it('retains an earlier miss for a one-way card', () => {
+    expect(
+      deriveServerCardOutcome(
+        { direction: 'ftb', isCorrect: true, wasOverridden: false },
+        [{ direction: 'ftb', isCorrect: false, wasOverridden: false }],
+        'ftb',
+      ),
+    ).toEqual({ completesCard: true, cardWasCorrect: false });
+  });
+
+  it('does not complete a card from a direction the deck does not require', () => {
+    expect(deriveServerCardOutcome(correctBtf, [], 'ftb')).toEqual({
+      completesCard: false,
+      cardWasCorrect: false,
+    });
+  });
 });

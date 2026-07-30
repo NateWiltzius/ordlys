@@ -85,7 +85,7 @@ export default function CreateVocabModal({
 
       <Modal.Backdrop>
         <Modal.Container scroll="inside">
-          <Modal.Dialog className="min-h-0 sm:max-w-xl">
+          <Modal.Dialog className="min-h-0 sm:max-w-2xl">
             <Modal.CloseTrigger />
             <Modal.Header className="space-y-1">
               <Modal.Heading>Create card</Modal.Heading>

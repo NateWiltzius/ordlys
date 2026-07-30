@@ -16,7 +16,13 @@ import { getAuthoringUsage, lockAuthoringAccount } from '@/db/queries/authoring-
 
 type ImportDeckInput = Pick<
   CreateDeck,
-  'ownerId' | 'title' | 'description' | 'frontLanguage' | 'backLanguage' | 'visibility'
+  | 'ownerId'
+  | 'title'
+  | 'description'
+  | 'frontLanguage'
+  | 'backLanguage'
+  | 'studyDirection'
+  | 'visibility'
 >;
 
 export async function importDeck(input: ImportDeckInput, rows: ImportedVocab[]): Promise<number> {

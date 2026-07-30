@@ -20,7 +20,7 @@ describe('getQuizCompletionContent', () => {
       title: 'Learning complete',
       completedLabel: 'New words',
       cleanLabel: 'Learned cleanly',
-      detail: 'Every new word is now in review; missed words will return sooner.',
+      detail: 'Every new word is now in review; missed words needed another pass in this session.',
     });
   });
 
@@ -73,12 +73,26 @@ describe('getQuizCompletionContent', () => {
       detail: '4 of 6 words passed without a miss and qualified for placement.',
     });
   });
+
+  it('describes one-way placement without claiming both directions were tested', () => {
+    expect(
+      getQuizCompletionContent({
+        studyMode: 'placement',
+        recordAttempts: true,
+        completedCards: 2,
+        totalCards: 2,
+        missedCardCount: 0,
+        usesOneWayCards: true,
+      }).description,
+    ).toBe('You tested 2 words in each deck’s required direction.');
+  });
 });
 
 describe('getDifficultQuizItems', () => {
   const quizItems = [
     {
       id: 1,
+      releaseId: 1,
       front: 'one',
       back: 'first',
       frontAlternatives: [],
@@ -90,9 +104,11 @@ describe('getDifficultQuizItems', () => {
       backLanguage: 'two',
       deckTitle: 'Deck',
       lessonTitle: 'Lesson',
+      studyDirection: 'both' as const,
     },
     {
       id: 2,
+      releaseId: 1,
       front: 'two',
       back: 'second',
       frontAlternatives: [],
@@ -104,9 +120,11 @@ describe('getDifficultQuizItems', () => {
       backLanguage: 'two',
       deckTitle: 'Deck',
       lessonTitle: 'Lesson',
+      studyDirection: 'both' as const,
     },
     {
       id: 3,
+      releaseId: 1,
       front: 'three',
       back: 'third',
       frontAlternatives: [],
@@ -118,6 +136,7 @@ describe('getDifficultQuizItems', () => {
       backLanguage: 'two',
       deckTitle: 'Deck',
       lessonTitle: 'Lesson',
+      studyDirection: 'both' as const,
     },
   ];
 

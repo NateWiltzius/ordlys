@@ -3,8 +3,14 @@
 import { useMountedTimestamp } from '@/hooks/use-mounted-timestamp';
 import { useQuizSession } from '@/hooks/use-quiz-session';
 import { getNextReviewBatch } from '@/lib/client/review-api';
-import { getQuizAttemptOutcome } from '@/lib/quiz/quiz-helpers';
-import { buildQuizQueue, buildRollingReviewQueue, shuffleArray } from '@/lib/quiz/quiz-helpers';
+import {
+  buildQuizQueue,
+  buildRollingReviewQueue,
+  getQuizAttemptOutcome,
+  getRequiredQuizDirections,
+  isQuizProgressComplete,
+  shuffleArray,
+} from '@/lib/quiz/quiz-helpers';
 import { normalizeAnswer } from '@/lib/quiz/normalize';
 import type {
   QuizProgressItem,
@@ -93,14 +99,25 @@ export function useQuizModeController({
   }, [recordAttempts, reviewDeckId, sessionIsSaved]);
 
   const progressStats: QuizProgressStats = useMemo(() => {
-    const progressItems = Object.values(session.quizProgress);
     const totalCards = sessionQuizItems.length;
-    const totalDirections = totalCards * 2;
-    const passedDirections = progressItems.reduce(
-      (total, item) => total + Number(item.btfPassed) + Number(item.ftbPassed),
+    const totalDirections = sessionQuizItems.reduce(
+      (total, item) => total + getRequiredQuizDirections(item.studyDirection).length,
       0,
     );
-    const completedCards = progressItems.filter(item => item.btfPassed && item.ftbPassed).length;
+    const passedDirections = sessionQuizItems.reduce((total, item) => {
+      const progress = session.quizProgress[item.id];
+      if (!progress) return total;
+      return (
+        total +
+        getRequiredQuizDirections(item.studyDirection).filter(direction =>
+          direction === 'btf' ? progress.btfPassed : progress.ftbPassed,
+        ).length
+      );
+    }, 0);
+    const completedCards = sessionQuizItems.filter(item => {
+      const progress = session.quizProgress[item.id];
+      return progress ? isQuizProgressComplete(progress, item.studyDirection) : false;
+    }).length;
 
     return {
       totalCards,
@@ -117,7 +134,7 @@ export function useQuizModeController({
               (session.attemptStats.correctAttempts / session.attemptStats.totalAttempts) * 100,
             ),
     };
-  }, [session.attemptStats, session.quizProgress, sessionQuizItems.length]);
+  }, [session.attemptStats, session.quizProgress, sessionQuizItems]);
 
   const currentQuizItem = session.quizQueue?.[0];
   const currentSourceItem = currentQuizItem
@@ -162,8 +179,8 @@ export function useQuizModeController({
       btfPassed: isAccepted && quizItem.direction === 'btf' ? true : currentProgress.btfPassed,
       ftbPassed: isAccepted && quizItem.direction === 'ftb' ? true : currentProgress.ftbPassed,
     };
-    const wasAlreadyFullyPassed = currentProgress.btfPassed && currentProgress.ftbPassed;
-    const isNowFullyPassed = nextProgressForCard.btfPassed && nextProgressForCard.ftbPassed;
+    const wasAlreadyFullyPassed = isQuizProgressComplete(currentProgress, quizItem.studyDirection);
+    const isNowFullyPassed = isQuizProgressComplete(nextProgressForCard, quizItem.studyDirection);
     const completesCard = isAccepted && isNowFullyPassed && !wasAlreadyFullyPassed;
     const directionKey = `${quizItem.cardId}:${quizItem.direction}`;
     const isFirstDirectionAttempt = !attemptedDirectionKeysRef.current.has(directionKey);
@@ -172,6 +189,7 @@ export function useQuizModeController({
     if (recordAttempts) {
       persistence.saveAttempt({
         vocabId: quizItem.cardId,
+        releaseId: quizItem.releaseId,
         mode: studyMode,
         direction: quizItem.direction,
         isCorrect: session.feedback.isCorrect,

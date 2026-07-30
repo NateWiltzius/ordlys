@@ -10,17 +10,19 @@ export default function VocabFormFields({ vocab }: Props) {
     <div className="space-y-6">
       <fieldset className="space-y-4">
         <legend className="mb-1 text-sm font-semibold text-default-900">Card content</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-4">
           <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="front">
               Front
             </Label>
-            <Input
+            <TextArea
               id="front"
               name="front"
               required
               maxLength={255}
-              className="w-full"
+              rows={3}
+              placeholder="Question, term, or prompt"
+              className="w-full resize-y"
               defaultValue={vocab?.front}
             />
           </div>
@@ -29,12 +31,14 @@ export default function VocabFormFields({ vocab }: Props) {
             <Label className="text-sm text-default-600" htmlFor="back">
               Back
             </Label>
-            <Input
+            <TextArea
               id="back"
               name="back"
               required
               maxLength={255}
-              className="w-full"
+              rows={3}
+              placeholder="Answer, definition, or response"
+              className="w-full resize-y"
               defaultValue={vocab?.back}
             />
           </div>

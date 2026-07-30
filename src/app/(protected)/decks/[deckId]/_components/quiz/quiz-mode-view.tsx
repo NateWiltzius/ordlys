@@ -7,6 +7,7 @@ import QuizCompletionSummary from '@/components/quiz/quiz-completion-summary';
 import QuizFeedbackPanel from '@/components/quiz/quiz-feedback-panel';
 import StatusAlert from '@/components/shared/status-alert';
 import { getDifficultQuizItems, getSrsMilestoneCounts } from '@/lib/quiz/quiz-completion';
+import { getRequiredQuizDirections } from '@/lib/quiz/quiz-helpers';
 import type { StudyTone } from '@/lib/study-colors';
 import type { StudyMode } from '@/types/quiz.types';
 import { HomeIcon } from '@heroicons/react/24/outline';
@@ -116,9 +117,13 @@ function ActiveQuiz({
   const completesCurrentWord = Boolean(
     controller.feedback?.isCorrect &&
       feedbackProgress &&
-      (controller.feedback.quizItem.direction === 'btf'
-        ? feedbackProgress.ftbPassed
-        : feedbackProgress.btfPassed),
+      getRequiredQuizDirections(controller.feedback.quizItem.studyDirection).every(direction =>
+        direction === controller.feedback?.quizItem.direction
+          ? true
+          : direction === 'btf'
+            ? feedbackProgress.btfPassed
+            : feedbackProgress.ftbPassed,
+      ),
   );
   const wordCompletion: 'clean' | 'recovered' | undefined =
     controller.feedback && completesCurrentWord
@@ -147,37 +152,39 @@ function ActiveQuiz({
         <StatusAlert status="warning">{controller.saveNotice}</StatusAlert>
       ) : null}
 
-      {controller.feedback ? (
-        <QuizFeedbackPanel
-          feedback={controller.feedback}
-          studyMode={studyMode}
-          wordCompletion={wordCompletion}
-          recordAttempts={recordAttempts}
-          onContinue={() => controller.continueQuiz()}
-          onAcceptAnyway={
-            allowAnswerOverride &&
-            !controller.feedback.isCorrect &&
-            controller.feedback.submittedAnswer.trim()
-              ? () => controller.continueQuiz(true)
-              : undefined
-          }
-        />
-      ) : (
-        <QuizAnswerForm
-          prompt={controller.currentQuizItem?.prompt ?? ''}
-          hint={controller.currentQuizItem?.hint ?? null}
-          answer={controller.answer}
-          direction={controller.currentQuizItem?.direction ?? 'btf'}
-          frontLanguage={controller.currentSourceItem?.frontLanguage ?? null}
-          backLanguage={controller.currentSourceItem?.backLanguage ?? null}
-          tone={tone}
-          onAnswerChange={controller.changeAnswer}
-          onSubmit={controller.submitAnswer}
-          onGiveUp={controller.giveUp}
-          deckTitle={controller.currentQuizItem?.deckTitle}
-          lessonTitle={controller.currentQuizItem?.lessonTitle}
-        />
-      )}
+      <div className="border-t border-default-200 pt-4">
+        {controller.feedback ? (
+          <QuizFeedbackPanel
+            feedback={controller.feedback}
+            studyMode={studyMode}
+            wordCompletion={wordCompletion}
+            recordAttempts={recordAttempts}
+            onContinue={() => controller.continueQuiz()}
+            onAcceptAnyway={
+              allowAnswerOverride &&
+              !controller.feedback.isCorrect &&
+              controller.feedback.submittedAnswer.trim()
+                ? () => controller.continueQuiz(true)
+                : undefined
+            }
+          />
+        ) : (
+          <QuizAnswerForm
+            prompt={controller.currentQuizItem?.prompt ?? ''}
+            hint={controller.currentQuizItem?.hint ?? null}
+            answer={controller.answer}
+            direction={controller.currentQuizItem?.direction ?? 'btf'}
+            frontLanguage={controller.currentSourceItem?.frontLanguage ?? null}
+            backLanguage={controller.currentSourceItem?.backLanguage ?? null}
+            tone={tone}
+            onAnswerChange={controller.changeAnswer}
+            onSubmit={controller.submitAnswer}
+            onGiveUp={controller.giveUp}
+            deckTitle={controller.currentQuizItem?.deckTitle}
+            lessonTitle={controller.currentQuizItem?.lessonTitle}
+          />
+        )}
+      </div>
     </div>
   );
 }

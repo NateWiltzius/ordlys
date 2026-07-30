@@ -4,7 +4,9 @@ import {
   addReviewWordToQueue,
   buildQuizQueue,
   buildRollingReviewQueue,
+  getRequiredQuizDirections,
   getQuizAttemptOutcome,
+  isQuizProgressComplete,
   REVIEW_ACTIVE_WORD_LIMIT,
 } from './quiz-helpers';
 import type { QuizSourceItem } from '@/types/quiz.types';
@@ -12,6 +14,7 @@ import type { QuizSourceItem } from '@/types/quiz.types';
 function buildSourceItem(id: number): QuizSourceItem {
   return {
     id,
+    releaseId: 1,
     front: `term ${id}`,
     back: `meaning ${id}`,
     frontAlternatives: [],
@@ -21,6 +24,7 @@ function buildSourceItem(id: number): QuizSourceItem {
     reading: null,
     frontLanguage: null,
     backLanguage: null,
+    studyDirection: 'both',
   };
 }
 
@@ -67,6 +71,7 @@ describe('buildQuizQueue', () => {
     const queue = buildQuizQueue([
       {
         id: 7,
+        releaseId: 3,
         front: 'term',
         back: 'meaning',
         frontAlternatives: ['alternate term'],
@@ -80,11 +85,13 @@ describe('buildQuizQueue', () => {
         deckTitle: 'Deck',
         lessonTitle: 'Lesson',
         srsLevel: 2,
+        studyDirection: 'both',
       },
     ]);
 
     expect(queue).toHaveLength(2);
     expect(queue[0]).toMatchObject({
+      releaseId: 3,
       prompt: 'meaning',
       acceptedAnswers: ['term', 'alternate term'],
       reading: 'reading',
@@ -94,6 +101,7 @@ describe('buildQuizQueue', () => {
       srsLevel: 2,
     });
     expect(queue[1]).toMatchObject({
+      releaseId: 3,
       prompt: 'term',
       acceptedAnswers: ['meaning', 'alternate meaning'],
       reading: 'reading',
@@ -102,6 +110,27 @@ describe('buildQuizQueue', () => {
       lessonTitle: 'Lesson',
       srsLevel: 2,
     });
+  });
+
+  it('only builds the configured direction for one-way decks', () => {
+    const frontToBack = buildQuizQueue([{ ...buildSourceItem(1), studyDirection: 'ftb' }]);
+    const backToFront = buildQuizQueue([{ ...buildSourceItem(2), studyDirection: 'btf' }]);
+
+    expect(frontToBack.map(item => item.direction)).toEqual(['ftb']);
+    expect(frontToBack[0]).toMatchObject({ prompt: 'term 1', answer: 'meaning 1' });
+    expect(backToFront.map(item => item.direction)).toEqual(['btf']);
+    expect(backToFront[0]).toMatchObject({ prompt: 'meaning 2', answer: 'term 2' });
+  });
+});
+
+describe('quiz direction requirements', () => {
+  it('only completes progress after every configured direction passes', () => {
+    const progress = { cardId: 1, btfPassed: false, ftbPassed: true };
+
+    expect(getRequiredQuizDirections('both')).toEqual(['btf', 'ftb']);
+    expect(isQuizProgressComplete(progress, 'ftb')).toBe(true);
+    expect(isQuizProgressComplete(progress, 'btf')).toBe(false);
+    expect(isQuizProgressComplete(progress, 'both')).toBe(false);
   });
 });
 
@@ -134,6 +163,12 @@ describe('rolling review queue', () => {
         .map(item => item.direction)
         .sort(),
     ).toEqual(['btf', 'ftb']);
+  });
+
+  it('adds only the required direction for a pending one-way card', () => {
+    const oneWayItem = { ...buildSourceItem(20), studyDirection: 'ftb' as const };
+
+    expect(addReviewWordToQueue([], oneWayItem).map(item => item.direction)).toEqual(['ftb']);
   });
 });
 

@@ -35,6 +35,7 @@ export const createDeck = async (deck: CreateDeck) => {
         description: deck.description,
         frontLanguage: deck.frontLanguage,
         backLanguage: deck.backLanguage,
+        studyDirection: deck.studyDirection,
         visibility: 'private',
       })
       .returning({ id: decks.id });
@@ -51,7 +52,10 @@ export const createDeck = async (deck: CreateDeck) => {
 export const updateDeck = async (
   deckId: number,
   userId: string,
-  deck: Pick<CreateDeck, 'title' | 'description' | 'frontLanguage' | 'backLanguage'>,
+  deck: Pick<
+    CreateDeck,
+    'title' | 'description' | 'frontLanguage' | 'backLanguage' | 'studyDirection'
+  >,
 ) => {
   const updated = await db
     .update(decks)
@@ -105,6 +109,9 @@ export const getUserFollowedDecks = async (userId: string) => {
       copyPolicy: sql<
         Deck['copyPolicy']
       >`(select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, false)})`,
+      studyDirection: sql<
+        Deck['studyDirection']
+      >`(select study_direction from deck_releases where id=${activeReleaseIdExpression(userId, false)})`,
       subscriberCount: sql<number>`(
         select count(*)::int
         from ${deckFollows} followers
@@ -134,6 +141,9 @@ export const getUserActiveDecks = async (userId: string): Promise<Deck[]> => {
       copyPolicy: sql<
         Deck['copyPolicy']
       >`case when ${decks.ownerId}=${userId} then ${decks.copyPolicy} else (select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, false)}) end`,
+      studyDirection: sql<
+        Deck['studyDirection']
+      >`case when ${decks.ownerId}=${userId} then ${decks.studyDirection} else (select study_direction from deck_releases where id=${activeReleaseIdExpression(userId, false)}) end`,
     })
     .from(decks)
     .innerJoin(
@@ -154,6 +164,7 @@ export const getPublicDecks = async () => {
       title: deckReleases.title,
       description: deckReleases.description,
       copyPolicy: deckReleases.copyPolicy,
+      studyDirection: deckReleases.studyDirection,
       subscriberCount: sql<number>`(
         select count(*)::int
         from ${deckFollows} follows
@@ -198,6 +209,9 @@ export const getAccessibleDeckById = async (
         copyPolicy: sql<
           Deck['copyPolicy']
         >`case when ${decks.ownerId}=${userId} then ${decks.copyPolicy} else (select copy_policy from deck_releases where id=${activeReleaseIdExpression(userId, true)}) end`,
+        studyDirection: sql<
+          Deck['studyDirection']
+        >`coalesce((select study_direction from deck_releases where id=${activeReleaseIdExpression(userId, true)}), ${decks.studyDirection})`,
       })
       .from(decks)
       .leftJoin(

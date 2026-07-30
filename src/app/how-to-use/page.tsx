@@ -26,8 +26,8 @@ export default function HowToUsePage() {
       <h2 className="mt-8 text-xl font-semibold">Try to recall before revealing the answer</h2>
       <p className="mt-2">
         Pause and make a real attempt, even when you are unsure. The effort of pulling an answer
-        from memory is part of what makes it stick. Practising both directions also helps you move
-        from simply recognizing an answer to being able to recall it yourself.
+        from memory is part of what makes it stick. When a deck tests both directions, that can also
+        help you move from simply recognizing an answer to being able to recall it yourself.
       </p>
 
       <h2 className="mt-8 text-xl font-semibold">Be honest when you forget</h2>

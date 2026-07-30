@@ -13,6 +13,7 @@ const SCROLL_RESTORE_DELAY = 100;
 const PREVIEW_ITEMS: QuizQueueItem[] = [
   {
     cardId: 1,
+    releaseId: 1,
     direction: 'ftb',
     prompt: 'å huske',
     hint: null,
@@ -20,9 +21,11 @@ const PREVIEW_ITEMS: QuizQueueItem[] = [
     acceptedAnswers: ['to remember', 'remember'],
     frontLanguage: 'nb',
     backLanguage: 'en',
+    studyDirection: 'both',
   },
   {
     cardId: 2,
+    releaseId: 1,
     direction: 'ftb',
     prompt: 'et språk',
     hint: null,
@@ -30,9 +33,11 @@ const PREVIEW_ITEMS: QuizQueueItem[] = [
     acceptedAnswers: ['a language', 'language'],
     frontLanguage: 'nb',
     backLanguage: 'en',
+    studyDirection: 'both',
   },
   {
     cardId: 3,
+    releaseId: 1,
     direction: 'ftb',
     prompt: 'å lære',
     hint: null,
@@ -40,6 +45,7 @@ const PREVIEW_ITEMS: QuizQueueItem[] = [
     acceptedAnswers: ['to learn', 'learn'],
     frontLanguage: 'nb',
     backLanguage: 'en',
+    studyDirection: 'both',
   },
 ];
 

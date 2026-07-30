@@ -42,6 +42,7 @@ export const followUpdateModeEnum = pgEnum('follow_update_mode', ['automatic', '
 export const followStatusEnum = pgEnum('follow_status', ['active', 'unfollowed', 'frozen']);
 export const studyModeEnum = pgEnum('study_mode', ['learn', 'review', 'placement']);
 export const quizDirectionEnum = pgEnum('quiz_direction', ['btf', 'ftb']);
+export const deckStudyDirectionEnum = pgEnum('deck_study_direction', ['both', 'ftb', 'btf']);
 
 export const decks = pgTable(
   'decks',
@@ -52,6 +53,7 @@ export const decks = pgTable(
     description: varchar('description', { length: 255 }),
     frontLanguage: varchar('front_language', { length: 35 }),
     backLanguage: varchar('back_language', { length: 35 }),
+    studyDirection: deckStudyDirectionEnum('study_direction').default('both').notNull(),
     visibility: visibilityEnum().default('private').notNull(),
     status: deckStatusEnum().default('active').notNull(),
     copyPolicy: copyPolicyEnum('copy_policy').default('follow_only').notNull(),
@@ -199,6 +201,7 @@ export const deckReleases = pgTable(
     version: integer('version').notNull(),
     title: varchar('title', { length: 255 }).notNull(),
     description: varchar('description', { length: 255 }),
+    studyDirection: deckStudyDirectionEnum('study_direction').default('both').notNull(),
     copyPolicy: copyPolicyEnum('copy_policy').notNull(),
     contentHash: varchar('content_hash', { length: 64 }).notNull(),
     changeSummary: text('change_summary').notNull(),

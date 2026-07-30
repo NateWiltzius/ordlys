@@ -62,6 +62,7 @@ export default function DeckHeader({ deck, isOwned, isFollowing }: Props) {
       <DeckIdentity
         badges={identityBadges}
         languagePair={formatLanguagePair(deck.frontLanguage, deck.backLanguage)}
+        studyDirection={deck.studyDirection}
       />
 
       <Suspense fallback={null}>

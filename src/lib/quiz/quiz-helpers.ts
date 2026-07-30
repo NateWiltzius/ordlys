@@ -1,9 +1,12 @@
 import {
   QuizFirstAttemptStats,
+  QuizDirection,
   QuizQueueItem,
   QuizProgress,
+  QuizProgressItem,
   QuizSourceItem,
 } from '@/types/quiz.types';
+import type { DeckStudyDirection } from '@/lib/deck-study-direction';
 
 export const REVIEW_ACTIVE_WORD_LIMIT = 10;
 
@@ -48,39 +51,60 @@ export function addFirstAttempt(
   };
 }
 
+export function getRequiredQuizDirections(studyDirection: DeckStudyDirection): QuizDirection[] {
+  return studyDirection === 'both' ? ['btf', 'ftb'] : [studyDirection];
+}
+
+export function isQuizProgressComplete(
+  progress: QuizProgressItem,
+  studyDirection: DeckStudyDirection,
+): boolean {
+  return getRequiredQuizDirections(studyDirection).every(direction =>
+    direction === 'btf' ? progress.btfPassed : progress.ftbPassed,
+  );
+}
+
 export function buildQuizQueue(learnItems: QuizSourceItem[]): QuizQueueItem[] {
-  return learnItems.flatMap(item => [
-    {
-      cardId: item.id,
-      direction: 'btf',
-      prompt: item.back,
-      hint: item.backToFrontQuizHint,
-      answer: item.front,
-      acceptedAnswers: [item.front, ...item.frontAlternatives],
-      frontLanguage: item.frontLanguage,
-      backLanguage: item.backLanguage,
-      reading: item.reading,
-      notes: item.notes ?? null,
-      deckTitle: item.deckTitle ?? null,
-      lessonTitle: item.lessonTitle ?? null,
-      srsLevel: item.srsLevel ?? null,
-    },
-    {
-      cardId: item.id,
-      direction: 'ftb',
-      prompt: item.front,
-      hint: item.frontToBackQuizHint,
-      answer: item.back,
-      acceptedAnswers: [item.back, ...item.backAlternatives],
-      frontLanguage: item.frontLanguage,
-      backLanguage: item.backLanguage,
-      reading: item.reading,
-      notes: item.notes ?? null,
-      deckTitle: item.deckTitle ?? null,
-      lessonTitle: item.lessonTitle ?? null,
-      srsLevel: item.srsLevel ?? null,
-    },
-  ]);
+  return learnItems.flatMap(item => {
+    const queueItems: Record<QuizDirection, QuizQueueItem> = {
+      btf: {
+        cardId: item.id,
+        releaseId: item.releaseId,
+        direction: 'btf',
+        prompt: item.back,
+        hint: item.backToFrontQuizHint,
+        answer: item.front,
+        acceptedAnswers: [item.front, ...item.frontAlternatives],
+        frontLanguage: item.frontLanguage,
+        backLanguage: item.backLanguage,
+        reading: item.reading,
+        notes: item.notes ?? null,
+        deckTitle: item.deckTitle ?? null,
+        lessonTitle: item.lessonTitle ?? null,
+        srsLevel: item.srsLevel ?? null,
+        studyDirection: item.studyDirection,
+      },
+      ftb: {
+        cardId: item.id,
+        releaseId: item.releaseId,
+        direction: 'ftb',
+        prompt: item.front,
+        hint: item.frontToBackQuizHint,
+        answer: item.back,
+        acceptedAnswers: [item.back, ...item.backAlternatives],
+        frontLanguage: item.frontLanguage,
+        backLanguage: item.backLanguage,
+        reading: item.reading,
+        notes: item.notes ?? null,
+        deckTitle: item.deckTitle ?? null,
+        lessonTitle: item.lessonTitle ?? null,
+        srsLevel: item.srsLevel ?? null,
+        studyDirection: item.studyDirection,
+      },
+    };
+
+    return getRequiredQuizDirections(item.studyDirection).map(direction => queueItems[direction]);
+  });
 }
 
 export function buildQuizProgress(learnItems: QuizSourceItem[]): QuizProgress {

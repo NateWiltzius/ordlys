@@ -39,6 +39,10 @@ import {
 } from '@/db/queries/vocab-content';
 import type { SaveQuizAttemptInput } from '@/types/quiz.types';
 import { deriveServerCardOutcome } from '@/lib/quiz/server-attempt-policy';
+import { alias } from 'drizzle-orm/pg-core';
+
+const sessionDeckReleases = alias(deckReleases, 'session_deck_releases');
+const sessionReleaseVocabs = alias(releaseVocabs, 'session_release_vocabs');
 
 export async function getSrsCategoryCountsByDeck(
   deckIds: number[],
@@ -136,6 +140,7 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
   return db
     .select({
       id: vocabs.id,
+      releaseId: releaseVocabs.releaseId,
       ...vocabRevisionQuizSelection,
       tags: vocabRevisionExtendedSelection.tags,
       notes: vocabRevisionExtendedSelection.notes,
@@ -143,6 +148,7 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
       lessonTitle: lessonRevisions.title,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
+      studyDirection: deckReleases.studyDirection,
     })
     .from(vocabs)
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
@@ -161,6 +167,7 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
         eq(releaseLessons.lessonId, releaseVocabs.lessonId),
       ),
     )
+    .innerJoin(deckReleases, eq(deckReleases.id, releaseVocabs.releaseId))
     .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
     .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
     .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
@@ -387,6 +394,7 @@ export async function getDueReviews(userId: string, deckId?: number, limit: numb
   const query = db
     .select({
       id: vocabs.id,
+      releaseId: releaseVocabs.releaseId,
       ...vocabRevisionQuizSelection,
       lessonId: vocabs.lessonId,
       lessonTitle: lessonRevisions.title,
@@ -395,6 +403,7 @@ export async function getDueReviews(userId: string, deckId?: number, limit: numb
       srsLevel: userVocabState.srsLevel,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
+      studyDirection: deckReleases.studyDirection,
       availableCount: sql<number>`count(*) over()`,
     })
     .from(userVocabState)
@@ -490,11 +499,13 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
   return db
     .select({
       id: vocabs.id,
+      releaseId: releaseVocabs.releaseId,
       ...vocabRevisionQuizSelection,
       lessonId: vocabs.lessonId,
       lessonTitle: lessonRevisions.title,
       frontLanguage: decks.frontLanguage,
       backLanguage: decks.backLanguage,
+      studyDirection: deckReleases.studyDirection,
     })
     .from(vocabs)
     .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
@@ -513,6 +524,7 @@ export async function getPlacementTestVocabs(deckId: number, lessonId: number, u
         eq(releaseLessons.lessonId, releaseVocabs.lessonId),
       ),
     )
+    .innerJoin(deckReleases, eq(deckReleases.id, releaseVocabs.releaseId))
     .innerJoin(lessonRevisions, eq(lessonRevisions.id, releaseLessons.revisionId))
     .innerJoin(vocabRevisions, eq(vocabRevisions.id, releaseVocabs.revisionId))
     .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
@@ -544,10 +556,40 @@ export async function saveQuizAttempt(
 
   return db.transaction(async tx => {
     const [vocabAccess] = await tx
-      .select({ id: vocabs.id, deckId: decks.id, lessonId: lessons.id })
+      .select({
+        id: vocabs.id,
+        deckId: decks.id,
+        lessonId: lessons.id,
+        studyDirection: sessionDeckReleases.studyDirection,
+      })
       .from(vocabs)
       .innerJoin(lessons, eq(vocabs.lessonId, lessons.id))
       .innerJoin(decks, eq(lessons.deckId, decks.id))
+      .innerJoin(
+        releaseVocabs,
+        and(
+          eq(releaseVocabs.vocabId, vocabs.id),
+          eq(releaseVocabs.releaseId, activeReleaseIdExpression(userId, false)),
+        ),
+      )
+      .innerJoin(deckReleases, eq(deckReleases.id, releaseVocabs.releaseId))
+      .innerJoin(
+        sessionReleaseVocabs,
+        and(
+          eq(sessionReleaseVocabs.vocabId, vocabs.id),
+          eq(
+            sessionReleaseVocabs.releaseId,
+            input.releaseId ?? activeReleaseIdExpression(userId, false),
+          ),
+        ),
+      )
+      .innerJoin(
+        sessionDeckReleases,
+        and(
+          eq(sessionDeckReleases.id, sessionReleaseVocabs.releaseId),
+          eq(sessionDeckReleases.deckId, decks.id),
+        ),
+      )
       .leftJoin(deckFollows, and(eq(deckFollows.deckId, decks.id), eq(deckFollows.userId, userId)))
       .where(and(eq(vocabs.id, input.vocabId), studyDeckAccess(userId)))
       .limit(1);
@@ -556,8 +598,8 @@ export async function saveQuizAttempt(
     // queued attempt obsolete rather than retryable forever.
     if (!vocabAccess) return { saved: false, transition: null, deckId: null };
 
-    // Serialize attempts for one card within one quiz session so two directions
-    // cannot race while the server derives the completion boundary.
+    // Serialize attempts for one card within one quiz session so required
+    // directions cannot race while the server derives the completion boundary.
     await tx.execute(sql`
       select pg_advisory_xact_lock(
         hashtextextended(${`${userId}:${input.sessionId}:${input.vocabId}:${input.mode}`}, 0)
@@ -605,6 +647,7 @@ export async function saveQuizAttempt(
         wasOverridden: input.wasOverridden,
       },
       previousAttempts,
+      vocabAccess.studyDirection,
     );
     if (!completesCard) {
       return { saved: true, transition: null, deckId: vocabAccess.deckId };

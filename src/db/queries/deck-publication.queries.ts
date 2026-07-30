@@ -100,6 +100,7 @@ export async function publishDeck(
     }
 
     const snapshot = {
+      studyDirection: deck.studyDirection,
       lessons: draftLessons.map(({ lesson, revision }) => ({
         title: revision.title,
         order: lesson.orderIndex,
@@ -169,7 +170,12 @@ export async function publishDeck(
             item.orderIndex === draft.orderIndex
           );
         });
-      if (previous && lessonsUnchanged && vocabsUnchanged) {
+      if (
+        previous &&
+        previous.studyDirection === deck.studyDirection &&
+        lessonsUnchanged &&
+        vocabsUnchanged
+      ) {
         contentHash = previous.contentHash;
       }
     }
@@ -181,6 +187,7 @@ export async function publishDeck(
         version: sql`coalesce((select max(version) from deck_releases where deck_id = ${deckId}), 0) + 1`,
         title: deck.title,
         description: deck.description,
+        studyDirection: deck.studyDirection,
         copyPolicy: deck.copyPolicy,
         contentHash,
         changeSummary,

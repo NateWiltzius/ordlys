@@ -187,8 +187,8 @@ export default function LessonsAccordion({
                     {canStudy && lesson.canTakePlacementTest ? (
                       <div className="mb-4 flex flex-col items-end gap-2">
                         <p className="max-w-md text-right text-sm text-default-500">
-                          Already know these cards? Test both directions to place familiar cards
-                          directly into review.
+                          Already know these cards? Test their required directions to place familiar
+                          cards directly into review.
                         </p>
                         <ButtonLink
                           href={`/decks/${deckId}/placement/${lesson.lessonId}`}

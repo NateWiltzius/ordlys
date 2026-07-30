@@ -1,3 +1,5 @@
+import { getStudyTextSizeClass } from '@/lib/study-text-size';
+
 type Props = {
   label: string;
   language?: string | null;
@@ -35,11 +37,10 @@ export default function WordSide({
         ) : null}
       </div>
       <p
-        className={
-          primary
-            ? 'mt-3 break-words text-4xl leading-tight font-semibold sm:text-5xl'
-            : 'mt-3 break-words text-2xl leading-snug font-medium sm:text-3xl'
-        }
+        className={`mt-3 break-words ${getStudyTextSizeClass(
+          value,
+          primary ? 'primary' : 'secondary',
+        )}`}
       >
         {value}
       </p>

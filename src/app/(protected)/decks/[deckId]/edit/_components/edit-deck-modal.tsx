@@ -4,6 +4,7 @@ import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields
 import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
+import { parseDeckStudyDirection } from '@/lib/deck-study-direction';
 import { updateDeckAction } from '@/server/deck.actions';
 import { Deck } from '@/types/deck.types';
 import { Button, Modal, useOverlayState } from '@heroui/react';
@@ -31,6 +32,7 @@ export default function EditDeckModal({ deck }: Props) {
         description: String(formData.get('description') ?? ''),
         frontLanguage: languageFormValue(formData.get('frontLanguage')),
         backLanguage: languageFormValue(formData.get('backLanguage')),
+        studyDirection: parseDeckStudyDirection(formData.get('studyDirection')),
       });
       if (isActionFailure(result)) {
         setError(result.message);
@@ -63,7 +65,8 @@ export default function EditDeckModal({ deck }: Props) {
             <Modal.Header className="space-y-1">
               <Modal.Heading>Edit deck</Modal.Heading>
               <p className="text-sm text-default-500">
-                Keep the deck title, description, and optional card-side labels clear.
+                Update the draft details and testing direction. Publish a new release before study
+                changes take effect.
               </p>
             </Modal.Header>
             <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
