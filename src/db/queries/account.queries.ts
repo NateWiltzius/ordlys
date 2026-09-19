@@ -12,6 +12,8 @@ import {
   userVocabState,
   vocabRevisions,
   vocabs,
+  studyPreferences,
+  lessonUnlocks,
 } from '@/db/schema';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { vocabRevisionContentSelection } from '@/db/queries/vocab-content';
@@ -34,6 +36,8 @@ export async function getAccountExportData(userId: string) {
     submittedReports,
     auditEvents,
     reviewHistory,
+    preferences,
+    unlockedLessons,
   ] = await Promise.all([
     ownedDeckIds.length
       ? db
@@ -89,6 +93,8 @@ export async function getAccountExportData(userId: string) {
       .from(reviewAttempts)
       .where(eq(reviewAttempts.userId, userId))
       .orderBy(reviewAttempts.id),
+    db.select().from(studyPreferences).where(eq(studyPreferences.userId, userId)),
+    db.select().from(lessonUnlocks).where(eq(lessonUnlocks.userId, userId)),
   ]);
 
   return {
@@ -101,6 +107,8 @@ export async function getAccountExportData(userId: string) {
     deckReports: submittedReports,
     auditEvents,
     reviewHistory,
+    studyPreferences: preferences,
+    unlockedLessons,
   };
 }
 
@@ -140,6 +148,8 @@ export async function deleteAccountData(userId: string) {
     await tx.delete(deckReports).where(eq(deckReports.reporterId, userId));
     await tx.delete(reviewAttempts).where(eq(reviewAttempts.userId, userId));
     await tx.delete(userVocabState).where(eq(userVocabState.userId, userId));
+    await tx.delete(studyPreferences).where(eq(studyPreferences.userId, userId));
+    await tx.delete(lessonUnlocks).where(eq(lessonUnlocks.userId, userId));
     await tx.delete(deckFollows).where(eq(deckFollows.userId, userId));
   });
 }

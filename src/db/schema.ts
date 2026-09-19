@@ -382,6 +382,34 @@ export const reviewAttempts = pgTable(
   ],
 );
 
+export const studyPreferences = pgTable(
+  'study_preferences',
+  {
+    userId: uuid('user_id').primaryKey(),
+    strictProgression: boolean('strict_progression').default(false).notNull(),
+    dailyNewWordTarget: integer('daily_new_word_target').default(10).notNull(),
+    timeZone: varchar('time_zone', { length: 100 }).default('UTC').notNull(),
+  },
+  table => [
+    check(
+      'study_preferences_daily_target_range',
+      sql`${table.dailyNewWordTarget} between 1 and 100`,
+    ),
+  ],
+);
+
+export const lessonUnlocks = pgTable(
+  'lesson_unlocks',
+  {
+    userId: uuid('user_id').notNull(),
+    lessonId: integer('lesson_id')
+      .notNull()
+      .references(() => lessons.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => [unique('lesson_unlocks_user_lesson_unique').on(table.userId, table.lessonId)],
+);
+
 export const feedback = pgTable(
   'feedback',
   {

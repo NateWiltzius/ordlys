@@ -15,29 +15,36 @@ type Props = {
   params: Promise<{
     deckId: string;
   }>;
-  searchParams: Promise<{ size?: string | string[] }>;
+  searchParams: Promise<{ size?: string | string[]; lesson?: string | string[] }>;
 };
 
 export default async function Page({ params, searchParams }: Props) {
   const { deckId } = await params;
+  const query = await searchParams;
+  const lessonId =
+    typeof query.lesson === 'string' ? parsePositiveInteger(query.lesson) : undefined;
+  if (query.lesson !== undefined && !lessonId) notFound();
   const selectedSize = parseLearnSessionSize(
-    (await searchParams).size,
+    query.size,
     (await cookies()).get(LEARN_SESSION_SIZE_COOKIE)?.value,
   );
   const parsedDeckId = parsePositiveInteger(deckId);
   if (!parsedDeckId) notFound();
-  const data = await getLearnPageData(parsedDeckId, selectedSize);
+  const data = await getLearnPageData(parsedDeckId, selectedSize, lessonId ?? undefined);
   if (!data) notFound();
-  const { deckTitle, learnItems, lessonProgress, availableCount } = data;
+  const { deckTitle, learnItems, lessonProgress, availableCount, dailyProgress } = data;
 
   return (
     <LearnPage
+      key={lessonId ?? 'deck'}
+      lessonId={lessonId ?? undefined}
       deckId={parsedDeckId}
       deckTitle={deckTitle}
       learnItems={learnItems}
       lessonProgress={lessonProgress}
       selectedSize={selectedSize}
       availableCount={availableCount}
+      dailyProgress={dailyProgress}
     />
   );
 }

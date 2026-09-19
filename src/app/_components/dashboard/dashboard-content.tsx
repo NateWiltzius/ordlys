@@ -9,11 +9,15 @@ import DashboardRecentMistakesCard from '@/app/_components/dashboard/dashboard-r
 import { getRecentMistakeCountData } from '@/server/data/review-page-data';
 import DashboardLearningCard from '@/app/_components/dashboard/dashboard-learning-card';
 import { DashboardAction, getDashboardActionOrder } from '@/lib/dashboard-actions';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { getDailyStudyProgress } from '@/db/queries/study-preferences.queries';
+import DailyStudyTarget from '@/components/shared/daily-study-target';
 
 export default async function DashboardContent() {
-  const [dashboardData, recentMistakeCount] = await Promise.all([
+  const [dashboardData, recentMistakeCount, dailyProgress] = await Promise.all([
     getDashboardData(),
     getRecentMistakeCountData(),
+    getCurrentUserId().then(getDailyStudyProgress),
   ]);
   const { activeDecks, allDeckStats, deckStats, reviewForecast, nextReview } = dashboardData;
   const deckShortcuts = [...activeDecks]
@@ -50,6 +54,7 @@ export default async function DashboardContent() {
   };
   return (
     <div className="space-y-6">
+      <DailyStudyTarget progress={dailyProgress} />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {actionOrder.map((action, index) => (
           <div

@@ -10,23 +10,29 @@ import StudySession from '@/components/shared/layout/study-session';
 import StudySessionHeader from '@/components/shared/layout/study-session-header';
 import SessionSizePicker from '@/components/shared/session-size-picker';
 import { LEARN_SESSION_SIZE_COOKIE, LEARN_SESSION_SIZES } from '@/lib/study-session-size';
+import ContinueToLesson from '@/components/shared/continue-to-lesson';
+import DailyStudyTarget from '@/components/shared/daily-study-target';
 
 type Props = {
   deckId: number;
+  lessonId?: number;
   deckTitle: string;
   learnItems: LearnItem[];
   lessonProgress: LessonProgress[];
   selectedSize: number | 'all';
   availableCount: number;
+  dailyProgress: { introducedToday: number; dailyNewWordTarget: number; timeZone: string };
 };
 
 export default function LearnPage({
   deckId,
+  lessonId,
   deckTitle,
   learnItems,
   lessonProgress,
   selectedSize,
   availableCount,
+  dailyProgress,
 }: Props) {
   const [mode, setMode] = useState<'learn' | 'quiz'>('learn');
   // Learning answers also revalidate this route. Preserve the batch and progress
@@ -60,18 +66,35 @@ export default function LearnPage({
         <Card>
           <Card.Header>
             <Card.Title render={props => <h2 {...props} />}>
-              {nextLockedLesson ? 'Keep reviewing to unlock more cards' : 'All cards introduced'}
+              {lessonId
+                ? 'Lesson cards introduced'
+                : nextLockedLesson
+                  ? 'Keep reviewing to unlock more cards'
+                  : 'All cards introduced'}
             </Card.Title>
             <Card.Description>
               {nextLockedLesson && previousLesson
-                ? `${remainingRequired} more ${
+                ? `You’ve introduced every available card. ${remainingRequired} more ${
                     remainingRequired === 1 ? 'card needs' : 'cards need'
                   } stronger recall in ${previousLesson.lessonTitle}.`
-                : 'You have added every card in this deck to your review queue.'}
+                : lessonId
+                  ? 'You have added every card in this lesson to your review queue.'
+                  : 'You have added every card in this deck to your review queue.'}
             </Card.Description>
           </Card.Header>
-          <Card.Footer>
+          <Card.Footer className="flex flex-wrap gap-3">
             <ButtonLink href={`/decks/${deckId}/review`}>Review now</ButtonLink>
+            {lessonId ? (
+              <ButtonLink href={`/decks/${deckId}`} variant="secondary">
+                Back to lessons
+              </ButtonLink>
+            ) : null}
+            {nextLockedLesson?.canContinueEarly ? (
+              <ContinueToLesson deckId={deckId} lessonId={nextLockedLesson.lessonId} />
+            ) : null}
+            <ButtonLink href="/account" variant="secondary">
+              Learning preferences
+            </ButtonLink>
           </Card.Footer>
         </Card>
       </StudySession>
@@ -89,9 +112,10 @@ export default function LearnPage({
         exitHref={`/decks/${deckId}`}
         exitLabel="Exit to deck"
       />
+      {mode === 'learn' ? <DailyStudyTarget progress={dailyProgress} /> : null}
       {mode === 'learn' ? (
         <SessionSizePicker
-          baseHref={`/decks/${deckId}/learn`}
+          baseHref={`/decks/${deckId}/learn${lessonId ? `?lesson=${lessonId}` : ''}`}
           selectedSize={selectedSize}
           sizes={LEARN_SESSION_SIZES}
           totalCount={session.availableCount}

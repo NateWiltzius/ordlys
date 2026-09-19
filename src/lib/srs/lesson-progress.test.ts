@@ -17,7 +17,7 @@ function lesson(
 
 describe('buildLessonProgress', () => {
   it('unlocks the next lesson after 80% of the released cards reach the threshold', () => {
-    const progress = buildLessonProgress([lesson(1, 10, 10, 8), lesson(2, 10, 0, 0)]);
+    const progress = buildLessonProgress([lesson(1, 10, 8, 8), lesson(2, 10, 0, 0)]);
 
     expect(progress[0]).toMatchObject({ requiredWords: 8, isUnlocked: true });
     expect(progress[1]).toMatchObject({ isUnlocked: true, canTakePlacementTest: true });
@@ -29,10 +29,48 @@ describe('buildLessonProgress', () => {
     expect(progress[1]).toMatchObject({ isUnlocked: false, canTakePlacementTest: false });
   });
 
-  it('unlocks the next lesson after every word in the preceding lesson is introduced', () => {
+  it('offers a choice instead of automatically advancing after every word is introduced', () => {
     const progress = buildLessonProgress([lesson(1, 10, 10, 0), lesson(2, 10, 0, 0)]);
 
-    expect(progress[1]).toMatchObject({ isUnlocked: true, canTakePlacementTest: true });
+    expect(progress[1]).toMatchObject({
+      isUnlocked: false,
+      canTakePlacementTest: false,
+      canContinueEarly: true,
+    });
+  });
+
+  it('requires Strong in structured mode even when all words are introduced', () => {
+    const progress = buildLessonProgress([lesson(1, 10, 10, 0), lesson(2, 10, 0, 0)], {
+      strictProgression: true,
+    });
+    expect(progress[1]).toMatchObject({ isUnlocked: false, canContinueEarly: false });
+  });
+
+  it('keeps an explicit choice available after switching to structured mode', () => {
+    const progress = buildLessonProgress(
+      [lesson(1, 10, 0, 0), lesson(2, 10, 0, 0), lesson(3, 10, 0, 0)],
+      { strictProgression: true, unlockedLessonIds: [2] },
+    );
+    expect(progress.map(item => item.isUnlocked)).toEqual([true, true, false]);
+    expect(progress[1].canTakePlacementTest).toBe(true);
+  });
+
+  it('only offers the next nonempty lesson, without skipping multiple locked lessons', () => {
+    const progress = buildLessonProgress([
+      lesson(1, 10, 0, 0),
+      lesson(2, 0, 0, 0),
+      lesson(3, 10, 0, 0),
+      lesson(4, 10, 0, 0),
+    ]);
+    expect(progress.map(item => item.canContinueEarly)).toEqual([false, false, true, false]);
+  });
+
+  it('rounds the Strong milestone upward', () => {
+    const below = buildLessonProgress([lesson(1, 12, 12, 9), lesson(2, 10, 0, 0)]);
+    const reached = buildLessonProgress([lesson(1, 12, 12, 10), lesson(2, 10, 0, 0)]);
+    expect(below[0].requiredWords).toBe(10);
+    expect(below[1].isUnlocked).toBe(false);
+    expect(reached[1].isUnlocked).toBe(true);
   });
 
   it('does not relock a lesson that the learner has already started', () => {

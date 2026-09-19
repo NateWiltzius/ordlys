@@ -62,6 +62,19 @@ Database contract tests are kept out of the normal local test suite. CI runs the
 its disposable PostgreSQL service; if you run them manually, they use `DATABASE_URL` and roll back
 their test fixtures.
 
+## Learning preferences
+
+Account → Learning preferences controls Guided (default) or Structured progression and a daily
+new-card target (default 10, across all decks). Both recommend 80% of the preceding lesson at
+Strong (display level 4). Guided offers an explicit “Continue anyway” choice; merely introducing
+every card no longer unlocks the next lesson. Started lessons and explicitly opened lessons stay
+available when preferences change. Daily targets are informational, not hard limits, and include
+successful placement cards. Days use the device time zone saved with preferences (UTC initially).
+
+Existing installations must apply `supabase/migrations/0002_study_preferences.sql` before deploying
+this version. It creates the preference and explicit-unlock tables and restricts browser access.
+For fresh databases, the schema push and bootstrap steps above already include these tables.
+
 ## Stack
 
 - Next.js and React

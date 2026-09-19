@@ -21,6 +21,7 @@ import {
   REVIEW_SESSION_SIZES,
 } from '@/lib/study-session-size';
 import { parsePositiveInteger } from '@/lib/validation/parse-positive-integer';
+import { getDailyStudyProgress } from '@/db/queries/study-preferences.queries';
 
 export async function getLessonProgressData(id: number) {
   const deckId = parsePositiveInteger(id);
@@ -31,6 +32,7 @@ export async function getLessonProgressData(id: number) {
 export async function getLearnPageData(
   id: number,
   requestedLimit: number | 'all' = DEFAULT_LEARN_SESSION_SIZE,
+  lessonId?: number,
 ) {
   const deckId = parsePositiveInteger(id);
   if (!deckId) throw new Error('Invalid deck ID.');
@@ -42,15 +44,21 @@ export async function getLearnPageData(
         : DEFAULT_LEARN_SESSION_SIZE;
   const userId = await getCurrentUserId();
   if (!(await getActiveReleaseId(deckId, userId))) return null;
-  const [deck, lessonProgress, availableCount] = await Promise.all([
+  const [deck, lessonProgress, deckAvailableCount, dailyProgress] = await Promise.all([
     getAccessibleDeckById(deckId, userId),
     getLessonProgressForDeck(deckId, userId),
     getNewVocabCountForDeck(deckId, userId),
+    getDailyStudyProgress(userId),
   ]);
   if (!deck) return null;
+  const selectedLesson = lessonProgress.find(lesson => lesson.lessonId === lessonId);
+  if (lessonId !== undefined && !selectedLesson?.isUnlocked) return null;
+  const availableCount = selectedLesson
+    ? Math.max(0, selectedLesson.totalWords - selectedLesson.introducedWords)
+    : deckAvailableCount;
   const limit = requestedSize === 'all' ? availableCount : requestedSize;
-  const learnItems = limit > 0 ? await getNewVocabsForDeck(deckId, userId, limit) : [];
-  return { deckTitle: deck.title, learnItems, lessonProgress, availableCount };
+  const learnItems = limit > 0 ? await getNewVocabsForDeck(deckId, userId, limit, lessonId) : [];
+  return { deckTitle: deck.title, learnItems, lessonProgress, availableCount, dailyProgress };
 }
 
 export async function getReviewPageData(

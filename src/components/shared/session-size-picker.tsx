@@ -50,7 +50,7 @@ export default function SessionSizePicker({
           {sizeChoices.map(size => (
             <Link
               key={size}
-              href={`${baseHref}?size=${size}`}
+              href={`${baseHref}${baseHref.includes('?') ? '&' : '?'}size=${size}`}
               onClick={() => rememberSize(size)}
               className={buttonVariants({
                 size: 'sm',
@@ -62,7 +62,7 @@ export default function SessionSizePicker({
           ))}
           {showAllChoice ? (
             <Link
-              href={`${baseHref}?size=all`}
+              href={`${baseHref}${baseHref.includes('?') ? '&' : '?'}size=all`}
               onClick={() => rememberSize('all')}
               className={buttonVariants({
                 size: 'sm',

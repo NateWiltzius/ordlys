@@ -9,25 +9,32 @@ export type LessonProgressRow = {
   learnedWords: number;
 };
 
-export function buildLessonProgress(rows: LessonProgressRow[]): LessonProgress[] {
+export function buildLessonProgress(
+  rows: LessonProgressRow[],
+  options: { strictProgression?: boolean; unlockedLessonIds?: number[] } = {},
+): LessonProgress[] {
   let previousNonEmptyLessonAllowsProgression = true;
+  let previousNonEmptyLessonIsUnlocked = false;
+  const explicitUnlocks = new Set(options.unlockedLessonIds ?? []);
 
   return rows.map(row => {
     const totalWords = Number(row.totalWords);
     const introducedWords = Number(row.introducedWords);
     const learnedWords = Number(row.learnedWords);
     const requiredWords = Math.ceil(totalWords * LESSON_PROGRESSION_CONFIG.unlockRatio);
-    // Once a learner has started a lesson, keep it unlocked even if an earlier
-    // lesson later falls below its milestone (for example after a lapse or a
-    // deck update). A fresh lesson becomes available after the preceding lesson
-    // is either strengthened or fully introduced.
+    // Started lessons and explicit choices survive lapses and preference changes.
     const isUnlocked =
-      totalWords === 0 || introducedWords > 0 || previousNonEmptyLessonAllowsProgression;
+      totalWords === 0 ||
+      introducedWords > 0 ||
+      explicitUnlocks.has(row.lessonId) ||
+      previousNonEmptyLessonAllowsProgression;
+    const canContinueEarly =
+      !options.strictProgression && !isUnlocked && previousNonEmptyLessonIsUnlocked;
     const canTakePlacementTest = totalWords > introducedWords && isUnlocked;
 
     if (totalWords > 0) {
-      previousNonEmptyLessonAllowsProgression =
-        isUnlocked && (learnedWords >= requiredWords || introducedWords >= totalWords);
+      previousNonEmptyLessonAllowsProgression = isUnlocked && learnedWords >= requiredWords;
+      previousNonEmptyLessonIsUnlocked = isUnlocked;
     }
 
     return {
@@ -39,6 +46,7 @@ export function buildLessonProgress(rows: LessonProgressRow[]): LessonProgress[]
       requiredWords,
       isUnlocked,
       canTakePlacementTest,
+      canContinueEarly,
     };
   });
 }

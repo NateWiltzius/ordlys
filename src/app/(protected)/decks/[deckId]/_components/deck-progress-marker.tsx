@@ -16,9 +16,6 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
   const remainingLearnedWords = currentLesson
     ? Math.max(0, currentLesson.requiredWords - currentLesson.learnedWords)
     : 0;
-  const remainingIntroducedWords = currentLesson
-    ? Math.max(0, currentLesson.totalWords - currentLesson.introducedWords)
-    : 0;
 
   return (
     <section className="border-t border-default-200 pt-6">
@@ -86,12 +83,8 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                 ? progress.nextLesson
                   ? `${progress.nextLesson.lessonTitle} unlocked`
                   : 'Final lesson milestone reached'
-                : progress.nextLesson && remainingIntroducedWords > 0
-                  ? `Introduce ${remainingIntroducedWords} more ${
-                      remainingIntroducedWords === 1 ? 'card' : 'cards'
-                    }, or strengthen ${remainingLearnedWords} more, to unlock ${
-                      progress.nextLesson.lessonTitle
-                    }`
+                : progress.nextLesson?.isUnlocked
+                  ? `${progress.nextLesson.lessonTitle} is available. Keep reviewing this lesson to strengthen your recall.`
                   : `${remainingLearnedWords} more ${
                       remainingLearnedWords === 1 ? 'card' : 'cards'
                     } to strengthen before you ${
@@ -100,6 +93,11 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
                         : 'complete the final milestone'
                     }`}
             </p>
+            {progress.nextLesson?.canContinueEarly ? (
+              <p className="text-sm text-default-500">
+                Prefer to move ahead? Choose “Continue anyway” on the next lesson below.
+              </p>
+            ) : null}
             <p className="text-xs text-default-500">
               {currentLesson.introducedWords} of {currentLesson.totalWords} cards introduced in this
               lesson

@@ -40,6 +40,7 @@ export type LessonProgress = {
   requiredWords: number;
   isUnlocked: boolean;
   canTakePlacementTest: boolean;
+  canContinueEarly?: boolean;
 };
 
 export type SrsTransition = {

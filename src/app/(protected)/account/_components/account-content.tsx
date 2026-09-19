@@ -3,11 +3,15 @@ import DeleteAccountModal from '@/app/(protected)/account/_components/delete-acc
 import ButtonLink from '@/components/shared/button-link';
 import PageSection from '@/components/shared/layout/page-section';
 import { createClient } from '@/lib/supabase/server';
+import { getCurrentUserId } from '@/lib/auth/get-current-user-id';
+import { getStudyPreferences } from '@/db/queries/study-preferences.queries';
+import StudyPreferencesForm from './study-preferences-form';
 
 export default async function AccountContent() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const email = typeof data?.claims?.email === 'string' ? data.claims.email : 'Not available';
+  const preferences = await getStudyPreferences(await getCurrentUserId());
 
   return (
     <div className="space-y-6">
@@ -18,6 +22,13 @@ export default async function AccountContent() {
             <dd className="font-medium">{email}</dd>
           </div>
         </dl>
+      </PageSection>
+
+      <PageSection
+        title="Learning preferences"
+        description="Choose your pace and how you move between lessons."
+      >
+        <StudyPreferencesForm preferences={preferences} />
       </PageSection>
 
       <PageSection

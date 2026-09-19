@@ -13,6 +13,7 @@ import { LessonProgress } from '@/types/review.types';
 import type { Vocab } from '@/types/vocab.types';
 import { Accordion, Button, Chip } from '@heroui/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import ContinueToLesson from '@/components/shared/continue-to-lesson';
 
 type SrsState = {
   srsLevel: number;
@@ -184,6 +185,16 @@ export default function LessonsAccordion({
                 </Accordion.Heading>
                 <Accordion.Panel>
                   <Accordion.Body className="px-3 pb-4">
+                    {canStudy && lesson.isUnlocked && lesson.totalWords > lesson.introducedWords ? (
+                      <div className="mb-4">
+                        <ButtonLink
+                          href={`/decks/${deckId}/learn?lesson=${lesson.lessonId}`}
+                          variant="secondary"
+                        >
+                          Learn this lesson
+                        </ButtonLink>
+                      </div>
+                    ) : null}
                     {canStudy && lesson.canTakePlacementTest ? (
                       <div className="mb-4 flex flex-col items-end gap-2">
                         <p className="max-w-md text-right text-sm text-default-500">
@@ -200,10 +211,19 @@ export default function LessonsAccordion({
                       </div>
                     ) : canStudy && lesson.totalWords > lesson.introducedWords ? (
                       <p className="mb-4 text-right text-sm text-muted">
-                        Introduce every card in the previous lesson, or strengthen at least{' '}
+                        Strengthen at least{' '}
                         {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}% of the previous
                         lesson&apos;s cards to unlock this placement test.
                       </p>
+                    ) : null}
+                    {canStudy && lesson.canContinueEarly ? (
+                      <div className="mb-4 space-y-2">
+                        <p className="text-sm text-muted">
+                          We recommend strengthening the previous lesson first. You can choose to
+                          continue early.
+                        </p>
+                        <ContinueToLesson deckId={deckId} lessonId={lesson.lessonId} />
+                      </div>
                     ) : null}
                     {lesson.totalWords > 0 ? (
                       <LessonVocabulary

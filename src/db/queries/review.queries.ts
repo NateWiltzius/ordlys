@@ -40,6 +40,7 @@ import {
 import type { SaveQuizAttemptInput } from '@/types/quiz.types';
 import { deriveServerCardOutcome } from '@/lib/quiz/server-attempt-policy';
 import { alias } from 'drizzle-orm/pg-core';
+import { getLessonProgressOptions } from './study-preferences.queries';
 
 const sessionDeckReleases = alias(deckReleases, 'session_deck_releases');
 const sessionReleaseVocabs = alias(releaseVocabs, 'session_release_vocabs');
@@ -126,10 +127,15 @@ export async function getLessonProgressForDeck(
     .groupBy(lessons.id, lessonRevisions.title, releaseLessons.orderIndex)
     .orderBy(releaseLessons.orderIndex, lessons.id);
 
-  return buildLessonProgress(rows);
+  return buildLessonProgress(rows, await getLessonProgressOptions(userId));
 }
 
-export async function getNewVocabsForDeck(deckId: number, userId: string, limit = 5) {
+export async function getNewVocabsForDeck(
+  deckId: number,
+  userId: string,
+  limit = 5,
+  lessonId?: number,
+) {
   const lessonProgress = await getLessonProgressForDeck(deckId, userId);
   const unlockedLessonIds = getUnlockedLessonIdsWithNewVocab(lessonProgress);
 
@@ -180,6 +186,7 @@ export async function getNewVocabsForDeck(deckId: number, userId: string, limit 
         eq(decks.id, deckId),
         studyDeckAccess(userId),
         inArray(lessons.id, unlockedLessonIds),
+        lessonId === undefined ? undefined : eq(lessons.id, lessonId),
         isNull(userVocabState.id),
       ),
     )
@@ -271,8 +278,11 @@ export async function getNewVocabCountsForDecks(
     progressRowsByDeck.set(row.deckId, progressRows);
   }
 
+  const progressionOptions = await getLessonProgressOptions(userId);
   for (const [deckId, progressRows] of progressRowsByDeck) {
-    counts[deckId] = getUnlockedNewVocabCount(buildLessonProgress(progressRows));
+    counts[deckId] = getUnlockedNewVocabCount(
+      buildLessonProgress(progressRows, progressionOptions),
+    );
   }
 
   return counts;
