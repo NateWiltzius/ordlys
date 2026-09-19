@@ -19,6 +19,7 @@ import type { DeckProvenance, RemovedDraftItem } from '@/db/queries/deck-release
 import { Label, ListBox, Select, Tabs } from '@heroui/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import EditDeckModal from './edit-deck-modal';
+import ButtonLink from '@/components/shared/button-link';
 import PublicationPanel from './publication-panel';
 import RemovedDraftItems from './removed-draft-items';
 import EditableVocabularySearch from './editable-vocabulary-search';
@@ -142,7 +143,18 @@ export default function EditPage({
         title={deck.title}
         description="Edit this deck's content, details, and publishing settings."
         backLink={{ href: `/decks/${parsedDeckId}`, label: 'Back to deck' }}
-        actions={<EditDeckModal deck={deck} />}
+        actions={
+          <>
+            <EditDeckModal deck={deck} />
+            <ButtonLink
+              href={`/decks/${deck.id}/delete`}
+              variant="tertiary"
+              className="text-danger"
+            >
+              Delete deck
+            </ButtonLink>
+          </>
+        }
       />
 
       <Tabs className="w-full" selectedKey={selectedTab} onSelectionChange={handleTabChange}>

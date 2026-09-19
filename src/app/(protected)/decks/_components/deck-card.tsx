@@ -15,6 +15,7 @@ import { useDeckCardActions } from './use-deck-card-actions';
 import { DeckCardConfirmationDialog, DeckCardMenu } from './deck-card-controls';
 import { DeckCardRowView, DeckCardTileView } from './deck-card-layouts';
 import DeckCardPrimaryAction from './deck-card-primary-action';
+import ButtonLink from '@/components/shared/button-link';
 
 type Props = {
   deck: Deck;
@@ -63,18 +64,28 @@ export function DeckCard({
       : null,
   ].filter((item): item is string => Boolean(item));
 
-  const primaryAction = (
-    <DeckCardPrimaryAction
-      action={rowPrimaryAction}
-      deckId={deck.id}
-      deckTitle={deck.title}
-      layout={layout}
-      stats={studyStats}
-      pending={actions.pending}
-      onFollow={actions.follow}
-      onRestore={actions.restore}
-    />
-  );
+  const primaryAction =
+    relationship === 'restorable' && deck.status === 'deleted' ? (
+      <ButtonLink
+        href={`/decks/${deck.id}/delete`}
+        size="sm"
+        variant="secondary"
+        className={layout === 'row' ? 'w-full sm:w-auto' : 'flex-1'}
+      >
+        Review deletion
+      </ButtonLink>
+    ) : (
+      <DeckCardPrimaryAction
+        action={rowPrimaryAction}
+        deckId={deck.id}
+        deckTitle={deck.title}
+        layout={layout}
+        stats={studyStats}
+        pending={actions.pending}
+        onFollow={actions.follow}
+        onRestore={actions.restore}
+      />
+    );
   const menuAction = (
     <DeckCardMenu
       deckTitle={deck.title}
@@ -145,7 +156,7 @@ function getRelationshipBadges(
 }
 
 function getRetentionMessage(retentionUntil: Date | null, mountedAt: number | null): string {
-  if (!retentionUntil) return 'Recoverable until an unknown date.';
+  if (!retentionUntil) return 'You can restore this deck until you permanently delete it.';
   if (mountedAt !== null && retentionUntil.getTime() <= mountedAt) {
     return 'Ready for permanent deletion.';
   }
@@ -154,5 +165,5 @@ function getRetentionMessage(retentionUntil: Date | null, mountedAt: number | nu
     dateStyle: 'medium',
     timeZone: 'UTC',
   }).format(retentionUntil);
-  return `Recoverable until ${date}.`;
+  return `Permanent deletion available from ${date}.`;
 }

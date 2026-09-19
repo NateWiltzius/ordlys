@@ -5,7 +5,6 @@ import {
   archiveDeckAction,
   changeDeckCopyPolicyAction,
   changeDeckVisibilityAction,
-  softDeleteDeckAction,
 } from '@/server/deck-release.actions';
 import type { DeckRelease } from '@/types/deck-release.types';
 import type { Deck } from '@/types/deck.types';
@@ -240,16 +239,15 @@ export function DeckLifecycleActions({
   activeOperation: PublicationOperation | null;
   run: RunPublicationOperation;
 }) {
-  const [confirmation, setConfirmation] = useState<'archive' | 'delete' | null>(null);
+  const [confirmation, setConfirmation] = useState<'archive' | null>(null);
   const isArchiving = pending && activeOperation === 'archive';
-  const isDeleting = pending && activeOperation === 'delete';
 
   return (
     <section className="space-y-3 border-t border-default-200 pt-5">
       <div>
-        <h3 className="text-sm font-semibold">Deck lifecycle</h3>
+        <h3 className="text-sm font-semibold">Archive deck</h3>
         <p className="mt-1 text-sm text-default-500">
-          Archive a deck temporarily or move it to deleted decks.
+          Hide this deck from your active library. You can restore it later.
         </p>
       </div>
       <div className="flex flex-col gap-2 min-[420px]:flex-row">
@@ -260,14 +258,6 @@ export function DeckLifecycleActions({
           onPress={() => setConfirmation('archive')}
         >
           Archive deck
-        </Button>
-        <Button
-          variant="danger"
-          className="w-full min-[420px]:w-auto"
-          isDisabled={pending}
-          onPress={() => setConfirmation('delete')}
-        >
-          Delete deck
         </Button>
       </div>
 
@@ -284,25 +274,6 @@ export function DeckLifecycleActions({
             'archive',
             () => archiveDeckAction(deckId),
             'Deck archived.',
-            true,
-            () => setConfirmation(null),
-          )
-        }
-      />
-
-      <ConfirmationDialog
-        isOpen={confirmation === 'delete'}
-        onOpenChange={isOpen => setConfirmation(isOpen ? 'delete' : null)}
-        title="Move this deck to deleted decks?"
-        description="The deck will no longer be available to learners. You can restore it during the retention period."
-        confirmLabel="Delete deck"
-        tone="danger"
-        isPending={isDeleting}
-        onConfirm={() =>
-          run(
-            'delete',
-            () => softDeleteDeckAction(deckId),
-            'Deck moved to deleted decks.',
             true,
             () => setConfirmation(null),
           )

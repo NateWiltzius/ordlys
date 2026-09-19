@@ -1,8 +1,6 @@
-import { TrophyIcon } from '@heroicons/react/24/outline';
 import { ProgressBar } from '@heroui/react';
 import { summarizeDeckProgress } from '@/lib/deck-progress';
 import type { LessonProgress } from '@/types/review.types';
-import DeckCoverage from '@/components/shared/deck-coverage';
 
 type Props = {
   lessonProgress: LessonProgress[];
@@ -10,103 +8,68 @@ type Props = {
 
 export default function DeckProgressMarker({ lessonProgress }: Props) {
   const progress = summarizeDeckProgress(lessonProgress);
-  if (progress.lessons.length === 0) return null;
-
   const currentLesson = progress.currentLesson;
-  const remainingLearnedWords = currentLesson
-    ? Math.max(0, currentLesson.requiredWords - currentLesson.learnedWords)
-    : 0;
-  const remainingIntroducedWords = currentLesson
-    ? Math.max(0, currentLesson.totalWords - currentLesson.introducedWords)
-    : 0;
+  if (!currentLesson || progress.lessonMilestonesComplete) return null;
+
+  const strengthenedCards = Math.min(currentLesson.learnedWords, currentLesson.requiredWords);
+  const remainingLearnedWords = Math.max(0, currentLesson.requiredWords - strengthenedCards);
+  const remainingIntroducedWords = Math.max(
+    0,
+    currentLesson.totalWords - currentLesson.introducedWords,
+  );
+  const nextLessonUnlocked = progress.nextLesson?.isUnlocked;
+  const nextStep = progress.nextLesson
+    ? nextLessonUnlocked || remainingLearnedWords === 0
+      ? `${progress.nextLesson.lessonTitle} is unlocked.`
+      : `To unlock ${progress.nextLesson.lessonTitle}, ${
+          remainingIntroducedWords > 0
+            ? `introduce ${remainingIntroducedWords} more ${remainingIntroducedWords === 1 ? 'card' : 'cards'} or `
+            : ''
+        }strengthen ${remainingLearnedWords} more ${remainingLearnedWords === 1 ? 'card' : 'cards'}.`
+    : remainingLearnedWords === 0
+      ? 'Final lesson milestone reached.'
+      : `Strengthen ${remainingLearnedWords} more ${remainingLearnedWords === 1 ? 'card' : 'cards'} to complete this lesson’s milestone.`;
 
   return (
-    <section className="border-t border-default-200 pt-6">
-      <div>
-        <div className="min-w-0">
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
-            {progress.lessonMilestonesComplete ? (
-              <TrophyIcon className="size-5 text-success" aria-hidden="true" />
-            ) : null}
-            Deck journey
-          </h2>
-          <p className="mt-1 text-sm leading-6 text-default-500">
-            {progress.lessonMilestonesComplete
-              ? 'Every lesson milestone is complete.'
-              : progress.allCardsIntroduced
-                ? 'You have started every card. Keep strengthening your recall.'
-                : currentLesson
-                  ? `Currently working through ${currentLesson.lessonTitle}.`
-                  : 'Start learning to begin your journey.'}
+    <section
+      aria-label="Current lesson progress"
+      className="rounded-xl border border-default-200 bg-default-50/50 p-4 sm:p-5"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-sm font-medium text-default-600">Current lesson</h2>
+        <p className="text-xs text-default-500">Lesson {progress.currentLessonNumber}</p>
+      </div>
+      <h3 className="mt-1 break-words text-lg font-semibold text-foreground">
+        {currentLesson.lessonTitle}
+      </h3>
+
+      <div className="mt-4 space-y-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+          <p className="text-default-600">Cards strengthened</p>
+          <p className="font-medium tabular-nums text-foreground">
+            {strengthenedCards}{' '}
+            <span className="font-normal text-default-500">of {currentLesson.requiredWords}</span>
           </p>
         </div>
+        <ProgressBar
+          aria-label={`${currentLesson.lessonTitle}: cards strengthened toward the lesson milestone`}
+          value={strengthenedCards}
+          maxValue={Math.max(1, currentLesson.requiredWords)}
+          color="success"
+          size="sm"
+        >
+          <ProgressBar.Track>
+            <ProgressBar.Fill />
+          </ProgressBar.Track>
+        </ProgressBar>
+        <p className="text-xs text-default-500">
+          {currentLesson.introducedWords} of {currentLesson.totalWords} cards introduced
+        </p>
       </div>
 
-      <div className="mt-5">
-        <div className="space-y-2">
-          <DeckCoverage
-            started={progress.introducedCards}
-            total={progress.totalCards}
-            deckTitle="Deck journey"
-            size="md"
-          />
-          <p className="text-sm text-default-500">
-            {progress.coveredLessons} of {progress.lessons.length} lessons covered
-          </p>
-        </div>
-
-        {currentLesson && !progress.lessonMilestonesComplete ? (
-          <div className="mt-5 space-y-3 border-l-2 border-blue-500/40 pl-4 sm:pl-5">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="font-medium text-default-800">{currentLesson.lessonTitle}</p>
-                <p className="text-sm text-default-500">
-                  Current milestone &middot; Lesson {progress.currentLessonNumber} of{' '}
-                  {progress.lessons.length}
-                </p>
-              </div>
-              <p className="text-sm font-medium text-default-700">
-                {Math.min(currentLesson.learnedWords, currentLesson.requiredWords)} of{' '}
-                {currentLesson.requiredWords} cards strengthened
-              </p>
-            </div>
-            <ProgressBar
-              aria-label={`Learning progress toward unlocking ${progress.nextLesson?.lessonTitle ?? 'deck completion'}`}
-              value={currentLesson.learnedWords}
-              maxValue={currentLesson.requiredWords}
-              color="success"
-              size="sm"
-            >
-              <ProgressBar.Track>
-                <ProgressBar.Fill />
-              </ProgressBar.Track>
-            </ProgressBar>
-            <p className="text-sm text-default-600">
-              {remainingLearnedWords === 0
-                ? progress.nextLesson
-                  ? `${progress.nextLesson.lessonTitle} unlocked`
-                  : 'Final lesson milestone reached'
-                : progress.nextLesson && remainingIntroducedWords > 0
-                  ? `Introduce ${remainingIntroducedWords} more ${
-                      remainingIntroducedWords === 1 ? 'card' : 'cards'
-                    }, or strengthen ${remainingLearnedWords} more, to unlock ${
-                      progress.nextLesson.lessonTitle
-                    }`
-                  : `${remainingLearnedWords} more ${
-                      remainingLearnedWords === 1 ? 'card' : 'cards'
-                    } to strengthen before you ${
-                      progress.nextLesson
-                        ? 'unlock the next lesson'
-                        : 'complete the final milestone'
-                    }`}
-            </p>
-            <p className="text-xs text-default-500">
-              {currentLesson.introducedWords} of {currentLesson.totalWords} cards introduced in this
-              lesson
-            </p>
-          </div>
-        ) : null}
-      </div>
+      <p className="mt-4 border-t border-default-200 pt-3 text-sm leading-6 text-default-600">
+        {nextStep}
+      </p>
     </section>
   );
 }

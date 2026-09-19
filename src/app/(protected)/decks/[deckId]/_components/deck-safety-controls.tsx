@@ -1,7 +1,6 @@
 'use client';
 
 import type { Deck } from '@/types/deck.types';
-import { canFinalizeDeckDeletion } from '@/lib/deck-deletion-policy';
 import { useState } from 'react';
 import StatusAlert from '@/components/shared/status-alert';
 import DeckSafetyMenu from './deck-safety-menu';
@@ -12,33 +11,25 @@ type Props = {
   deckId: number;
   deckTitle: string;
   status: Deck['status'];
-  retentionUntil: Deck['retentionUntil'];
   isOwned: boolean;
   isFollowing: boolean;
   canFollow: boolean;
   canModerate: boolean;
-  protectedFollowerCount: number | null;
 };
 
 export default function DeckSafetyControls({
   deckId,
   deckTitle,
   status,
-  retentionUntil,
   isOwned,
   isFollowing,
   canFollow,
   canModerate,
-  protectedFollowerCount,
 }: Props) {
   const [confirmation, setConfirmation] = useState<DeckSafetyConfirmation | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const actions = useDeckSafetyActions(deckId);
-  const hardDeleteEligible =
-    status === 'deleted' &&
-    protectedFollowerCount !== null &&
-    canFinalizeDeckDeletion(protectedFollowerCount, retentionUntil);
 
   return (
     <div className="flex min-w-0 flex-col gap-2">
@@ -46,12 +37,10 @@ export default function DeckSafetyControls({
         deckId={deckId}
         deckTitle={deckTitle}
         status={status}
-        retentionUntil={retentionUntil}
         isOwned={isOwned}
         isFollowing={isFollowing}
         canFollow={canFollow}
         canModerate={canModerate}
-        hardDeleteEligible={hardDeleteEligible}
         pending={actions.pending}
         isOpen={isMenuOpen}
         onOpenChange={setIsMenuOpen}

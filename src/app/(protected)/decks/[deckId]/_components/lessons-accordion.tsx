@@ -8,7 +8,7 @@ import EmptyState from '@/components/shared/empty-state';
 import StatusAlert from '@/components/shared/status-alert';
 import { filterVocabulary } from '@/lib/vocab/search-vocabulary';
 import { getDeckVocabularyForSearch } from '@/lib/client/vocabulary-api';
-import { LESSON_PROGRESSION_CONFIG } from '@/lib/srs/srs-config';
+import { getLessonUnlockMessage } from '@/lib/deck-study-guidance';
 import { LessonProgress } from '@/types/review.types';
 import type { Vocab } from '@/types/vocab.types';
 import { Accordion, Button, Chip } from '@heroui/react';
@@ -148,9 +148,10 @@ export default function LessonsAccordion({
           expandedKeys={expandedKeys}
           onExpandedChange={keys => setExpandedKeys(new Set(keys))}
         >
-          {lessons.map(lesson => {
+          {lessons.map((lesson, lessonIndex) => {
             const lessonKey = String(lesson.lessonId);
             const isExpanded = expandedKeys.has(lessonKey);
+            const unlockMessage = canStudy ? getLessonUnlockMessage(lessons, lessonIndex) : null;
 
             return (
               <Accordion.Item
@@ -161,8 +162,15 @@ export default function LessonsAccordion({
                 <Accordion.Heading>
                   <Accordion.Trigger className="px-3 py-3">
                     <span className="flex min-w-0 flex-1 flex-col items-start gap-2 pr-2 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                      <span className="min-w-0 break-words font-medium text-foreground">
-                        {lesson.lessonTitle}
+                      <span className="min-w-0 break-words">
+                        <span className="block font-medium text-foreground">
+                          {lesson.lessonTitle}
+                        </span>
+                        {unlockMessage ? (
+                          <span className="mt-1 block text-sm font-normal leading-5 text-default-500">
+                            {unlockMessage}
+                          </span>
+                        ) : null}
                       </span>
                       {lesson.totalWords === 0 ? (
                         <Chip size="sm" variant="soft" className="shrink-0">
@@ -198,12 +206,6 @@ export default function LessonsAccordion({
                           Test out of this lesson
                         </ButtonLink>
                       </div>
-                    ) : canStudy && lesson.totalWords > lesson.introducedWords ? (
-                      <p className="mb-4 text-right text-sm text-muted">
-                        Introduce every card in the previous lesson, or strengthen at least{' '}
-                        {Math.round(LESSON_PROGRESSION_CONFIG.unlockRatio * 100)}% of the previous
-                        lesson&apos;s cards to unlock this placement test.
-                      </p>
                     ) : null}
                     {lesson.totalWords > 0 ? (
                       <LessonVocabulary

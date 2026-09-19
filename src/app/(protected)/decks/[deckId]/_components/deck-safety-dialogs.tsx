@@ -29,27 +29,21 @@ export function DeckSafetyConfirmationDialog({
           ? 'Delete all progress?'
           : confirmation === 'unfollow'
             ? `Unfollow “${deckTitle}”?`
-            : confirmation === 'moderate-removal'
-              ? 'Remove this deck for moderation?'
-              : 'Finalize deletion?'
+            : 'Remove this deck for moderation?'
       }
       description={
         confirmation === 'delete-progress'
           ? 'All learning progress for this deck will be permanently deleted. This cannot be undone.'
           : confirmation === 'unfollow'
             ? 'Author updates will stop, but your progress is retained if you follow the deck again.'
-            : confirmation === 'moderate-removal'
-              ? 'Learner access will be revoked.'
-              : 'This permanently removes the deck from your account. Releases or lineage required by other records will remain under an anonymized tombstone.'
+            : 'Learner access will be revoked.'
       }
       confirmLabel={
         confirmation === 'delete-progress'
           ? 'Delete progress'
           : confirmation === 'unfollow'
             ? 'Unfollow deck'
-            : confirmation === 'moderate-removal'
-              ? 'Remove deck'
-              : 'Finalize deletion'
+            : 'Remove deck'
       }
       tone={confirmation === 'unfollow' ? 'warning' : 'danger'}
       isPending={pending}

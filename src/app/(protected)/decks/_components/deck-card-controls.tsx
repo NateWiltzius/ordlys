@@ -81,30 +81,14 @@ export function DeckCardConfirmationDialog({
       onOpenChange={isOpen => {
         if (!isOpen && !pending) onClose();
       }}
-      title={
-        confirmation === 'copy'
-          ? `Copy “${deckTitle}”?`
-          : confirmation === 'unfollow'
-            ? `Unfollow “${deckTitle}”?`
-            : `Delete “${deckTitle}”?`
-      }
+      title={confirmation === 'copy' ? `Copy “${deckTitle}”?` : `Unfollow “${deckTitle}”?`}
       description={
         confirmation === 'copy'
           ? 'The published release becomes an independent private deck. Source learning progress is not copied.'
-          : confirmation === 'unfollow'
-            ? 'Updates will stop, but your learning progress will be retained.'
-            : 'The deck will be removed from your active decks. If it has no followers, permanent deletion is available immediately; otherwise it remains recoverable for 30 days.'
+          : 'Updates will stop, but your learning progress will be retained.'
       }
-      confirmLabel={
-        confirmation === 'copy'
-          ? 'Copy deck'
-          : confirmation === 'unfollow'
-            ? 'Unfollow deck'
-            : 'Delete deck'
-      }
-      tone={
-        confirmation === 'copy' ? 'neutral' : confirmation === 'unfollow' ? 'warning' : 'danger'
-      }
+      confirmLabel={confirmation === 'copy' ? 'Copy deck' : 'Unfollow deck'}
+      tone={confirmation === 'copy' ? 'neutral' : 'warning'}
       isPending={pending}
       onConfirm={onConfirm}
     />

@@ -53,6 +53,12 @@ export default function DeckHeader({ deck, isOwned, isFollowing }: Props) {
             <RestoreDeckButton deckId={deck.id} />
           ) : null}
 
+          {isOwned && deck.status === 'deleted' ? (
+            <ButtonLink href={`/decks/${deck.id}/delete`} variant="secondary">
+              Review deletion
+            </ButtonLink>
+          ) : null}
+
           <Suspense fallback={<SkeletonBlock className="size-10 shrink-0 rounded-lg" />}>
             <DeckHeaderSafetyControls deckId={deck.id} />
           </Suspense>

@@ -7,12 +7,10 @@ type Props = {
   deckId: number;
   deckTitle: string;
   status: Deck['status'];
-  retentionUntil: Deck['retentionUntil'];
   isOwned: boolean;
   isFollowing: boolean;
   canFollow: boolean;
   canModerate: boolean;
-  hardDeleteEligible: boolean;
   pending: boolean;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -26,12 +24,10 @@ export default function DeckSafetyMenu({
   deckId,
   deckTitle,
   status,
-  retentionUntil,
   isOwned,
   isFollowing,
   canFollow,
   canModerate,
-  hardDeleteEligible,
   pending,
   isOpen,
   onOpenChange,
@@ -121,28 +117,17 @@ export default function DeckSafetyMenu({
                 </ListBox.Item>
               </>
             ) : null}
-            {isOwned && status === 'deleted' ? (
+            {isOwned && status !== 'moderation_removed' ? (
               <ListBox.Item
-                id="finalize-deletion"
-                variant="danger"
+                id="delete-deck"
+                href={`/decks/${deckId}/delete`}
                 className="text-danger"
-                isDisabled={pending || !hardDeleteEligible}
-                onAction={() => closeThen(() => onConfirm('hard-delete'))}
+                onAction={() => onOpenChange(false)}
               >
-                Finalize deletion
+                {status === 'deleted' ? 'Review deletion' : 'Delete deck'}
               </ListBox.Item>
             ) : null}
           </ListBox>
-          {isOwned && status === 'deleted' && !hardDeleteEligible && retentionUntil ? (
-            <p className="px-2 pb-2 text-xs text-default-500">
-              Available after{' '}
-              {new Intl.DateTimeFormat('en', {
-                dateStyle: 'medium',
-                timeZone: 'UTC',
-              }).format(retentionUntil)}
-              .
-            </p>
-          ) : null}
         </Popover.Dialog>
       </Popover.Content>
     </Popover>

@@ -14,7 +14,12 @@ export default function LessonsSkeleton() {
           <SkeletonLine className="h-4 w-56 max-w-full" />
         </div>
         <SkeletonBlock className="h-7 w-24 shrink-0 rounded-full" />
-        <SkeletonBlock className="size-5 shrink-0 rounded-md" />
+      </div>
+      <div className="mt-4 space-y-3">
+        <SkeletonBlock className="h-10 w-full rounded-lg" />
+        <SkeletonBlock className="h-14 w-full rounded-lg" />
+        <SkeletonBlock className="h-14 w-full rounded-lg" />
+        <SkeletonBlock className="h-14 w-full rounded-lg" />
       </div>
     </section>
   );

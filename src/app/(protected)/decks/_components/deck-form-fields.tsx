@@ -90,37 +90,6 @@ export default function DeckFormFields({
           ))}
         </RadioGroup>
       </fieldset>
-
-      <details
-        className="group border-t border-default-200 pt-5"
-        open={hasLanguageDefaults}
-        aria-labelledby={languagesHeadingId}
-      >
-        <summary
-          id={languagesHeadingId}
-          className="cursor-pointer text-sm font-medium text-default-700 marker:text-default-400"
-        >
-          Card-side languages <span className="font-normal text-default-400">(optional)</span>
-        </summary>
-        <p className="mt-2 text-xs leading-5 text-default-500">
-          For language-learning decks, label the language used on each side. Leave these blank for
-          other subjects.
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <DeckLanguageSelect
-            name="frontLanguage"
-            label="Front-side language"
-            defaultValue={defaults?.frontLanguage}
-            isDisabled={isDisabled}
-          />
-          <DeckLanguageSelect
-            name="backLanguage"
-            label="Back-side language"
-            defaultValue={defaults?.backLanguage}
-            isDisabled={isDisabled}
-          />
-        </div>
-      </details>
     </>
   );
 
@@ -151,13 +120,44 @@ export default function DeckFormFields({
             Deck settings <span className="font-normal text-default-400">(optional)</span>
           </summary>
           <p className="border-t border-default-200 px-4 pt-4 text-xs leading-5 text-default-500">
-            Add a description, change the testing direction, or label card-side languages.
+            Add a description or change the testing direction.
           </p>
           <div className="space-y-5 px-4 pb-4 pt-3">{settings}</div>
         </details>
       ) : (
         settings
       )}
+
+      <details
+        className="group overflow-hidden rounded-lg border border-default-200"
+        open={hasLanguageDefaults}
+        aria-labelledby={languagesHeadingId}
+      >
+        <summary
+          id={languagesHeadingId}
+          className="cursor-pointer px-4 py-3 text-sm font-medium text-default-700 marker:text-default-400"
+        >
+          Card-side languages <span className="font-normal text-default-400">(optional)</span>
+        </summary>
+        <p className="border-t border-default-200 px-4 pt-4 text-xs leading-5 text-default-500">
+          For language-learning decks, label the language used on each side. Leave these blank for
+          other subjects.
+        </p>
+        <div className="grid gap-4 p-4 sm:grid-cols-2">
+          <DeckLanguageSelect
+            name="frontLanguage"
+            label="Front-side language"
+            defaultValue={defaults?.frontLanguage}
+            isDisabled={isDisabled}
+          />
+          <DeckLanguageSelect
+            name="backLanguage"
+            label="Back-side language"
+            defaultValue={defaults?.backLanguage}
+            isDisabled={isDisabled}
+          />
+        </div>
+      </details>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import CollapsibleSection from '@/components/shared/collapsible-section';
+import PageSection from '@/components/shared/layout/page-section';
 import { Chip } from '@heroui/react';
 import type { ReactNode } from 'react';
 
@@ -9,17 +9,16 @@ type Props = {
 
 export default function LessonsSection({ children, lessonCount }: Props) {
   return (
-    <CollapsibleSection
-      id="lessons"
+    <PageSection
       title="Lessons"
-      description="Open to browse this deck's cards."
-      summary={
+      description="Search this deck or open a lesson to browse its cards."
+      action={
         <Chip size="sm" variant="soft">
           {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}
         </Chip>
       }
     >
       {children}
-    </CollapsibleSection>
+    </PageSection>
   );
 }

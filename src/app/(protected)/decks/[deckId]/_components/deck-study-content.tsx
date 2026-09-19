@@ -9,6 +9,7 @@ import StudyActionCard from '@/app/(protected)/decks/[deckId]/_components/study-
 import NextReviewText from '@/components/shared/next-review-text';
 import ButtonLink from '@/components/shared/button-link';
 import ReviewForecastCard from '@/components/shared/review-forecast-card';
+import { getDeckLearningEmptyState } from '@/lib/deck-study-guidance';
 
 type Props = {
   deck: Deck;
@@ -22,6 +23,7 @@ export default async function DeckStudyContent({ deck, isOwned, autoFollow = fal
     getCachedLessonProgress(deck.id),
   ]);
   const { counts, canStudy, nextReview, reviewForecast } = studyData;
+  const learningEmptyState = getDeckLearningEmptyState(lessonProgress);
 
   return (
     <div className="space-y-6">
@@ -51,7 +53,11 @@ export default async function DeckStudyContent({ deck, isOwned, autoFollow = fal
 
         <StudyActionCard
           title="Learn new cards"
-          description="Learn new material now and review it again at the right time."
+          description={
+            canStudy && counts.newWordsAvailable === 0
+              ? learningEmptyState.description
+              : 'Learn new material now and review it again at the right time.'
+          }
           count={counts.newWordsAvailable}
           countLabel="ready to learn"
           actionLabel="Start learning"
@@ -62,7 +68,7 @@ export default async function DeckStudyContent({ deck, isOwned, autoFollow = fal
           unavailableAction={
             canStudy ? (
               <Button variant="secondary" size="lg" className="w-full" isDisabled>
-                No cards to learn
+                {learningEmptyState.label}
               </Button>
             ) : isOwned && !deck.currentReleaseId && deck.status === 'active' ? (
               <ButtonLink

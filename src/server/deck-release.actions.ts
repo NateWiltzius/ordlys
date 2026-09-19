@@ -39,6 +39,7 @@ function refresh(id: number) {
   revalidatePath('/progress');
   revalidatePath(`/decks/${id}`);
   revalidatePath(`/decks/${id}/edit`);
+  revalidatePath(`/decks/${id}/delete`);
 }
 
 export async function publishDeckAction(id: number, summary: string, idempotencyKey: string) {

@@ -3,14 +3,13 @@
 import { isActionFailure } from '@/lib/action-result';
 import { errorMessage } from '@/lib/validation/content';
 import type { DeckCardAction } from '@/lib/deck-card-actions';
-import { deleteDeckAction } from '@/server/deck.actions';
 import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actions';
 import { forkReleaseAction, restoreDeckAction } from '@/server/deck-release.actions';
 import type { Deck } from '@/types/deck.types';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-export type DeckCardConfirmation = 'copy' | 'delete' | 'unfollow';
+export type DeckCardConfirmation = 'copy' | 'unfollow';
 
 export function useDeckCardActions(deck: Deck) {
   const router = useRouter();
@@ -71,9 +70,6 @@ export function useDeckCardActions(deck: Deck) {
   const handleConfirmation = useCallback(async () => {
     const action = confirmation;
     if (action === 'copy') await copy();
-    if (action === 'delete') {
-      await run('delete', () => deleteDeckAction(deck.id), 'Could not delete the deck.');
-    }
     if (action === 'unfollow') {
       await run('unfollow', () => unfollowDeckAction(deck.id), 'Could not unfollow the deck.');
     }
@@ -91,8 +87,10 @@ export function useDeckCardActions(deck: Deck) {
         case 'manage':
           router.push(`/decks/${deck.id}/edit`);
           break;
-        case 'copy':
         case 'delete':
+          router.push(`/decks/${deck.id}/delete`);
+          break;
+        case 'copy':
         case 'unfollow':
           setConfirmation(action);
           break;

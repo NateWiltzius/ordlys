@@ -6,17 +6,12 @@ import {
   moderationReviewDeckAction,
   permanentlyDeleteFollowProgressAction,
   reportDeckAction,
-  restrictedHardDeleteDeckAction,
 } from '@/server/deck-release.actions';
 import { followDeckAction, unfollowDeckAction } from '@/server/deck-follow.actions';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState, useTransition } from 'react';
 
-export type DeckSafetyConfirmation =
-  | 'delete-progress'
-  | 'hard-delete'
-  | 'moderate-removal'
-  | 'unfollow';
+export type DeckSafetyConfirmation = 'delete-progress' | 'moderate-removal' | 'unfollow';
 
 export function useDeckSafetyActions(deckId: number) {
   const router = useRouter();
@@ -72,8 +67,6 @@ export function useDeckSafetyActions(deckId: number) {
         run(() => unfollowDeckAction(deckId), 'Deck unfollowed.', true);
       } else if (action === 'moderate-removal') {
         run(() => moderationRemoveDeckAction(deckId), 'Deck removed by moderation.', true);
-      } else {
-        run(() => restrictedHardDeleteDeckAction(deckId), 'Deletion finalized.', true);
       }
     },
     [deckId, run],

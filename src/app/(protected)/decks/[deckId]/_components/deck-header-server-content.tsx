@@ -7,19 +7,17 @@ export async function DeckHeaderSafetyControls({ deckId }: { deckId: number }) {
   const data = await getCachedDeckHeaderControlsData(deckId);
   if (!data) return null;
 
-  const { deck, isOwned, isFollowing, canModerate, protectedFollowerCount } = data;
+  const { deck, isOwned, isFollowing, canModerate } = data;
 
   return (
     <DeckSafetyControls
       deckId={deck.id}
       deckTitle={deck.title}
       status={deck.status}
-      retentionUntil={deck.retentionUntil}
       isOwned={isOwned}
       isFollowing={isFollowing}
       canFollow={!isFollowing && deck.status === 'active' && deck.currentReleaseId !== null}
       canModerate={canModerate}
-      protectedFollowerCount={protectedFollowerCount}
     />
   );
 }
@@ -45,7 +43,7 @@ export async function DeckHeaderStatusDetails({ deckId }: { deckId: number }) {
           {protectedFollowerCount !== null &&
           canFinalizeDeckDeletion(protectedFollowerCount, deck.retentionUntil)
             ? 'Ready for permanent deletion.'
-            : `Recoverable until ${deck.retentionUntil.toLocaleDateString()}.`}
+            : `Permanent deletion available from ${deck.retentionUntil.toLocaleDateString()}. You can restore this deck until you permanently delete it.`}
         </p>
       ) : null}
 
