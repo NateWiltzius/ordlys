@@ -89,7 +89,7 @@ export default function QuizAnswerForm({
         <div className="quiz-answer-content">
           <div
             role="note"
-            className="border-b border-default-200 pb-6"
+            className="border-b border-default-200 pb-6 sm:pb-8"
             aria-label={`${promptLabel} shown; ${answerInstruction.toLowerCase()}`}
           >
             {deckTitle || lessonTitle ? (
@@ -97,8 +97,8 @@ export default function QuizAnswerForm({
                 {[deckTitle, lessonTitle].filter(Boolean).join(' · ')}
               </p>
             ) : null}
-            <div className="quiz-answer-direction flex items-center justify-center gap-2 text-xs text-default-500 sm:text-sm">
-              <strong className="font-medium text-default-700">{promptLabel}</strong>
+            <div className="quiz-answer-direction flex items-center justify-center gap-2 text-xs font-medium text-default-500">
+              <strong className="font-medium text-default-500">{promptLabel}</strong>
               <ArrowRightIcon
                 className={`size-4 shrink-0 ${STUDY_TONE_STYLES[tone].text}`}
                 aria-hidden="true"
@@ -108,7 +108,7 @@ export default function QuizAnswerForm({
               </strong>
             </div>
             <p
-              className={`quiz-answer-prompt break-words py-8 text-center sm:py-10 ${getStudyTextSizeClass(
+              className={`quiz-answer-prompt break-words py-6 text-center sm:py-8 ${getStudyTextSizeClass(
                 prompt,
               )}`}
               lang={shownLanguageCode ?? undefined}
@@ -139,7 +139,7 @@ export default function QuizAnswerForm({
           </div>
         </div>
 
-        <div className="quiz-answer-footer mt-5 flex flex-col gap-3 border-t border-default-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="quiz-answer-footer mt-6 flex flex-col gap-3 border-t border-default-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="hidden text-xs text-default-500 sm:block">
             Press <kbd className="rounded border border-default-300 px-1.5 py-0.5">Enter</kbd> to
             submit

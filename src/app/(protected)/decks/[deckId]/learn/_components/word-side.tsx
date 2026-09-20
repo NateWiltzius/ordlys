@@ -21,18 +21,18 @@ export default function WordSide({
     <section
       className={
         primary
-          ? 'pb-7 text-center sm:pb-9'
-          : 'border-t border-default-200 pt-7 text-center sm:pt-9'
+          ? 'pb-6 text-center sm:pb-8'
+          : 'border-t border-default-200 pt-6 text-center sm:pt-8'
       }
     >
       <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1">
-        <p className="text-xs font-semibold uppercase text-default-500">{label}</p>
+        <p className="text-xs font-medium text-default-500">{label}</p>
         {language ? (
           <>
             <span className="text-default-300" aria-hidden="true">
               ·
             </span>
-            <p className="text-xs text-default-500">{language}</p>
+            <p className="text-xs font-medium text-default-500">{language}</p>
           </>
         ) : null}
       </div>

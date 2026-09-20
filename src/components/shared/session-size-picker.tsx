@@ -37,9 +37,9 @@ export default function SessionSizePicker({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-default-200 bg-default-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-default-200 bg-default-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="font-medium">Session size</p>
+        <p className="text-sm font-medium text-default-600">Session size</p>
         <p className="text-sm text-default-500">
           {selectedCount} of {totalCount} {totalCount === 1 ? noun : `${noun}s`} ·{' '}
           {getEstimatedStudyDuration(selectedCount)}
@@ -52,9 +52,10 @@ export default function SessionSizePicker({
               key={size}
               href={`${baseHref}?size=${size}`}
               onClick={() => rememberSize(size)}
+              aria-current={selectedSize === size ? 'true' : undefined}
               className={buttonVariants({
                 size: 'sm',
-                variant: selectedSize === size ? 'primary' : 'tertiary',
+                variant: selectedSize === size ? 'secondary' : 'tertiary',
               })}
             >
               {size}
@@ -64,9 +65,10 @@ export default function SessionSizePicker({
             <Link
               href={`${baseHref}?size=all`}
               onClick={() => rememberSize('all')}
+              aria-current={isAllSelected ? 'true' : undefined}
               className={buttonVariants({
                 size: 'sm',
-                variant: isAllSelected ? 'primary' : 'tertiary',
+                variant: isAllSelected ? 'secondary' : 'tertiary',
               })}
             >
               All ({totalCount})

@@ -55,7 +55,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
         tone="learning"
       />
 
-      <article className="border-y border-default-200 px-1 py-7 sm:px-4 sm:py-9">
+      <article className="border-y border-default-200 px-1 py-6 sm:px-4 sm:py-8">
         <h2 className="sr-only">New cards</h2>
         <div>
           <WordSide
@@ -74,7 +74,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
           />
 
           {hasDetails ? (
-            <section className="mt-7 space-y-3 border-t border-default-200 pt-5 text-left">
+            <section className="mt-6 space-y-3 border-t border-default-200 pt-4 text-left">
               {currentItem.notes ? (
                 <div>
                   <h3 className="text-sm font-semibold">Notes</h3>
@@ -98,7 +98,7 @@ export default function LearnMode({ learnItems, onStartQuiz }: Props) {
         </div>
       </article>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-default-200 bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-lg backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-default-200 bg-background px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:border-0 sm:bg-transparent sm:p-0">
         <div className="mx-auto grid w-full max-w-xl grid-cols-2 gap-3">
           <Button
             variant="secondary"

@@ -171,7 +171,7 @@ export default function QuizFeedbackPanel({
         </Chip>
       </header>
 
-      <div className="border-b border-default-200 py-7 text-center sm:py-9">
+      <div className="border-b border-default-200 py-6 text-center sm:py-8">
         {feedback.quizItem.deckTitle || feedback.quizItem.lessonTitle ? (
           <p className="mb-3 truncate text-xs font-medium text-default-500">
             {[feedback.quizItem.deckTitle, feedback.quizItem.lessonTitle]
@@ -179,9 +179,7 @@ export default function QuizFeedbackPanel({
               .join(' · ')}
           </p>
         ) : null}
-        <p className="text-xs font-semibold uppercase text-default-500">
-          {languageLabels.promptRowLabel}
-        </p>
+        <p className="text-xs font-medium text-default-500">{languageLabels.promptRowLabel}</p>
         <p
           className={`mt-3 break-words ${getStudyTextSizeClass(feedback.quizItem.prompt)}`}
           lang={shownLanguageCode ?? undefined}
@@ -205,7 +203,7 @@ export default function QuizFeedbackPanel({
         ) : null}
       </div>
 
-      <footer className="mt-5 space-y-3 border-t border-default-200 pt-5">
+      <footer className="mt-6 space-y-3 border-t border-default-200 pt-4">
         {!feedback.isCorrect && onAcceptAnyway ? (
           <p className="text-sm text-default-500 sm:text-right">
             Accept anyway counts this response as correct once. It does not add a new accepted

@@ -1,4 +1,4 @@
-import { STUDY_TONE_STYLES, type StudyTone } from '@/lib/study-colors';
+import { type StudyTone } from '@/lib/study-colors';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { buttonVariants } from '@heroui/react';
 
@@ -18,10 +18,13 @@ export default function StudySessionHeader({
   exitLabel,
 }: Props) {
   return (
-    <header className="flex items-start justify-between gap-4 border-b border-default-200 pb-5">
+    <header
+      data-study-tone={tone}
+      className="flex items-start justify-between gap-4 border-b border-default-200 pb-5"
+    >
       <div className="min-w-0">
-        <h1 className={`text-2xl font-semibold ${STUDY_TONE_STYLES[tone].text}`}>{title}</h1>
-        <p className="mt-1 text-sm text-default-500">{description}</p>
+        <h1 className="break-words text-2xl font-semibold text-foreground">{title}</h1>
+        <p className="mt-1 text-sm leading-6 text-default-500">{description}</p>
       </div>
       <a
         href={exitHref}
