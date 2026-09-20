@@ -1,11 +1,10 @@
 'use client';
 
-import { Card } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import type { NextReviewBatch, ReviewForecast } from '@/types/review.types';
 import NextReviewText from '@/components/shared/next-review-text';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
+import CollapsiblePanel from '@/components/shared/collapsible-panel';
 
 type Props = {
   forecast: ReviewForecast;
@@ -13,16 +12,16 @@ type Props = {
   description?: string;
   nextReview?: NextReviewBatch | null;
   collapsible?: boolean;
-  surface?: 'card' | 'section';
+  defaultOpen?: boolean;
 };
 
 export default function ReviewForecastCard({
   forecast,
-  title = 'Review forecast',
+  title = 'Review schedule',
   description = 'Reviews scheduled over the next 24 hours.',
   nextReview,
   collapsible = false,
-  surface = 'card',
+  defaultOpen = false,
 }: Props) {
   const [hasMounted, setHasMounted] = useState(false);
   const maxCount = Math.max(...forecast.hours.map(item => item.count), 1);
@@ -91,87 +90,23 @@ export default function ReviewForecastCard({
       </div>
     </>
   );
-  const dueNow = (
-    <div
-      className={`flex shrink-0 items-center justify-between gap-3 rounded-lg border px-3 py-2 sm:block sm:text-right ${
-        forecast.dueNow > 0 ? STUDY_TONE_STYLES.review.surface : 'border-default-200 bg-default-50'
-      }`}
-    >
-      <p className="text-xs text-default-500">Due now</p>
-      <p
-        className={`text-xl font-semibold ${
-          forecast.dueNow > 0 ? STUDY_TONE_STYLES.review.text : 'text-default-400'
-        }`}
-      >
-        {forecast.dueNow}
-      </p>
-    </div>
-  );
-
-  if (collapsible) {
-    return (
-      <details className="group border-t border-default-200">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold">{title}</h2>
-            <p className="text-sm text-default-500">{description}</p>
-            {nextReview !== undefined && forecast.dueNow === 0 ? (
-              <NextReviewText
-                nextReview={nextReview}
-                className="mt-1 block text-sm text-default-500"
-              />
-            ) : null}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {dueNow}
-            <ChevronDownIcon
-              className="size-5 text-default-400 transition-transform group-open:rotate-180"
-              aria-hidden="true"
-            />
-          </div>
-        </summary>
-        <div className="pb-5">{forecastChart}</div>
-      </details>
-    );
-  }
-
-  if (surface === 'section') {
-    return (
-      <section className="border-t border-default-200 pt-6">
-        <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start">
-          <div>
-            <h2 className="text-lg font-semibold">{title}</h2>
-            <p className="mt-1 text-sm leading-6 text-default-500">{description}</p>
-            {nextReview !== undefined && forecast.dueNow === 0 ? (
-              <NextReviewText
-                nextReview={nextReview}
-                className="mt-1 block text-sm text-default-500"
-              />
-            ) : null}
-          </div>
-          {dueNow}
-        </div>
-        <div className="mt-5">{forecastChart}</div>
-      </section>
-    );
-  }
-
   return (
-    <Card>
-      <Card.Header className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start">
-        <div>
-          <h2 className="card__title">{title}</h2>
-          <Card.Description>{description}</Card.Description>
-          {nextReview !== undefined && forecast.dueNow === 0 ? (
-            <NextReviewText
-              nextReview={nextReview}
-              className="mt-1 block text-sm text-default-500"
-            />
-          ) : null}
+    <CollapsiblePanel
+      title={title}
+      open={defaultOpen || !collapsible}
+      description={
+        <div className="h-6 truncate">
+          {nextReview ? (
+            <NextReviewText nextReview={nextReview} />
+          ) : nextReview === null ? (
+            'No upcoming reviews scheduled.'
+          ) : (
+            description
+          )}
         </div>
-        {dueNow}
-      </Card.Header>
-      <Card.Content>{forecastChart}</Card.Content>
-    </Card>
+      }
+    >
+      {forecastChart}
+    </CollapsiblePanel>
   );
 }

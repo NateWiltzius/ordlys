@@ -23,7 +23,7 @@ export default function PublicDeckCard({ deck, showFollowerCount = true }: Props
               {deck.title}
             </Link>
           </h3>
-          <p className="line-clamp-2 text-sm text-default-500">
+          <p className="min-h-10 line-clamp-2 text-sm leading-5 text-default-500">
             {deck.description || 'A public flashcard deck you can preview before signing up.'}
           </p>
           <DeckIdentity badges={['public']} languagePair={languagePair} className="pt-1.5" />

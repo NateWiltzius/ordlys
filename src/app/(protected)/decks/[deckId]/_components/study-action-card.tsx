@@ -76,11 +76,11 @@ export default function StudyActionCard({
         >
           <Icon className="size-6" aria-hidden="true" />
         </span>
-        <div>
-          <SemanticCardTitle level={2} className="text-lg">
+        <div className="min-w-0 flex-1">
+          <SemanticCardTitle level={2} className="text-lg leading-7">
             {title}
           </SemanticCardTitle>
-          <Card.Description>{description}</Card.Description>
+          <Card.Description className="min-h-12 text-sm leading-6">{description}</Card.Description>
         </div>
       </Card.Header>
 

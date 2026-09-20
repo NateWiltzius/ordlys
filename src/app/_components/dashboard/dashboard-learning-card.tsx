@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import StudyActionCard from '@/app/(protected)/decks/[deckId]/_components/study-action-card';
 import ButtonLink from '@/components/shared/button-link';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
@@ -86,11 +88,11 @@ export default function DashboardLearningCard({ decks, deckStats, newWordsAvaila
                 })}
               </ul>
             </Modal.Body>
-            <Modal.Footer>
+            <DialogActions>
               <Button variant="tertiary" onPress={modalState.close} className="w-full sm:w-auto">
                 Cancel
               </Button>
-            </Modal.Footer>
+            </DialogActions>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

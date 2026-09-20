@@ -55,7 +55,9 @@ export default async function DeckStudyContent({ deck, isOwned, autoFollow = fal
           title="Learn new cards"
           description={
             canStudy && counts.newWordsAvailable === 0
-              ? learningEmptyState.description
+              ? learningEmptyState.label === 'Next lesson locked'
+                ? 'See your current lesson below for the next step.'
+                : learningEmptyState.description
               : 'Learn new material now and review it again at the right time.'
           }
           count={counts.newWordsAvailable}

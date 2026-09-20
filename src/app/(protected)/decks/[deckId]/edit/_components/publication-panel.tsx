@@ -1,5 +1,9 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
+import CollapsiblePanel from '@/components/shared/collapsible-panel';
+
 import type { DeckProvenance } from '@/db/queries/deck-release.queries';
 import { publishDeckAction } from '@/server/deck-release.actions';
 import type { DeckRelease } from '@/types/deck-release.types';
@@ -187,11 +191,8 @@ export default function PublicationPanel({
           />
         </section>
 
-        <details className="overflow-hidden rounded-xl border border-default-200 bg-default-50/50">
-          <summary className="cursor-pointer px-4 py-3 font-medium text-default-700">
-            Advanced publishing settings
-          </summary>
-          <div className="space-y-6 border-t border-default-200 bg-background p-4 sm:p-5">
+        <CollapsiblePanel title="Advanced publishing settings">
+          <div className="space-y-6 border-t border-default-200 pt-4">
             <section>
               <h3 className="mb-3 text-sm font-semibold">Copying</h3>
               <DeckCopyPolicySetting
@@ -209,7 +210,7 @@ export default function PublicationPanel({
               run={run}
             />
           </div>
-        </details>
+        </CollapsiblePanel>
 
         {feedback ? (
           <Alert status={feedback.status} role="status">
@@ -289,24 +290,24 @@ export default function PublicationPanel({
                 </Alert.Content>
               </Alert>
             </Modal.Body>
-            <Modal.Footer className="flex-col-reverse items-stretch gap-2 min-[560px]:flex-row min-[560px]:items-center min-[560px]:justify-end">
+            <DialogActions>
               <Button
                 variant="tertiary"
-                className="w-full min-[560px]:w-auto"
+                className="w-full sm:w-auto"
                 isDisabled={isPublishing}
                 onPress={() => handleReviewOpenChange(false)}
               >
                 Keep editing
               </Button>
               <Button
-                className="w-full min-[560px]:w-auto"
+                className="w-full sm:w-auto"
                 isPending={isPublishing}
                 isDisabled={!summary.trim()}
                 onPress={publish}
               >
                 Publish version {nextVersion}
               </Button>
-            </Modal.Footer>
+            </DialogActions>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

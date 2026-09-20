@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input, Label, Modal } from '@heroui/react';
@@ -219,7 +221,7 @@ export default function DeckDeletion({
               </div>
               {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
             </Modal.Body>
-            <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row">
+            <DialogActions>
               <Button variant="tertiary" isDisabled={pending} onPress={() => setConfirmation(null)}>
                 Cancel
               </Button>
@@ -231,7 +233,7 @@ export default function DeckDeletion({
               >
                 Permanently delete deck
               </Button>
-            </Modal.Footer>
+            </DialogActions>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

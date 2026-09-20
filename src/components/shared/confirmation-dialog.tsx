@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import { ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Button, Modal, useOverlayState } from '@heroui/react';
 import { ReactNode } from 'react';
@@ -58,7 +60,7 @@ export default function ConfirmationDialog({
           <Modal.Body>
             <p className="text-sm text-default-600">{description}</p>
           </Modal.Body>
-          <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <DialogActions>
             <Button
               variant="tertiary"
               className="w-full sm:w-auto"
@@ -75,7 +77,7 @@ export default function ConfirmationDialog({
             >
               {confirmLabel}
             </Button>
-          </Modal.Footer>
+          </DialogActions>
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>

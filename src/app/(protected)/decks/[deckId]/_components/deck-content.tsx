@@ -1,3 +1,4 @@
+import DeckTabs from '@/app/(protected)/decks/[deckId]/_components/deck-tabs';
 import DeckHeader from '@/app/(protected)/decks/[deckId]/_components/deck-header';
 import DeckLessons from '@/app/(protected)/decks/[deckId]/_components/deck-lessons';
 import DeckStudyContent from '@/app/(protected)/decks/[deckId]/_components/deck-study-content';
@@ -22,17 +23,22 @@ export default async function DeckContent({ deckId, autoFollow = false }: Props)
     <div className="space-y-6">
       <DeckHeader deck={deck} isOwned={isOwned} isFollowing={isFollowing} />
 
-      <Suspense fallback={<StudyContentSkeleton />}>
-        <DeckStudyContent deck={deck} isOwned={isOwned} autoFollow={autoFollow} />
-      </Suspense>
-
-      <Suspense fallback={<LessonsSkeleton />}>
-        <DeckLessons
-          deckId={deck.id}
-          frontLabel={getLanguageName(deck.frontLanguage) ?? 'Front'}
-          backLabel={getLanguageName(deck.backLanguage) ?? 'Back'}
-        />
-      </Suspense>
+      <DeckTabs
+        study={
+          <Suspense fallback={<StudyContentSkeleton />}>
+            <DeckStudyContent deck={deck} isOwned={isOwned} autoFollow={autoFollow} />
+          </Suspense>
+        }
+        lessons={
+          <Suspense fallback={<LessonsSkeleton />}>
+            <DeckLessons
+              deckId={deck.id}
+              frontLabel={getLanguageName(deck.frontLanguage) ?? 'Front'}
+              backLabel={getLanguageName(deck.backLanguage) ?? 'Back'}
+            />
+          </Suspense>
+        }
+      />
     </div>
   );
 }

@@ -1,15 +1,16 @@
-import {
-  PageHeaderSkeleton,
-  SkeletonBlock,
-  SkeletonLine,
-  SrsDistributionSkeleton,
-} from '@/components/shared/skeleton';
+import PageHeader from '@/components/shared/layout/page-header';
+import { SkeletonBlock, SkeletonLine, SrsDistributionSkeleton } from '@/components/shared/skeleton';
 
 export default function ProgressLoading({ showHeader = true }: { showHeader?: boolean }) {
   return (
     <div className="space-y-6" role="status" aria-label="Loading progress" aria-busy="true">
       <span className="sr-only">Loading progress…</span>
-      {showHeader ? <PageHeaderSkeleton actionCount={0} descriptionLines={2} /> : null}
+      {showHeader ? (
+        <PageHeader
+          title="Progress"
+          description="See how your cards, recall, and study habits are developing over time."
+        />
+      ) : null}
       <section aria-label="Loading progress overview">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
@@ -26,11 +27,11 @@ export default function ProgressLoading({ showHeader = true }: { showHeader?: bo
           ))}
         </div>
       </section>
-      <section className="space-y-4 border-t border-default-200 pt-6">
+      <section className="space-y-4 rounded-xl border border-default-200 bg-default-50/50 p-4 sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <SkeletonLine className="h-6 w-32" />
-            <SkeletonLine className="h-4 w-64 max-w-full" />
+            <SkeletonLine className="h-7 w-32" />
+            <SkeletonLine className="h-6 w-64 max-w-full" />
           </div>
           <SkeletonLine className="h-4 w-24" />
         </div>
@@ -42,10 +43,10 @@ export default function ProgressLoading({ showHeader = true }: { showHeader?: bo
         <SkeletonLine className="h-3 w-3/4 max-w-2xl" />
       </section>
       <SrsDistributionSkeleton />
-      <section className="space-y-4 border-t border-default-200 pt-6">
+      <section className="space-y-4 rounded-xl border border-default-200 bg-default-50/50 p-4 sm:p-5">
         <div className="space-y-1">
-          <SkeletonLine className="h-6 w-28" />
-          <SkeletonLine className="h-4 w-72 max-w-full" />
+          <SkeletonLine className="h-7 w-28" />
+          <SkeletonLine className="h-6 w-72 max-w-full" />
         </div>
         <div className="divide-y divide-default-200">
           {Array.from({ length: 2 }, (_, index) => (

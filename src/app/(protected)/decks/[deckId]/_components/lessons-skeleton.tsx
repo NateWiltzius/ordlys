@@ -2,12 +2,7 @@ import { SkeletonBlock, SkeletonLine } from '@/components/shared/skeleton';
 
 export default function LessonsSkeleton() {
   return (
-    <section
-      className="border-t border-default-200 py-6"
-      role="status"
-      aria-label="Loading lessons"
-      aria-busy="true"
-    >
+    <section className="pb-6" role="status" aria-label="Loading lessons" aria-busy="true">
       <div className="flex items-center gap-4">
         <div className="min-w-0 flex-1 space-y-2">
           <SkeletonLine className="h-5 w-20" />

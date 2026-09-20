@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields';
 import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import LessonFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/lesson-form-fields';
@@ -111,7 +113,7 @@ export default function CreateDeckModal({
                 </p>
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <DialogActions>
                 <Button
                   type="button"
                   variant="tertiary"
@@ -124,7 +126,7 @@ export default function CreateDeckModal({
                 <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
                   Create and start editing
                 </Button>
-              </Modal.Footer>
+              </DialogActions>
             </form>
           </Modal.Dialog>
         </Modal.Container>

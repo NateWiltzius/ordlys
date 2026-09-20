@@ -1,5 +1,5 @@
+import CollapsiblePanel from '@/components/shared/collapsible-panel';
 import { Vocab } from '@/types/vocab.types';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Input, Label, TextArea } from '@heroui/react';
 
 type Props = {
@@ -56,24 +56,12 @@ export default function VocabFormFields({ vocab, autoFocus = false }: Props) {
         </div>
       </fieldset>
 
-      <details
-        className="group overflow-hidden rounded-lg border border-default-200"
+      <CollapsiblePanel
+        title="More card options"
+        description="Pronunciation, quiz hints, and accepted answers"
         open={hasAdvancedValues}
       >
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
-          <span>
-            <span className="block text-sm font-medium text-default-700">More card options</span>
-            <span className="mt-0.5 block text-xs text-default-500">
-              Pronunciation, quiz hints, and accepted answers
-            </span>
-          </span>
-          <ChevronDownIcon
-            className="size-4 shrink-0 text-default-400 transition-transform group-open:rotate-180"
-            aria-hidden="true"
-          />
-        </summary>
-
-        <div className="space-y-6 border-t border-default-200 px-4 py-5">
+        <div className="space-y-6 border-t border-default-200 pt-4">
           <div className="form-field">
             <Label className="text-sm text-default-600" htmlFor="reading">
               Reading or pronunciation{' '}
@@ -162,7 +150,7 @@ export default function VocabFormFields({ vocab, autoFocus = false }: Props) {
             </div>
           </fieldset>
         </div>
-      </details>
+      </CollapsiblePanel>
     </div>
   );
 }

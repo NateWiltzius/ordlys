@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import type { DeckSafetyConfirmation } from './use-deck-safety-actions';
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import { Button, Input, Label, Modal, TextArea } from '@heroui/react';
@@ -110,7 +112,7 @@ export function DeckReportModal({
                 />
               </div>
             </Modal.Body>
-            <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <DialogActions>
               <Button
                 type="button"
                 variant="tertiary"
@@ -129,7 +131,7 @@ export function DeckReportModal({
               >
                 Submit report
               </Button>
-            </Modal.Footer>
+            </DialogActions>
           </form>
         </Modal.Dialog>
       </Modal.Container>

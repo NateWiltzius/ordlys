@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import LessonFormFields from '@/app/(protected)/decks/[deckId]/edit/_components/lesson-form-fields';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
@@ -77,7 +79,7 @@ export default function CreateLessonModal({
                 <LessonFormFields id={`create-lesson-${deckId}-title`} autoFocus />
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <DialogActions>
                 <Button
                   type="button"
                   variant="tertiary"
@@ -90,7 +92,7 @@ export default function CreateLessonModal({
                 <Button className="w-full sm:w-auto" type="submit" isPending={isSubmitting}>
                   Create lesson
                 </Button>
-              </Modal.Footer>
+              </DialogActions>
             </form>
           </Modal.Dialog>
         </Modal.Container>

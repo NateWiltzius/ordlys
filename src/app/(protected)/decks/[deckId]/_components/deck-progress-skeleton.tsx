@@ -5,7 +5,10 @@ export default function DeckProgressSkeleton() {
     <section className="rounded-xl border border-default-200 bg-default-50/50 p-4 sm:p-5">
       <div className="flex items-center justify-between gap-4">
         <SkeletonLine className="h-4 w-28" />
-        <SkeletonLine className="h-3 w-16" />
+        <div className="flex items-center gap-3">
+          <SkeletonLine className="h-3 w-16" />
+          <SkeletonBlock className="h-8 w-24 rounded-lg" />
+        </div>
       </div>
       <SkeletonLine className="mt-2 h-6 w-56 max-w-full" />
       <div className="mt-4 space-y-2">

@@ -20,6 +20,7 @@ export default function ProgressActivityChart({ activity }: Props) {
 
   return (
     <PageSection
+      surface="card"
       title="Study activity"
       description={`Distinct cards practiced each day over the last ${PROGRESS_CHART_DAYS} days.`}
       action={

@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import DeckFormFields from '@/app/(protected)/decks/_components/deck-form-fields';
 import { languageFormValue } from '@/app/(protected)/decks/_components/deck-language-select';
 import { importCsvDeckAction } from '@/server/deck-import.actions';
@@ -148,7 +150,7 @@ export default function ImportDeckModal({ autoOpen = false }: Props) {
                 ) : null}
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <DialogActions>
                 <Button
                   type="button"
                   variant="tertiary"
@@ -166,7 +168,7 @@ export default function ImportDeckModal({ autoOpen = false }: Props) {
                 >
                   {pending ? 'Importing deck…' : 'Import deck'}
                 </Button>
-              </Modal.Footer>
+              </DialogActions>
             </form>
           </Modal.Dialog>
         </Modal.Container>

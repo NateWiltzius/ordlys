@@ -1,7 +1,6 @@
 import { Deck } from '@/types/deck.types';
 import { ReviewCounts } from '@/types/review.types';
 import Link from 'next/link';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
 import { STUDY_TONE_STYLES } from '@/lib/study-colors';
 import ButtonLink from '@/components/shared/button-link';
 import DeckCoverage from '@/components/shared/deck-coverage';
@@ -21,10 +20,6 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
     <div className="py-4">
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-default-200 bg-default-100 text-default-600">
-            <BookOpenIcon className="size-5" aria-hidden="true" />
-          </span>
-
           <div className="min-w-0 flex-1 space-y-2">
             <h3 className="truncate text-base font-semibold text-default-900">
               <Link
@@ -36,9 +31,9 @@ export default function DashboardDeckRow({ deck, stats }: Props) {
             </h3>
 
             {deck.description ? (
-              <p className="line-clamp-2 text-sm leading-6 text-default-500">{deck.description}</p>
+              <p className="truncate text-sm leading-6 text-default-500">{deck.description}</p>
             ) : (
-              <p className="text-sm italic text-default-400">No description</p>
+              <p className="text-sm leading-6 text-default-400">No description</p>
             )}
           </div>
         </div>

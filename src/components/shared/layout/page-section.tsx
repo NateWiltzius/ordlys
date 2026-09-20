@@ -9,6 +9,7 @@ type Props = {
   className?: string;
   contentClassName?: string;
   tone?: 'default' | 'danger';
+  surface?: 'section' | 'card';
 };
 
 export default function PageSection({
@@ -19,11 +20,12 @@ export default function PageSection({
   className,
   contentClassName,
   tone = 'default',
+  surface = 'section',
 }: Props) {
   return (
     <section
       className={cn(
-        'border-t pt-6',
+        surface === 'card' ? 'rounded-xl border bg-default-50/50 p-4 sm:p-5' : 'border-t pt-6',
         tone === 'danger' ? 'border-danger/40' : 'border-default-200',
         className,
       )}

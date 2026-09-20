@@ -1,5 +1,7 @@
 'use client';
 
+import CollapsiblePanel from '@/components/shared/collapsible-panel';
+
 import type { getDeckFollowState, inspectReleaseChanges } from '@/db/queries/deck-release.queries';
 import {
   forkReleaseAction,
@@ -180,11 +182,8 @@ export default function FollowReleaseControls({
         ) : null}
       </div>
 
-      <details className="mt-4 overflow-hidden rounded-lg border border-default-200 bg-default-50/50">
-        <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-default-700">
-          Advanced update settings
-        </summary>
-        <div className="space-y-3 border-t border-default-200 bg-background p-3">
+      <CollapsiblePanel title="Advanced update settings" className="mt-4">
+        <div className="space-y-3 border-t border-default-200 pt-4">
           <Select
             className="min-w-0"
             value={studied?.id ?? null}
@@ -248,7 +247,7 @@ export default function FollowReleaseControls({
             </Button>
           ) : null}
         </div>
-      </details>
+      </CollapsiblePanel>
 
       {feedback ? (
         <Alert status={feedback.status} className="mt-4" role="status">

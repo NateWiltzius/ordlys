@@ -1,6 +1,6 @@
+import PageHeader from '@/components/shared/layout/page-header';
 import {
   DashboardDeckListSkeleton,
-  PageHeaderSkeleton,
   ReviewForecastSkeleton,
   StudyActionCardSkeleton,
 } from '@/components/shared/skeleton';
@@ -9,7 +9,12 @@ export default function DashboardLoading({ showHeader = true }: { showHeader?: b
   return (
     <div className="space-y-6" role="status" aria-label="Loading Today" aria-busy="true">
       <span className="sr-only">Loading Today…</span>
-      {showHeader ? <PageHeaderSkeleton actionCount={0} descriptionLines={2} /> : null}
+      {showHeader ? (
+        <PageHeader
+          title="Today"
+          description="Start what is ready now and keep your learning moving."
+        />
+      ) : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <StudyActionCardSkeleton descriptionLines={2} />
         <StudyActionCardSkeleton descriptionLines={2} />

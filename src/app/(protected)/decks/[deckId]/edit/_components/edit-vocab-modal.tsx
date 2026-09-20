@@ -1,12 +1,15 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
+import CollapsiblePanel from '@/components/shared/collapsible-panel';
+
 import ConfirmationDialog from '@/components/shared/confirmation-dialog';
 import StatusAlert from '@/components/shared/status-alert';
 import { isActionFailure } from '@/lib/action-result';
 import { parseAlternatives } from '@/lib/vocab/parse-alternatives';
 import { replaceVocabAction, updateVocabAction } from '@/server/vocab.actions';
 import type { Vocab } from '@/types/vocab.types';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Button, Checkbox, Label, Modal } from '@heroui/react';
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import ShortcutAction from './shortcut-action';
@@ -163,22 +166,12 @@ export default function EditVocabModal({
             >
               <Modal.Body className="space-y-6">
                 {vocab ? <VocabFormFields key={vocab.id} vocab={vocab} /> : null}
-                <details className="group overflow-hidden rounded-lg border border-warning/30 bg-warning/5">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary [&::-webkit-details-marker]:hidden">
-                    <span>
-                      <span className="block text-sm font-medium text-default-700">
-                        Identity and learner progress
-                      </span>
-                      <span className="mt-0.5 block text-xs text-default-500">
-                        Only use this when the card’s meaning has changed.
-                      </span>
-                    </span>
-                    <ChevronDownIcon
-                      className="size-4 shrink-0 text-default-400 transition-transform group-open:rotate-180"
-                      aria-hidden="true"
-                    />
-                  </summary>
-                  <div className="border-t border-warning/20 p-3">
+                <CollapsiblePanel
+                  title="Identity and learner progress"
+                  description="Only use this when the card’s meaning has changed."
+                  tone="warning"
+                >
+                  <div className="border-t border-warning/20 pt-4">
                     <Checkbox
                       isSelected={replaceIdentity}
                       onChange={setReplaceIdentity}
@@ -196,10 +189,10 @@ export default function EditVocabModal({
                       </Checkbox.Content>
                     </Checkbox>
                   </div>
-                </details>
+                </CollapsiblePanel>
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer className="flex-col-reverse items-stretch gap-2 min-[560px]:grid min-[560px]:grid-cols-2 min-[640px]:flex min-[640px]:flex-row min-[640px]:flex-wrap min-[640px]:items-center min-[640px]:justify-end">
+              <DialogActions layout="extended">
                 <Button
                   type="button"
                   variant="tertiary"
@@ -247,7 +240,7 @@ export default function EditVocabModal({
                     {replaceIdentity ? 'Replace card' : 'Save changes'}
                   </Button>
                 </ShortcutAction>
-              </Modal.Footer>
+              </DialogActions>
             </form>
           </Modal.Dialog>
         </Modal.Container>

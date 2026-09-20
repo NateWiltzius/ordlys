@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import StatusAlert from '@/components/shared/status-alert';
 import { Vocab } from '@/types/vocab.types';
 import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
@@ -112,7 +114,7 @@ export default function MoveVocabModal({
               </div>
               {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
             </Modal.Body>
-            <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <DialogActions>
               <Button
                 type="button"
                 variant="tertiary"
@@ -130,7 +132,7 @@ export default function MoveVocabModal({
               >
                 Move card
               </Button>
-            </Modal.Footer>
+            </DialogActions>
           </form>
         </Modal.Dialog>
       </Modal.Container>

@@ -1,5 +1,7 @@
 'use client';
 
+import DialogActions from '@/components/shared/dialog-actions';
+
 import { Button, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import { FormEvent, useState } from 'react';
 import { deleteAccountAction } from '@/server/auth.actions';
@@ -78,7 +80,7 @@ export default function DeleteAccountModal() {
                 </div>
                 {error ? <StatusAlert status="danger">{error}</StatusAlert> : null}
               </Modal.Body>
-              <Modal.Footer className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <DialogActions>
                 <Button
                   type="button"
                   variant="tertiary"
@@ -97,7 +99,7 @@ export default function DeleteAccountModal() {
                 >
                   Permanently delete account
                 </Button>
-              </Modal.Footer>
+              </DialogActions>
             </form>
           </Modal.Dialog>
         </Modal.Container>

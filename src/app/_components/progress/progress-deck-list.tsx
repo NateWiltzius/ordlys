@@ -16,6 +16,7 @@ type Props = {
 export default function ProgressDeckList({ decks }: Props) {
   return (
     <PageSection
+      surface="card"
       title="Deck progress"
       description="Coverage, memory strength, and recent accuracy for each active deck."
       contentClassName={decks.length > 0 ? 'divide-y divide-default-200' : undefined}

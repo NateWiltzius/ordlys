@@ -1,3 +1,4 @@
+import { ViewLessonButton } from '@/app/(protected)/decks/[deckId]/_components/deck-tabs';
 import { ProgressBar } from '@heroui/react';
 import { summarizeDeckProgress } from '@/lib/deck-progress';
 import type { LessonProgress } from '@/types/review.types';
@@ -37,7 +38,10 @@ export default function DeckProgressMarker({ lessonProgress }: Props) {
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-sm font-medium text-default-600">Current lesson</h2>
-        <p className="text-xs text-default-500">Lesson {progress.currentLessonNumber}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-default-500">Lesson {progress.currentLessonNumber}</p>
+          <ViewLessonButton lessonId={currentLesson.lessonId} />
+        </div>
       </div>
       <h3 className="mt-1 break-words text-lg font-semibold text-foreground">
         {currentLesson.lessonTitle}

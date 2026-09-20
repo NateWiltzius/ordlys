@@ -11,6 +11,7 @@ export default function LessonsSection({ children, lessonCount }: Props) {
   return (
     <PageSection
       title="Lessons"
+      className="border-t-0 pt-0"
       description="Search this deck or open a lesson to browse its cards."
       action={
         <Chip size="sm" variant="soft">

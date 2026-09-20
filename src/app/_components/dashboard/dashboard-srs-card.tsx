@@ -18,6 +18,7 @@ export default function DashboardSrsCard({ counts }: Props) {
 
   return (
     <PageSection
+      surface="card"
       title="Memory strength"
       description="How well you remember cards across your active decks."
       action={

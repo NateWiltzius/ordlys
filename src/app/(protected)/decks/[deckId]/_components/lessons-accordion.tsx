@@ -1,5 +1,6 @@
 'use client';
 
+import { useDeckTabs } from '@/app/(protected)/decks/[deckId]/_components/deck-tabs';
 import LessonVocabulary from '@/app/(protected)/decks/[deckId]/_components/lesson-vocabulary';
 import VocabularySearchField from '@/app/(protected)/decks/[deckId]/_components/vocab/vocabulary-search-field';
 import VocabTable from '@/app/(protected)/decks/[deckId]/_components/vocab/vocab-table';
@@ -34,7 +35,7 @@ export default function LessonsAccordion({
   frontLabel,
   backLabel,
 }: Props) {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string | number>>(new Set());
+  const { expandedKeys, setExpandedKeys } = useDeckTabs();
   const [query, setQuery] = useState('');
   const [searchVocabs, setSearchVocabs] = useState<Vocab[] | null>(null);
   const [searchSrsStates, setSearchSrsStates] = useState<Record<number, SrsState>>({});
@@ -166,20 +167,21 @@ export default function LessonsAccordion({
                         <span className="block font-medium text-foreground">
                           {lesson.lessonTitle}
                         </span>
-                        {unlockMessage ? (
-                          <span className="mt-1 block text-sm font-normal leading-5 text-default-500">
-                            {unlockMessage}
-                          </span>
-                        ) : null}
+                        <span className="mt-1 block text-sm font-normal text-default-500">
+                          {lesson.totalWords} {lesson.totalWords === 1 ? 'card' : 'cards'}
+                        </span>
                       </span>
                       {lesson.totalWords === 0 ? (
                         <Chip size="sm" variant="soft" className="shrink-0">
                           Empty
                         </Chip>
-                      ) : lesson.isUnlocked ? (
+                      ) : !canStudy ? null : lesson.isUnlocked ? (
                         <Chip size="sm" variant="soft" color="success" className="shrink-0">
-                          {Math.min(lesson.learnedWords, lesson.requiredWords)} of{' '}
-                          {lesson.requiredWords} cards strengthened
+                          {lesson.introducedWords >= lesson.totalWords
+                            ? 'All cards started'
+                            : lesson.introducedWords > 0
+                              ? 'In progress'
+                              : 'Available'}
                         </Chip>
                       ) : (
                         <Chip size="sm" variant="soft" className="shrink-0">
@@ -192,6 +194,16 @@ export default function LessonsAccordion({
                 </Accordion.Heading>
                 <Accordion.Panel>
                   <Accordion.Body className="px-3 pb-4">
+                    {unlockMessage ? (
+                      <p className="mb-4 text-sm leading-6 text-default-500">{unlockMessage}</p>
+                    ) : null}
+                    {canStudy && lesson.isUnlocked && lesson.totalWords > 0 ? (
+                      <p className="mb-4 text-sm text-default-500">
+                        {lesson.introducedWords} of {lesson.totalWords} cards introduced �{' '}
+                        {Math.min(lesson.learnedWords, lesson.requiredWords)} of{' '}
+                        {lesson.requiredWords} cards strengthened toward the lesson milestone
+                      </p>
+                    ) : null}
                     {canStudy && lesson.canTakePlacementTest ? (
                       <div className="mb-4 flex flex-col items-end gap-2">
                         <p className="max-w-md text-right text-sm text-default-500">

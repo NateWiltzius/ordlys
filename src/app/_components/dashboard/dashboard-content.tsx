@@ -1,4 +1,4 @@
-import PageSection from '@/components/shared/layout/page-section';
+import DashboardShortcutsSection from '@/app/_components/dashboard/dashboard-shortcuts-section';
 import ButtonLink from '@/components/shared/button-link';
 import EmptyState from '@/components/shared/empty-state';
 import DashboardDeckRow from '@/app/_components/dashboard/dashboard-deck-row';
@@ -61,20 +61,14 @@ export default async function DashboardContent() {
         ))}
       </div>
 
-      <ReviewForecastCard forecast={reviewForecast} nextReview={nextReview} surface="section" />
+      <ReviewForecastCard
+        forecast={reviewForecast}
+        nextReview={nextReview}
+        collapsible
+        defaultOpen
+      />
 
-      <PageSection
-        title="Deck shortcuts"
-        description="Your most relevant decks based on reviews and new cards available."
-        action={
-          activeDecks.length > 0 ? (
-            <ButtonLink href="/decks" variant="tertiary" size="sm">
-              View library
-            </ButtonLink>
-          ) : null
-        }
-        contentClassName={activeDecks.length > 0 ? 'divide-y divide-default-200' : undefined}
-      >
+      <DashboardShortcutsSection>
         {activeDecks.length === 0 ? (
           <EmptyState
             title="No active decks yet"
@@ -86,7 +80,7 @@ export default async function DashboardContent() {
             <DashboardDeckRow key={deck.id} deck={deck} stats={deckStats[deck.id]} />
           ))
         )}
-      </PageSection>
+      </DashboardShortcutsSection>
     </div>
   );
 }
