@@ -4,10 +4,11 @@ type Props = {
   label: string;
   value: string;
   alternatives: string[];
+  hint: string | null;
   children?: ReactNode;
 };
 
-export default function VocabSide({ label, value, alternatives, children }: Props) {
+export default function VocabSide({ label, value, alternatives, hint, children }: Props) {
   const visibleChildren = Children.toArray(children);
 
   return (
@@ -25,6 +26,12 @@ export default function VocabSide({ label, value, alternatives, children }: Prop
       ) : null}
 
       {visibleChildren.length > 0 ? <div className="mt-1">{visibleChildren}</div> : null}
+
+      {hint ? (
+        <p className="mt-1 break-words text-xs leading-relaxed text-muted">
+          <span className="font-medium">Hint:</span> {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

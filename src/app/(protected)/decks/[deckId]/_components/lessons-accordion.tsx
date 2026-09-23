@@ -199,7 +199,7 @@ export default function LessonsAccordion({
                     ) : null}
                     {canStudy && lesson.isUnlocked && lesson.totalWords > 0 ? (
                       <p className="mb-4 text-sm text-default-500">
-                        {lesson.introducedWords} of {lesson.totalWords} cards introduced �{' '}
+                        {lesson.introducedWords} of {lesson.totalWords} cards introduced &middot;{' '}
                         {Math.min(lesson.learnedWords, lesson.requiredWords)} of{' '}
                         {lesson.requiredWords} cards strengthened toward the lesson milestone
                       </p>

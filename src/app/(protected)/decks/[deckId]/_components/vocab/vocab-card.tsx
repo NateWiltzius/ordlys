@@ -48,11 +48,21 @@ export default function VocabCard({
 
       <span className="hidden pt-0.5 text-sm tabular-nums text-muted sm:block">{index}</span>
 
-      <VocabSide label={frontLabel} value={vocab.front} alternatives={vocab.frontAlternatives}>
+      <VocabSide
+        label={frontLabel}
+        value={vocab.front}
+        alternatives={vocab.frontAlternatives}
+        hint={vocab.frontToBackQuizHint}
+      >
         {vocab.reading ? <p className="text-xs text-muted">Reading: {vocab.reading}</p> : null}
       </VocabSide>
 
-      <VocabSide label={backLabel} value={vocab.back} alternatives={vocab.backAlternatives} />
+      <VocabSide
+        label={backLabel}
+        value={vocab.back}
+        alternatives={vocab.backAlternatives}
+        hint={vocab.backToFrontQuizHint}
+      />
 
       {showSrsLevel ? (
         <div className="hidden pt-0.5 sm:block">
